@@ -18,6 +18,7 @@ python3 bin/lexer.py tests/lexer/TestCases/MergeSort.java
 ```
 
 The current directory structure after running `make` is:
+```
 .
 ├── bin
 │   └── lexer.py
@@ -37,6 +38,7 @@ The current directory structure after running `make` is:
             ├── MergeSort.class
             ├── MergeSort.java
             └── Operators.java
+```
 
 
 # Group Members
