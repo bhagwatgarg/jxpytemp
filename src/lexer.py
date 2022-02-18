@@ -3,26 +3,22 @@ import sys
 #keywords
 
 keywords = {
-    'abstract':'ABSTRACT',
-    'assert':'ASSERT',
     'boolean':'BOOLEAN',
     'break':'BREAK',
     'byte':'BYTE',
     'case':'CASE',
     'char':'CHAR',
     'class':'CLASS',
-    'const':'CONST',
+    # 'const': 'CONST',
     'continue':'CONTINUE',
     'default':'DEFAULT',
     'do':'DO',
     'double':'DOUBLE',
     'else':'ELSE',
-    'extends':'EXTENDS',
     'final':'FINAL',
     'float':'FLOAT',
     'for':'FOR',
     'if':'IF',
-    'goto':'GOTO',
     'import':'IMPORT',
     'int':'INT',
     'long':'LONG',
@@ -85,7 +81,6 @@ operators = [
     'LSHIFT_ASSIGN',
     'RSHIFT_ASSIGN',
     'URSHIFT_ASSIGN',
-    'ELLIPSIS',
     'LSHIFT',
     'RSHIFT',
     'URSHIFT',
@@ -103,7 +98,7 @@ literal = [
     'STRING_LITERAL'
 ]
 
-tokens = seperators + operators + list(keywords.values()) + literal + ['LINE_COMMENT','BLOCK_COMMENT','IDENTIFIER']
+tokens = seperators + operators + list(keywords.values()) + literal + ['IDENTIFIER']
 
 #regex for seperators
 
@@ -156,7 +151,6 @@ t_URSHIFT        =   r'>>>'
 t_LSHIFT_ASSIGN  =   r'<<='
 t_RSHIFT_ASSIGN  =   r'>>='
 t_URSHIFT_ASSIGN =   r'>>>='
-t_ELLIPSIS       =   r'\.\.\.'
 
 #ignore whitespaces
 
@@ -208,12 +202,12 @@ def t_newline(t):
 
 def t_LINE_COMMENT(t):
     r'//.*'
-    return t
+    pass
 
 def t_BLOCK_COMMENT(t):
     r'/\*(.|\n)*?\*/'
     t.lexer.lineno += t.value.count('\n')
-    return t
+    pass
 
 def t_error(t):
     print("Illegal character '{}' ({}) in line {}".format(t.value[0], hex(ord(t.value[0])), t.lexer.lineno))
