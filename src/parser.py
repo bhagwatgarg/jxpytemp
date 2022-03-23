@@ -1,6 +1,7 @@
 import sys
 import ply.lex as lex
 import ply.yacc as yacc
+from pytest import Instance
 import lexer
 from .model import *
 
@@ -16,16 +17,19 @@ def p_Literal(p):
     | CHAR_LITERAL 
     | STRING_LITERAL 
     '''
+    p[0] = Literal(p[1])
 
 def p_Type(p):
     ''' Type : PrimitiveType
     | ReferenceType
     '''
+    p[0] = p[1]
 
 def p_PrimitiveType(p):
     ''' PrimitiveType : NumericType
     | BOOLEAN
     '''
+    p[0] = p[1]
 
 def p_NumericType(p):
     ''' NumericType : IntegralType
@@ -49,27 +53,33 @@ def p_ReferenceType(p):
     ''' ReferenceType : ArrayType
     | ClassType
     '''
+    p[0] = p[1]
 
 def p_ClassType(p):
     '''
     ClassType : Name
     '''
+    p[0] = p[1]
 
 def p_ArrayType(p):
-    ''' ArrayType : PrimitiveType LBRACK RBRACK
-    | Name LBRACK RBRACK
-    | ArrayType LBRACK RBRACK
+    ''' ArrayType : PrimitiveType Dims
+    | Name Dims
     '''
+    p[0] = Type(p[1], dimensions = p[2])
 
 def p_Name(p):
     ''' Name : SimpleName
     | QualifiedName'''
+    p[0] = p[1]
 
 def p_SimpleName(p):
     ''' SimpleName : IDENTIFIER'''
+    p[0] = Name(p[1])
 
 def p_QualifiedName(p):
     ''' QualifiedName : Name DOT IDENTIFIER'''
+    p[1].append_name(p[3])
+    p[0] = p[1]
 
 def p_CompilationUnit(p):
     '''
@@ -94,6 +104,8 @@ def p_TypeDeclarations(p):
     TypeDeclarations : TypeDeclaration
     | TypeDeclarations TypeDeclaration
     '''
+    if len(p) == 2: p[0] = [p[1]]
+    else: p[0] = p[1] + [p[2]]
 
 def p_PackageDeclaration(p):
     '''
@@ -119,8 +131,14 @@ def p_TypeImportOnDemandDeclaration(p):
 def p_TypeDeclaration(p):
     '''
     TypeDeclaration : ClassDeclaration
-    | SEMI
     '''
+    p[0] = p[1]
+
+def p_TypeDeclaration2(p):
+    '''
+    TypeDeclaration : SEMI
+    '''
+    p[0] = EmptyDeclaration()
 
 # split this according to titanium http://titanium.cs.berkeley.edu/doc/java-langspec-1.0/19.doc.html
 def p_Modifiers(p):
@@ -128,10 +146,10 @@ def p_Modifiers(p):
     Modifiers : Modifier
     | Modifiers Modifier
     '''
-    if len(p)==2:
-        p[0]=[p[1]]
+    if len(p) == 2:
+        p[0] = [p[1]]
     else:
-        p[0]=p[1]+[p[2]]
+        p[0] = p[1] + [p[2]]
 
 def p_Modifier(p):
     '''
@@ -141,25 +159,31 @@ def p_Modifier(p):
     | PROTECTED
     | PUBLIC
     '''
-    p[0]=p[1]
+    p[0] = p[1]
 
 def p_ClassDeclaration(p):
     '''
     ClassDeclaration : Modifiers CLASS IDENTIFIER  ClassBody
     | CLASS IDENTIFIER  ClassBody
     '''
+    if len(p) == 5: p[0] = ClassDeclaration(name = p[3], body = p[4], modifiers = p[1])
+    else: p[0] = ClassDeclaration(name = p[2], body = p[3])
 
 def p_ClassBody(p):
     '''
     ClassBody : LBRACE RBRACE
     | LBRACE ClassBodyDeclarations RBRACE
     '''
+    if len(p) == 3: p[0] = []
+    else: p[0] = [2]
 
 def p_ClassBodyDeclarations(p):
     '''
     ClassBodyDeclarations : ClassBodyDeclaration
     | ClassBodyDeclarations ClassBodyDeclaration
     '''
+    if len(p) == 2: p[0] = [p[1]]
+    else: p[0] = p[1] + [p[2]]
 
 def p_ClassBodyDeclaration(p):
     '''
@@ -167,42 +191,52 @@ def p_ClassBodyDeclaration(p):
     | ConstructorDeclaration
     | StaticInitializer
     '''
+    p[0] = p[1]
 
 def p_ClassMemberDeclaration(p):
     '''
     ClassMemberDeclaration : FieldDeclaration
     | MethodDeclaration
     '''
+    p[0] = p[1]
 
 def p_FieldDeclaration(p):
     '''
     FieldDeclaration : Modifiers Type VariableDeclarators SEMI
     | Type VariableDeclarators SEMI
     '''
+    if len(p) == 5: p[0] = FieldDeclaration(type = p[2], variable_declarators = p[3], modifiers = p[1])
+    else: p[0] = FieldDeclaration(type = p[1], variable_declarators = p[2])
 
 def p_VariableDeclarators(p):
     '''
     VariableDeclarators : VariableDeclarator
     | VariableDeclarators COMMA VariableDeclarator
     '''
+    if len(p) == 2: p[0] = [p[1]]
+    else: p[0] = p[1] + [p[3]]
 
 def p_VariableDeclarator(p):
     '''
     VariableDeclarator : VariableDeclaratorId
     | VariableDeclaratorId ASSIGN VariableInitializer
     '''
+    if len(p) == 2: p[0] = VariableDeclarator(p[1])
+    else: p[0] = VariableDeclarator(p[1], initializer = p[3])
 
 def p_VariableDeclaratorId(p):
+    #made a change here
     '''
-    VariableDeclaratorId : IDENTIFIER
-    | VariableDeclaratorId LBRACK RBRACK
+    VariableDeclaratorId : IDENTIFIER Dims
     '''
+    p[0] = Variable(p[1], dimensions = p[2])
 
 def p_VariableInitializer(p):
     '''
     VariableInitializer : Expression
     | ArrayInitializer
     '''
+    p[0] = p[1]
 
 def p_MethodDeclaration(p):
     '''
@@ -228,11 +262,14 @@ def p_FormalParametersList(p):
     FormalParameterList : FormalParameter
     | FormalParameterList COMMA FormalParameter
     '''
+    if len(p) == 2: p[0] = [p[1]]
+    else: p[0] = p[1] + [p[3]]
 
 def p_FormalParameter(p):
     '''
     FormalParameter : Type VariableDeclaratorId
     '''
+    p[0] = FormalParameter(variable = p[2], type = p[1])
 
 #def p_ClassTypeList(p):
 #    '''
@@ -250,6 +287,7 @@ def p_StaticInitializer(p):
     '''
     StaticInitializer : STATIC Block
     '''
+    p[0] = ClassInitializer(p[2], static = True)
 
 
 ### BG START
@@ -675,12 +713,16 @@ def p_ClassInstanceCreationExpression(p):
     ClassInstanceCreationExpression : NEW ClassType LPAREN RPAREN
     | NEW ClassType LPAREN ArgumentList RPAREN
     '''
+    if len(p) == 5: p[0] = InstanceCreation(type = [2])
+    else: p[0] = InstanceCreation(type = p[2], arguments = p[4])
 
 def p_ArgumentList(p):
     '''
     ArgumentList : Expression
     | ArgumentList COMMA Expression
     '''
+    if len(p) == 2: p[0] = [p[1]]
+    else: p[0] = p[1] + [p[3]]
 
 def p_ArrayCreationExpression(p):
     '''
@@ -811,7 +853,7 @@ def p_CastExpression2(p):
     '''
     CastExpression :  LPAREN PrimitiveType RPAREN UnaryExpression
     '''
-    p[0] = Cast(Type(p[2],, p[4])
+    p[0] = Cast(Type(p[2], p[4]))
 
 def p_CastExpression3(p):
     '''
