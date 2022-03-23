@@ -1,4 +1,4 @@
-package TestCases;
+// package TestCases;
 public class Operators{
   public static void literals_and_operators() {
     int i_a = 10, i_b = 0, i_c = -113256, i_d;
