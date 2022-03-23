@@ -633,18 +633,27 @@ def p_ContinueStatement(p):
     ContinueStatement : CONTINUE IDENTIFIER SEMI
     | CONTINUE SEMI
     '''
+    if len(p) == 3:
+        p[0] = Continue()
+    else:
+        p[0] = Continue(p[2])
 
 def p_ReturnStatement(p):
     '''
     ReturnStatement : RETURN Expression SEMI
     | RETURN SEMI
     '''
-
+    if len(p) == 3:
+        p[0] = Return()
+    else:
+        p[0] = Return(p[2])
+    
 def p_Primary(p):
     '''
     Primary : PrimaryNoNewArray
     | ArrayCreationExpression
     '''
+    p[0] = p[1]
 
 def p_PrimaryNoNewArray(p):
     '''
@@ -656,6 +665,10 @@ def p_PrimaryNoNewArray(p):
     | MethodInvocation
     | ArrayAccess
     '''
+    if len(p)==4:
+        p[0] = p[2]
+    else :
+        p[0] = p[1]
 
 def p_ClassInstanceCreationExpression(p):
     '''
@@ -676,7 +689,7 @@ def p_ArrayCreationExpression(p):
     | NEW ClassType DimExprs Dims
     | NEW ClassType DimExprs
     '''
-
+##leaving these 2 rn
 def p_DimExprs(p):
     '''
     DimExprs : DimExpr
@@ -687,18 +700,24 @@ def p_DimExpr(p):
     '''
     DimExpr : LBRACK Expression RBRACK
     '''
+##
 
 def p_Dims(p):
     '''
     Dims : LBRACK RBRACK
     | Dims LBRACK RBRACK
     '''
+    if len(p) == 2:
+        p[0] = 1
+    else:
+        p[0] = 1 + p[1]
 
 def p_FieldAccess(p):
     '''
     FieldAccess : Primary DOT IDENTIFIER
     | SUPER DOT IDENTIFIER
     '''
+    p[0] = FieldAccess(p[3], p[1])
 
 def p_MethodInvocation(p):
     '''
@@ -707,12 +726,22 @@ def p_MethodInvocation(p):
     | Primary DOT IDENTIFIER LPAREN ArgumentList RPAREN
     | Primary DOT IDENTIFIER LPAREN RPAREN
     '''
+    if len(p)==5:
+        p[0] = MethodInvocation(p[1], arguments=p[3])
+    elif len(p)==7:
+        p[0] = MethodInvocation(p[3], target=p[1], arguments=p[5])
+    elif len(p)==4:
+        p[0] = MethodInvocation(p[1])
+    elif len(p)==6:
+        p[0] = MethodInvocation(p[3], target=p[1])
+    
 
 def p_ArrayAccess(p):
     '''
     ArrayAccess : Name LBRACK Expression RBRACK
     | PrimaryNoNewArray LBRACK Expression RBRACK
     '''
+    p[0] = ArrayAccess(p[3], p[1])
 
 def p_PostfixExpression(p):
     '''
@@ -721,16 +750,19 @@ def p_PostfixExpression(p):
     | PostIncrementExpression
     | PostDecrementExpression
     '''
+    p[0] = p[1]
 
 def p_PostIncrementExpression(p):
     '''
     PostIncrementExpression : PostfixExpression INC
     '''
+    p[0] = Unary('x++', p[1])
 
 def p_PostDecrementExpression(p):
     '''
     PostDecrementExpression : PostfixExpression DEC
     '''
+    p[0] = Unary('x--', p[1])
 
 def p_UnaryExpression(p):
     '''
@@ -740,16 +772,22 @@ def p_UnaryExpression(p):
     | SUB UnaryExpression
     | UnaryExpressionNotAddSub
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Unary(p[1], p[2])
 
 def p_PreIncrementExpression(p):
     '''
     PreIncrementExpression : INC UnaryExpression
     '''
+    p[0] = Unary('++x', p[2])
 
 def p_PreDecrementExpression(p):
     '''
     PreDecrementExpression : DEC UnaryExpression
     '''
+    p[0] = Unary('--x', p[2])
 
 def p_UnaryExpressionNotAddSub(p):
     '''
@@ -758,14 +796,33 @@ def p_UnaryExpressionNotAddSub(p):
     | TILDE UnaryExpression
     | CastExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Unary(p[1], p[2])
 
-def p_CastExpression(p):
+def p_CastExpression1(p):
     '''
     CastExpression : LPAREN PrimitiveType Dims RPAREN UnaryExpression
-    | LPAREN PrimitiveType RPAREN UnaryExpression
-    | LPAREN Expression RPAREN UnaryExpressionNotAddSub
-    | LPAREN Name Dims RPAREN UnaryExpressionNotAddSub
     '''
+    p[0] = Cast(Type(p[2], dimensions=p[3]), p[5])
+
+def p_CastExpression2(p):
+    '''
+    CastExpression :  LPAREN PrimitiveType RPAREN UnaryExpression
+    '''
+    p[0] = Cast(Type(p[2],, p[4])
+
+def p_CastExpression3(p):
+    '''
+    CastExpression : LPAREN Expression RPAREN UnaryExpressionNotAddSub
+    '''
+    p[0] = Cast(Type(p[2]), p[4])
+def p_CastExpression4(p):
+    '''
+    CastExpression : LPAREN Name Dims RPAREN UnaryExpressionNotAddSub
+    '''
+    p[0] = Cast(Type(p[2], dimensions=p[3]), p[5])
 
 def p_MultiplicativeExpression(p):
     '''
@@ -774,6 +831,11 @@ def p_MultiplicativeExpression(p):
     | MultiplicativeExpression DIV UnaryExpression
     | MultiplicativeExpression MOD UnaryExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Multiplicative(p[2], p[1], p[3])
+
 
 def p_AdditiveExpression(p):
     '''
@@ -781,6 +843,11 @@ def p_AdditiveExpression(p):
     | AdditiveExpression ADD MultiplicativeExpression
     | AdditiveExpression SUB MultiplicativeExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Shift(p[2], p[1], p[3])
+
 
 def p_ShiftExpression(p):
     '''
@@ -789,6 +856,11 @@ def p_ShiftExpression(p):
     | ShiftExpression RSHIFT AdditiveExpression
     | ShiftExpression URSHIFT AdditiveExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Shift(p[2], p[1], p[3])
+
 
 def p_RelationalExpression(p):
     '''
@@ -798,6 +870,11 @@ def p_RelationalExpression(p):
     | RelationalExpression LE ShiftExpression
     | RelationalExpression GE ShiftExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Relational(p[2], p[1], p[3])
+
 
 def p_EqualityExpression(p):
     '''
@@ -805,53 +882,86 @@ def p_EqualityExpression(p):
     | EqualityExpression EQUAL RelationalExpression
     | EqualityExpression NOTEQUAL RelationalExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Equality(p[2], p[1], p[3])
+
 
 def p_AndExpression(p):
     '''
     AndExpression : EqualityExpression
     | AndExpression BITAND EqualityExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = And(p[2], p[1], p[3])
+
 
 def p_ExclusiveOrExpression(p):
     '''
     ExclusiveOrExpression : AndExpression
     | ExclusiveOrExpression CARET AndExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Xor(p[2], p[1], p[3])
+
 
 def p_InclusiveOrExpression(p):
     '''
     InclusiveOrExpression : ExclusiveOrExpression
     | InclusiveOrExpression BITOR ExclusiveOrExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Or(p[2], p[1], p[3])
 
 def p_ConditionalAndExpression(p):
     '''
     ConditionalAndExpression : InclusiveOrExpression
     | ConditionalAndExpression AND InclusiveOrExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = ConditionalAnd(p[2], p[1], p[3])
 
 def p_ConditionalOrExpression(p):
     '''
     ConditionalOrExpression : ConditionalAndExpression
     | ConditionalOrExpression OR ConditionalAndExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = ConditionalOr(p[2], p[1], p[3])
 
 def p_ConditionalExpression(p):
     '''
     ConditionalExpression : ConditionalOrExpression
     | ConditionalOrExpression QUESTION Expression COLON ConditionalExpression
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = Conditional(p[1], p[3], p[5])
 
 def p_AssignmentExpression(p):
     '''
     AssignmentExpression : ConditionalExpression
     | Assignment
     '''
+    p[0] = p[1]
 
 def p_Assignment(p):
     '''
     Assignment : LeftHandSide AssignmentOperator AssignmentExpression
     '''
+    p[0] = Assignment(p[2], p[1], p[3])
 
 def p_LeftHandSide(p):
     '''
@@ -859,6 +969,7 @@ def p_LeftHandSide(p):
     | FieldAccess
     | ArrayAccess
     '''
+    p[0] = p[1]
 
 def p_AssignmentOperator(p):
     '''
@@ -875,16 +986,19 @@ def p_AssignmentOperator(p):
     | RSHIFT_ASSIGN
     | URSHIFT_ASSIGN
     '''
+    p[0] = p[1]
 
 def p_Expression(p):
     '''
     Expression : AssignmentExpression
     '''
+    p[0] = p[1]
 
 def p_ConstantExpression(p):
     '''
     ConstantExpression : Expression
     '''
+    p[0] = p[1]
 
 def p_error(p):
     print("Syntax Error in line", p.lineno)
