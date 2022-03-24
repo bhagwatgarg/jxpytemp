@@ -15,7 +15,7 @@ public class BinarySearch{
 
 class Main{
 	public static int hello (){
-		a = BinarySearch();
+		BinarySearch a = BinarySearch();
 		int[] arr = {1,2,3,4,5};
 		return a.search(arr, 3);
 	}	
