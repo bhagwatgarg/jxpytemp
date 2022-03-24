@@ -85,7 +85,7 @@ def p_QualifiedName(p):
     p[0] = p[1]
 
 
-def p_CompilationUnit1(p):
+def p_CompilationUnit(p):
     '''
     CompilationUnit : PackageDeclaration ImportDeclarations TypeDeclarations
     | PackageDeclaration ImportDeclarations
@@ -107,16 +107,16 @@ def p_CompilationUnit2(p):
     if len(p)==3:
         p[0] = CompilationUnit(package_declaration=p[1], type_declarations=p[2])
     else :
-        p[0] = CompilationUnit(import_declaration=p[1])
+        p[0] = CompilationUnit(import_declarations=p[1])
 def p_CompilationUnit3(p):
     '''
     CompilationUnit :  ImportDeclarations TypeDeclarations
     | TypeDeclarations
     '''
     if len(p)==3:
-        p[0] = CompilationUnit(import_declaration=p[1], type_declarations=p[2])
+        p[0] = CompilationUnit(import_declarations=p[1], type_declarations=p[2])
     else :
-        p[0] = CompilationUnit(type_declaration=p[1])
+        p[0] = CompilationUnit(type_declarations=p[1])
 
 def p_ImportDeclarations(p):
     '''
@@ -208,7 +208,7 @@ def p_ClassBody(p):
     | LBRACE ClassBodyDeclarations RBRACE
     '''
     if len(p) == 3: p[0] = []
-    else: p[0] = [2]
+    else: p[0] = p[2]
 
 def p_ClassBodyDeclarations(p):
     '''
@@ -258,11 +258,14 @@ def p_VariableDeclarator(p):
     else: p[0] = VariableDeclarator(p[1], initializer = p[3])
 
 def p_VariableDeclaratorId(p):
-    #made a change here
+    # made a change here
     '''
-    VariableDeclaratorId : IDENTIFIER Dims
+    VariableDeclaratorId : IDENTIFIER
+    | IDENTIFIER Dims
     '''
-    p[0] = Variable(p[1], dimensions = p[2])
+    dims=0
+    if len(p)==3: dims=p[2]
+    p[0] = Variable(p[1], dimensions = dims)
 
 def p_VariableInitializer(p):
     '''
@@ -366,7 +369,7 @@ def p_ConstructorDeclaration(p):
     else:
         declarator=p[1]
         body=p[2]
-    p[0]=ConstructorDeclaration(name=declarator['simple_name'], block=body['block_statements'], modifiers=modifiers, type_parameters=TODO, parameters=declarator['formal_parameter_list'], throws=TODO)
+    p[0]=ConstructorDeclaration(name=declarator['simple_name'], block=body['block_statements'], modifiers=modifiers, type_parameters=None, parameters=declarator['formal_parameter_list'], throws=None)
 
 def p_ConstructorDeclarator(p):
     '''
@@ -383,15 +386,15 @@ def p_ConstructorDeclarator(p):
 
 def p_ConstructorBody(p):
     '''
-    ConstructorBody : LBRACE ExplicitConstructorInvocation BlockStatements RBRACE
-    | LBRACE ExplicitConstructorInvocation RBRACE
+    ConstructorBody :
     | LBRACE BlockStatements RBRACE
     | LBRACE RBRACE
     '''
     constructor_invocation, block_statements=None, None
     if len(p)==4:
-        if p[2].has_key('argument_list'): constructor_invocation=p[2]
-        else: block_statements=p[2]
+        # if p[2].has_key('argument_list'): constructor_invocation=p[2]
+        # else: block_statements=p[2]
+        block_statements=p[2]
     elif len(p)==5:
         constructor_invocation=p[2]
         block_statements=p[3]
@@ -424,7 +427,7 @@ def p_VariableInitializers(p):
     | VariableInitializers COMMA VariableInitializer
     '''
     if len(p)==2: p[0]=[p[1]]
-    else: p[0]={'variable_initializers': p[1]+[p[3]]}
+    else: p[0]=p[1]+[p[3]]
 
 def p_Block(p):
     '''
@@ -910,7 +913,7 @@ def p_UnaryExpressionNotAddSub(p):
     else:
         p[0] = Unary(p[1], p[2])
 
-def p_CastExpression1(p):
+def p_CastExpression(p):
     '''
     CastExpression : LPAREN PrimitiveType Dims RPAREN UnaryExpression
     '''
