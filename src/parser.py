@@ -3,7 +3,7 @@ import ply.lex as lex
 import ply.yacc as yacc
 from pytest import Instance
 import lexer
-from .model import *
+from model import *
 
 def p_Goal(p):
     '''Goal : CompilationUnit'''
@@ -91,20 +91,20 @@ def p_CompilationUnit1(p):
     | PackageDeclaration ImportDeclarations
     | PackageDeclaration
     '''
-    if len(p)==3:
+    if len(p)==4:
         p[0] = CompilationUnit(package_declaration=p[1], import_declarations=p[2], type_declarations=p[3])
-    elif len(p)==2:
+    elif len(p)==3:
         p[0] = CompilationUnit(package_declaration=p[1], import_declarations=p[2])
     else :
         p[0] = CompilationUnit(package_declaration=p[1])
 
 def p_CompilationUnit2(p):
     '''
-    CompilationUnit :
-    | PackageDeclaration TypeDeclarations
+    CompilationUnit : PackageDeclaration TypeDeclarations
     | ImportDeclarations
     '''
-    if len(p)==2:
+    # TODO: Can be empty?
+    if len(p)==3:
         p[0] = CompilationUnit(package_declaration=p[1], type_declarations=p[2])
     else :
         p[0] = CompilationUnit(import_declaration=p[1])
@@ -113,7 +113,7 @@ def p_CompilationUnit3(p):
     CompilationUnit :  ImportDeclarations TypeDeclarations
     | TypeDeclarations
     '''
-    if len(p)==2:
+    if len(p)==3:
         p[0] = CompilationUnit(import_declaration=p[1], type_declarations=p[2])
     else :
         p[0] = CompilationUnit(type_declaration=p[1])
@@ -275,11 +275,14 @@ def p_MethodDeclaration(p):
     '''
     MethodDeclaration : MethodHeader MethodBody
     '''
-    p[0] = MethodDeclaration(p[1]['name'], parameters=p[1]['parameters'],
-                                     extended_dims=p[1]['extended_dims'], type_parameters=p[1]['type_parameters'],
-                                     return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
+    p[0] = MethodDeclaration(p[1]['name'], return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
 
-def p_MethodHeader1(p):
+    # TODO
+    # p[0] = MethodDeclaration(p[1]['name'], parameters=p[1]['parameters'],
+    #                                  extended_dims=p[1]['extended_dims'], type_parameters=p[1]['type_parameters'],
+    #                                  return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
+
+def p_MethodHeader(p):
     '''
     MethodHeader : Modifiers Type MethodDeclarator
     | Type MethodDeclarator
@@ -287,7 +290,7 @@ def p_MethodHeader1(p):
     if len(p)==3:
         p[0] = {'modifiers': p[1], 'type': p[2], 'name': p[3]}
     else:
-        p[0] = {'type': p[2], 'name': p[2]}
+        p[0] = {'type': p[2], 'name': p[2], 'modifiers':[]}
 
 
 def p_MethodHeader2(p):
@@ -296,9 +299,9 @@ def p_MethodHeader2(p):
     | VOID MethodDeclarator
     '''
     if len(p)==3:
-        p[0] = {'modifiers': p[1], 'name': p[3]}
+        p[0] = {'modifiers': p[1], 'name': p[3], 'type':'void'}
     else:
-        p[0] = {'name': p[2]}
+        p[0] = {'name': p[2], 'type':'void', 'modifiers':[]}
 
 
 
@@ -307,6 +310,7 @@ def p_MethodDeclarator(p):
     MethodDeclarator : IDENTIFIER LPAREN RPAREN
     | IDENTIFIER LPAREN FormalParameterList RPAREN
     '''
+    p[0]={}
     if len(p)==4:
         p[0]['name']=p[1]
     else :
@@ -812,7 +816,7 @@ def p_Dims(p):
     Dims : LBRACK RBRACK
     | Dims LBRACK RBRACK
     '''
-    if len(p) == 2:
+    if len(p) == 3:
         p[0] = 1
     else:
         p[0] = 1 + p[1]
