@@ -7,6 +7,7 @@ from .model import *
 
 def p_Goal(p):
     '''Goal : CompilationUnit'''
+    p[0] = p[1]
 
 def p_Literal(p):
     ''' Literal : DECIMAL_LITERAL 
@@ -35,7 +36,7 @@ def p_NumericType(p):
     ''' NumericType : IntegralType
     | FloatingPointType
     '''
-
+    p[0] = p[1]
 def p_IntegralType(p):
     ''' IntegralType : BYTE
     | SHORT
@@ -43,11 +44,13 @@ def p_IntegralType(p):
     | LONG
     | CHAR
     '''
+    p[0] = p[1]
 
 def p_FloatingPointType(p):
     ''' FloatingPointType : FLOAT
     | DOUBLE
     '''
+    p[0] = p[1]
 
 def p_ReferenceType(p):
     ''' ReferenceType : ArrayType
@@ -81,23 +84,49 @@ def p_QualifiedName(p):
     p[1].append_name(p[3])
     p[0] = p[1]
 
-def p_CompilationUnit(p):
+
+def p_CompilationUnit1(p):
     '''
     CompilationUnit : PackageDeclaration ImportDeclarations TypeDeclarations
     | PackageDeclaration ImportDeclarations
-    | PackageDeclaration TypeDeclarations
-    | ImportDeclarations TypeDeclarations
     | PackageDeclaration
-    | ImportDeclarations
-    | TypeDeclarations
-    |
     '''
+    if len(p)==3:
+        p[0] = CompilationUnit(package_declaration=p[1], import_declarations=p[2], type_declarations=p[3])
+    elif len(p)==2:
+        p[0] = CompilationUnit(package_declaration=p[1], import_declarations=p[2])
+    else :
+        p[0] = CompilationUnit(package_declaration=p[1])
+
+def p_CompilationUnit2(p):
+    '''
+    CompilationUnit :
+    | PackageDeclaration TypeDeclarations
+    | ImportDeclarations
+    '''
+    if len(p)==2:
+        p[0] = CompilationUnit(package_declaration=p[1], type_declarations=p[2])
+    else :
+        p[0] = CompilationUnit(import_declaration=p[1])
+def p_CompilationUnit3(p):
+    '''
+    CompilationUnit :  ImportDeclarations TypeDeclarations
+    | TypeDeclarations
+    '''
+    if len(p)==2:
+        p[0] = CompilationUnit(import_declaration=p[1], type_declarations=p[2])
+    else :
+        p[0] = CompilationUnit(type_declaration=p[1])
 
 def p_ImportDeclarations(p):
     '''
     ImportDeclarations : ImportDeclaration
     | ImportDeclarations ImportDeclaration
     '''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[2]]
 
 def p_TypeDeclarations(p):
     '''
@@ -111,22 +140,26 @@ def p_PackageDeclaration(p):
     '''
     PackageDeclaration : PACKAGE Name SEMI
     '''
+    p[0] = PackageDeclaration(p[2])
 
 def p_ImportDeclaration(p):
     '''
     ImportDeclaration : SingleTypeImportDeclaration
     | TypeImportOnDemandDeclaration
     '''
+    p[0] = p[1]
 
 def p_SingleTypeImportDeclaration(p):
     '''
     SingleTypeImportDeclaration : IMPORT Name SEMI
     '''
+    p[0] = ImportDeclaration(p[2])
 
 def p_TypeImportOnDemandDeclaration(p):
     '''
     TypeImportOnDemandDeclaration : IMPORT Name DOT MUL SEMI
     '''
+    p[0] = ImportDeclaration(p[2], on_demand=True)
 
 def p_TypeDeclaration(p):
     '''
@@ -242,20 +275,43 @@ def p_MethodDeclaration(p):
     '''
     MethodDeclaration : MethodHeader MethodBody
     '''
+    p[0] = MethodDeclaration(p[1]['name'], parameters=p[1]['parameters'],
+                                     extended_dims=p[1]['extended_dims'], type_parameters=p[1]['type_parameters'],
+                                     return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
 
-def p_MethodHeader(p):
+def p_MethodHeader1(p):
     '''
     MethodHeader : Modifiers Type MethodDeclarator
     | Type MethodDeclarator
-    | Modifiers VOID MethodDeclarator
+    '''
+    if len(p)==3:
+        p[0] = {'modifiers': p[1], 'type': p[2], 'name': p[3]}
+    else:
+        p[0] = {'type': p[2], 'name': p[2]}
+
+
+def p_MethodHeader2(p):
+    '''
+    MethodHeader : Modifiers VOID MethodDeclarator
     | VOID MethodDeclarator
     '''
+    if len(p)==3:
+        p[0] = {'modifiers': p[1], 'name': p[3]}
+    else:
+        p[0] = {'name': p[2]}
+
+
 
 def p_MethodDeclarator(p):
     '''
     MethodDeclarator : IDENTIFIER LPAREN RPAREN
     | IDENTIFIER LPAREN FormalParameterList RPAREN
     '''
+    if len(p)==4:
+        p[0]['name']=p[1]
+    else :
+        p[0]['name']=p[1]
+        p[0]['parameters']=p[3]
 
 def p_FormalParametersList(p):
     '''
@@ -282,6 +338,7 @@ def p_MethodBody(p):
     MethodBody : Block
     | SEMI
     '''
+    p[0] = p[1]
 
 def p_StaticInitializer(p):
     '''
@@ -731,18 +788,24 @@ def p_ArrayCreationExpression(p):
     | NEW ClassType DimExprs Dims
     | NEW ClassType DimExprs
     '''
-##leaving these 2 rn
+    p[0] = ArrayCreation(p[2], dimensions=p[3])
+
 def p_DimExprs(p):
     '''
     DimExprs : DimExpr
     | DimExprs DimExpr
     '''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1] + [p[2]]
 
 def p_DimExpr(p):
     '''
     DimExpr : LBRACK Expression RBRACK
     '''
-##
+    p[0] = p[2]
+
 
 def p_Dims(p):
     '''
