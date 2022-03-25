@@ -1,8 +1,8 @@
 // package TestCases;
 
 public class BinarySearch{
-  public statc int search(int[] arr, int num){
-    int lef=0, righ=arr.length - 1, mid=0;
+  public static int search(int[] arr, int num){
+    int lef=0, righ=5, mid=0;
     while(lef<=righ){
       mid=lef+(righ-lef)/2;
       if(arr[mid]==num)return mid;
@@ -15,7 +15,7 @@ public class BinarySearch{
 
 class Main{
 	public static int hello (){
-		BinarySearch a = BinarySearch();
+		BinarySearch a = new BinarySearch();
 		int[] arr = {1,2,3,4,5};
 		return a.search(arr, 3);
 	}	
