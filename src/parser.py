@@ -923,7 +923,7 @@ def p_CastExpression2(p):
     '''
     CastExpression :  LPAREN PrimitiveType RPAREN UnaryExpression
     '''
-    p[0] = Cast(Type(p[2], p[4]))
+    p[0] = Cast(Type(p[2]), p[4])
 
 def p_CastExpression3(p):
     '''
