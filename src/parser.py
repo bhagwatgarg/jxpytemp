@@ -958,7 +958,7 @@ def p_AdditiveExpression(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = Shift(p[2], p[1], p[3])
+        p[0] = Additive(p[2], p[1], p[3])
 
 
 def p_ShiftExpression(p):
