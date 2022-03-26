@@ -1,3 +1,5 @@
+import grp
+# from msilib.schema import Binary
 import sys
 import ply.lex as lex
 import ply.yacc as yacc
@@ -8,14 +10,312 @@ from new_sym_table import *
 
 stackbegin = []
 stackend = []
+import pydot
+import os
+
+graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
+node_num=0
+
+def generate_ast(p, parent=None):
+    global graph, node_num
+    curr_obj=p
+    curr_class=None
+    curr_val=str(node_num)
+    if p==None: return
+    if type(p)==type([]):
+        for i in p: generate_ast(i, parent)
+        return
+    try:
+        curr_class=curr_obj.__class__
+    except:
+        # it is a terminal
+        print(f"Terminal: {curr_obj}")
+        return
+
+    if curr_class==CompilationUnit:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        generate_ast(p.package_declaration, curr_val)
+        generate_ast(p.import_declarations, curr_val)
+        generate_ast(p.type_declarations, curr_val)
+
+    elif curr_class in [PackageDeclaration]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+        generate_ast(p.modifiers, curr_val)
+
+    elif curr_class in [ImportDeclaration]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+
+    elif curr_class in [ClassDeclaration]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+        generate_ast(p.body, curr_val)
+        generate_ast(p.modifiers, curr_val)
+        generate_ast(p.type_parameters, curr_val)
+        generate_ast(p.extends, curr_val)
+        generate_ast(p.implements, curr_val)
+
+    elif curr_class in [ClassInitializer]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.block, curr_val)
+        generate_ast(p.static, curr_val)
+
+    elif curr_class in [ConstructorDeclaration]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+        generate_ast(p.block, curr_val)
+        generate_ast(p.modifiers, curr_val)
+        generate_ast(p.type_parameters, curr_val)
+        generate_ast(p.parameters, curr_val)
+    
+    elif curr_class in [FieldDeclaration]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.type, curr_val)
+        generate_ast(p.variable_declarators, curr_val)
+        generate_ast(p.modifiers, curr_val)
+
+    elif curr_class in [MethodDeclaration]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+        generate_ast(p.modifiers, curr_val)
+        generate_ast(p.type_parameters, curr_val)
+        generate_ast(p.parameters, curr_val)
+        generate_ast(p.return_type, curr_val)
+        generate_ast(p.body, curr_val)
+        generate_ast(p.abstract, curr_val)
+        generate_ast(p.extended_dims, curr_val)
+        generate_ast(p.throws, curr_val)
+
+    elif curr_class in [FormalParameter]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.variable, curr_val)
+        generate_ast(p.type, curr_val)
+        generate_ast(p.vararg, curr_val)
+        generate_ast(p.modifiers, curr_val)
+
+    elif curr_class in [Variable]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+        generate_ast(p.dimensions, curr_val)
+
+    elif curr_class in [VariableDeclarator]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.variable, curr_val)
+        generate_ast(p.initializer, curr_val)
+    
+    elif curr_class in [Type]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.type_arguments, curr_val)
+        generate_ast(p.enclosed_in, curr_val)
+        generate_ast(p.dimensions, curr_val)
+
+    elif issubclass(curr_class, BinaryExpression):
+        print(curr_class.__name__)
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.operator, curr_val)
+        generate_ast(p.lhs, curr_val)
+        generate_ast(p.rhs, curr_val)
+
+    elif curr_class in [Conditional]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.predicate, curr_val)
+        generate_ast(p.if_true, curr_val)
+        generate_ast(p.if_false, curr_val)
+
+    elif curr_class in [Unary]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.sign, curr_val)
+        generate_ast(p.expression, curr_val)
+
+    elif curr_class in [Cast]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.target, curr_val)
+        generate_ast(p.expression, curr_val)
+
+    elif curr_class in [Block]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.statements, curr_val)
+
+
+    elif curr_class in [ArrayInitializer]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.elements, curr_val)
+
+    elif curr_class in [MethodInvocation]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+        generate_ast(p.arguments, curr_val)
+        generate_ast(p.type_arguments, curr_val)
+        generate_ast(p.target, curr_val)
+
+    elif curr_class in [IfThenElse]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.predicate, curr_val)
+        generate_ast(p.if_true, curr_val)
+        generate_ast(p.if_false, curr_val)
+
+    elif curr_class in [While]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.predicate, curr_val)
+        generate_ast(p.body, curr_val)
+    
+    elif curr_class in [For]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.init, curr_val)
+        generate_ast(p.predicate, curr_val)
+        generate_ast(p.update, curr_val)
+        generate_ast(p.body, curr_val)
+
+    elif curr_class in [Switch]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.expression, curr_val)
+        generate_ast(p.body, curr_val)
+    
+    elif curr_class in [SwitchCase]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.cases, curr_val)
+        generate_ast(p.body, curr_val)
+    
+    elif curr_class in [DoWhile]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.predicate, curr_val)
+        generate_ast(p.body, curr_val)
+
+    elif curr_class in [Continue, Break]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.label, curr_val)
+
+    elif curr_class in [Return]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.result, curr_val)
+
+    elif curr_class in [ConstructorInvocation]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+        generate_ast(p.target, curr_val)
+        generate_ast(p.type_arguments, curr_val)
+        generate_ast(p.arguments, curr_val)
+
+    elif curr_class in [FieldAccess]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+        generate_ast(p.target, curr_val)
+
+    elif curr_class in [ArrayAccess]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.index, curr_val)
+        generate_ast(p.target, curr_val)
+
+    elif curr_class in [ArrayCreation]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.type, curr_val)
+        generate_ast(p.dimensions, curr_val)
+        generate_ast(p.initializer, curr_val)
+
+    elif curr_class in [ExpressionStatement]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.expression, curr_val)
+
+
+
+
+
+
+
+    elif curr_class in [EmptyDeclaration, Expression]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+
+    elif curr_class in [Literal, Name]:
+        graph.add_node(pydot.Node((curr_val), label=curr_obj.value))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+    elif curr_class in [str]:
+        graph.add_node(pydot.Node((curr_val), label=curr_obj))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+
+#   CompilationUnit().
 
 def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
     
     # p[0].itr(p[0], None)
-    print(p[0])
-    ST.print_scope_table()
+    # print(p[0])
+    # ST.print_scope_table()
+    generate_ast(p[0])
+    prefix='.'
+    graph.write(prefix+'/graph.dot')
+    # os.system(f"sfdp -x -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
+    # os.system(f"sfdp -x -Goverlap=scale -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
+    os.system(f"dot -Tpng '{prefix}/graph.dot' -o '{prefix}/graph.png'")
+    os.system(f"xdg-open '{prefix}/graph.png'")
 
 def p_Literal(p):
     ''' Literal : DECIMAL_LITERAL 
@@ -155,6 +455,7 @@ def p_ImportDeclaration(p):
     ImportDeclaration : SingleTypeImportDeclaration
     | TypeImportOnDemandDeclaration
     '''
+    print(p[1])
     p[0] = p[1]
 
 def p_SingleTypeImportDeclaration(p):
