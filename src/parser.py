@@ -4,9 +4,7 @@ import ply.yacc as yacc
 from pytest import Instance
 import lexer
 from model import *
-from symbol_table import *
-
-ST = ScopeTable()
+from new_sym_table import *
 
 stackbegin = []
 stackend = []
@@ -17,6 +15,7 @@ def p_Goal(p):
     
     # p[0].itr(p[0], None)
     print(p[0])
+    ST.print_scope_table()
 
 def p_Literal(p):
     ''' Literal : DECIMAL_LITERAL 

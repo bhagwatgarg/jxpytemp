@@ -298,7 +298,7 @@ class FieldDeclaration(SourceElement):
         self.modifiers = modifiers
 
         for var in variable_declarators:
-            ST.insert_in_sym_table(idName=var.variable, idType=type, modifiers=modifiers)
+            ST.insert_in_sym_table(idName=var.variable.name, idType=type, modifiers=modifiers)
 
 class MethodDeclaration(ScopeField):
 
@@ -326,6 +326,7 @@ class MethodDeclaration(ScopeField):
         self.throws = throws
 
         ST.insert_in_sym_table(name, idType='function', is_func=True, args=parameters, modifiers=modifiers, return_type=return_type)
+        ST.end_scope()
 
 class FormalParameter(SourceElement):
 

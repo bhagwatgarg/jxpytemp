@@ -22,7 +22,7 @@ class ScopeTable:
         self.scope_and_table_map[self.curr_scope] = self.curr_sym_table
 
 
-    def create_new_table(self, new_label, TAC):
+    def create_new_table(self, new_label, TAC = None):
         '''
         Creates a new symbol table. If func_name is provided,
         that name is used for scope
@@ -31,12 +31,12 @@ class ScopeTable:
         new_sym_table = SymbolTable(new_label, self.curr_scope)
         self.curr_scope = new_label
         self.scope_and_table_map[self.curr_scope] = new_sym_table
-        TAC.emit('scope', 'begin', self.curr_scope, '', self)
+        # TAC.emit('scope', 'begin', self.curr_scope, '', self)
 
 
-    def end_scope(self, TAC):
+    def end_scope(self, TAC = None):
         # change the name for curr_cope only
-        TAC.emit('scope', 'end', self.curr_scope, '', self)
+        # TAC.emit('scope', 'end', self.curr_scope, '', self)
         self.curr_scope = self.scope_and_table_map[self.curr_scope].parent
 
 
