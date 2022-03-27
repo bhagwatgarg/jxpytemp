@@ -31,7 +31,8 @@ def generate_ast(p, parent=None, arr_name=None):
     if type(p)==type([]):
         if len(p)==0: return
         if arr_name==None:
-            raise Exception(f"ERROR! {curr_class.__name__} arrname not given")
+            arr_name="None"
+            # raise Exception(f"ERROR! {curr_class.__name__} arrname not given")
             print(f"ERROR! {curr_class.__name__} arrname not given")
         graph.add_node(pydot.Node((curr_val), label=arr_name))
         node_num+=1
@@ -212,9 +213,9 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        generate_ast(p.init, curr_val)
-        generate_ast(p.predicate, curr_val)
-        generate_ast(p.update, curr_val)
+        generate_ast(p.init, curr_val, arr_name='Init')
+        generate_ast(p.predicate, curr_val, arr_name='Predicate')
+        generate_ast(p.update, curr_val, arr_name='Update')
         generate_ast(p.body, curr_val, arr_name='Body')
 
     elif curr_class in [Switch]:
@@ -307,7 +308,8 @@ def generate_ast(p, parent=None, arr_name=None):
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
     else:
-        print(p)
+        pass
+        # print(p)
         # graph.add_node(pydot.Node((curr_val), label=str(curr_obj)))
         # node_num+=1
         # graph.add_edge(pydot.Edge(str(parent), (curr_val)))
