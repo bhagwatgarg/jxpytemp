@@ -394,6 +394,9 @@ class BinaryExpression(Expression):
 class Assignment(BinaryExpression):
     pass
 
+
+## BG start
+
 class Conditional(Expression):
 
     def __init__(self, predicate, if_true, if_false):
