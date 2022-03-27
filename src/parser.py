@@ -16,35 +16,42 @@ import os
 graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
 node_num=0
 
-def generate_ast(p, parent=None):
+def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
     curr_obj=p
     curr_class=None
     curr_val=str(node_num)
     if p==None: return
-    if type(p)==type([]):
-        for i in p: generate_ast(i, parent)
-        return
     try:
         curr_class=curr_obj.__class__
     except:
         # it is a terminal
-        print(f"Terminal: {curr_obj}")
+        # print(f"Terminal: {curr_obj}")
+        return
+    if type(p)==type([]):
+        if len(p)==0: return
+        if arr_name==None:
+            raise Exception(f"ERROR! {curr_class.__name__} arrname not given")
+            print(f"ERROR! {curr_class.__name__} arrname not given")
+        graph.add_node(pydot.Node((curr_val), label=arr_name))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        for i in p: generate_ast(i, curr_val)
         return
 
     if curr_class==CompilationUnit:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         generate_ast(p.package_declaration, curr_val)
-        generate_ast(p.import_declarations, curr_val)
-        generate_ast(p.type_declarations, curr_val)
+        generate_ast(p.import_declarations, curr_val, arr_name='ImportDeclarations')
+        generate_ast(p.type_declarations, curr_val, arr_name='TypeDeclarations')
 
     elif curr_class in [PackageDeclaration]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
-        generate_ast(p.modifiers, curr_val)
+        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
 
     elif curr_class in [ImportDeclaration]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -57,9 +64,9 @@ def generate_ast(p, parent=None):
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
-        generate_ast(p.body, curr_val)
-        generate_ast(p.modifiers, curr_val)
-        generate_ast(p.type_parameters, curr_val)
+        generate_ast(p.body, curr_val, arr_name='Body')
+        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
+        generate_ast(p.type_parameters, curr_val, arr_name='TypeParameters')
         generate_ast(p.extends, curr_val)
         generate_ast(p.implements, curr_val)
 
@@ -76,31 +83,31 @@ def generate_ast(p, parent=None):
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
         generate_ast(p.block, curr_val)
-        generate_ast(p.modifiers, curr_val)
-        generate_ast(p.type_parameters, curr_val)
-        generate_ast(p.parameters, curr_val)
+        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
+        generate_ast(p.type_parameters, curr_val, arr_name='TypeParameters')
+        generate_ast(p.parameters, curr_val, arr_name='Parameters')
     
     elif curr_class in [FieldDeclaration]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.type, curr_val)
-        generate_ast(p.variable_declarators, curr_val)
-        generate_ast(p.modifiers, curr_val)
+        generate_ast(p.variable_declarators, curr_val, arr_name='VariableDeclarators')
+        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
 
     elif curr_class in [MethodDeclaration]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
-        generate_ast(p.modifiers, curr_val)
-        generate_ast(p.type_parameters, curr_val)
-        generate_ast(p.parameters, curr_val)
+        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
+        generate_ast(p.type_parameters, curr_val, arr_name='TypeParameters')
+        generate_ast(p.parameters, curr_val, arr_name='Parameters')
         generate_ast(p.return_type, curr_val)
-        generate_ast(p.body, curr_val)
-        generate_ast(p.abstract, curr_val)
-        generate_ast(p.extended_dims, curr_val)
-        generate_ast(p.throws, curr_val)
+        generate_ast(p.body, curr_val, arr_name='Body')
+        # generate_ast(p.abstract, curr_val)
+        # generate_ast(p.extended_dims, curr_val)
+        # generate_ast(p.throws, curr_val)
 
     elif curr_class in [FormalParameter]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -109,7 +116,7 @@ def generate_ast(p, parent=None):
         generate_ast(p.variable, curr_val)
         generate_ast(p.type, curr_val)
         generate_ast(p.vararg, curr_val)
-        generate_ast(p.modifiers, curr_val)
+        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
 
     elif curr_class in [Variable]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -129,16 +136,16 @@ def generate_ast(p, parent=None):
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        generate_ast(p.type_arguments, curr_val)
+        generate_ast(p.type_arguments, curr_val, arr_name='TypeArguments')
         generate_ast(p.enclosed_in, curr_val)
         generate_ast(p.dimensions, curr_val)
 
     elif issubclass(curr_class, BinaryExpression):
-        print(curr_class.__name__)
-        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        # graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        graph.add_node(pydot.Node((curr_val), label=str(p.operator)))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        generate_ast(p.operator, curr_val)
+        # generate_ast(p.operator, curr_val)
         generate_ast(p.lhs, curr_val)
         generate_ast(p.rhs, curr_val)
 
@@ -168,22 +175,22 @@ def generate_ast(p, parent=None):
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        generate_ast(p.statements, curr_val)
+        generate_ast(p.statements, curr_val, arr_name='Statements')
 
 
     elif curr_class in [ArrayInitializer]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        generate_ast(p.elements, curr_val)
+        generate_ast(p.elements, curr_val, arr_name='Elements')
 
     elif curr_class in [MethodInvocation]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
-        generate_ast(p.arguments, curr_val)
-        generate_ast(p.type_arguments, curr_val)
+        generate_ast(p.arguments, curr_val, arr_name='Arguments')
+        generate_ast(p.type_arguments, curr_val, arr_name='TypeArguments')
         generate_ast(p.target, curr_val)
 
     elif curr_class in [IfThenElse]:
@@ -199,7 +206,7 @@ def generate_ast(p, parent=None):
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.predicate, curr_val)
-        generate_ast(p.body, curr_val)
+        generate_ast(p.body, curr_val, arr_name='Body')
     
     elif curr_class in [For]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -208,28 +215,28 @@ def generate_ast(p, parent=None):
         generate_ast(p.init, curr_val)
         generate_ast(p.predicate, curr_val)
         generate_ast(p.update, curr_val)
-        generate_ast(p.body, curr_val)
+        generate_ast(p.body, curr_val, arr_name='Body')
 
     elif curr_class in [Switch]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.expression, curr_val)
-        generate_ast(p.body, curr_val)
+        generate_ast(p.body, curr_val, arr_name='Body')
     
     elif curr_class in [SwitchCase]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        generate_ast(p.cases, curr_val)
-        generate_ast(p.body, curr_val)
+        generate_ast(p.cases, curr_val, arr_name='Cases')
+        generate_ast(p.body, curr_val, arr_name='Body')
     
     elif curr_class in [DoWhile]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.predicate, curr_val)
-        generate_ast(p.body, curr_val)
+        generate_ast(p.body, curr_val, arr_name='Body')
 
     elif curr_class in [Continue, Break]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -249,8 +256,8 @@ def generate_ast(p, parent=None):
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
         generate_ast(p.target, curr_val)
-        generate_ast(p.type_arguments, curr_val)
-        generate_ast(p.arguments, curr_val)
+        generate_ast(p.type_arguments, curr_val, arr_name='TypeArguments')
+        generate_ast(p.arguments, curr_val, arr_name='Arguments')
 
     elif curr_class in [FieldAccess]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -295,10 +302,15 @@ def generate_ast(p, parent=None):
         graph.add_node(pydot.Node((curr_val), label=curr_obj.value))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-    elif curr_class in [str]:
+    elif curr_class in [str, int, bool]:
         graph.add_node(pydot.Node((curr_val), label=curr_obj))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+    else:
+        print(p)
+        # graph.add_node(pydot.Node((curr_val), label=str(curr_obj)))
+        # node_num+=1
+        # graph.add_edge(pydot.Edge(str(parent), (curr_val)))
 
 #   CompilationUnit().
 
@@ -312,9 +324,10 @@ def p_Goal(p):
     generate_ast(p[0])
     prefix='.'
     graph.write(prefix+'/graph.dot')
+    os.system(f"dot -Tpng '{prefix}/graph.dot' -o '{prefix}/graph.png'")
     # os.system(f"sfdp -x -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
     # os.system(f"sfdp -x -Goverlap=scale -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
-    os.system(f"dot -Tpng '{prefix}/graph.dot' -o '{prefix}/graph.png'")
+    # graph.write_png(f'{prefix}graph.png')
     os.system(f"xdg-open '{prefix}/graph.png'")
 
 def p_Literal(p):
@@ -455,7 +468,7 @@ def p_ImportDeclaration(p):
     ImportDeclaration : SingleTypeImportDeclaration
     | TypeImportOnDemandDeclaration
     '''
-    print(p[1])
+    # print(p[1])
     p[0] = p[1]
 
 def p_SingleTypeImportDeclaration(p):
