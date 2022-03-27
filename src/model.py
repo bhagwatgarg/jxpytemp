@@ -6,6 +6,19 @@ ST=ScopeTable()
 # all_types=
 
 # Base node
+import lexer
+priorities={
+  'double':5,
+  'float':4,
+  'long':3,
+  'int':2,
+  'char':1,
+  'boolean':0
+}
+
+def highest_prior(lhs_type, rhs_type):
+  return lhs_type if priorities[lhs_type]>priorities[rhs_type] else rhs_type
+
 class SourceElement(object):
     '''
     A SourceElement is the base class for all elements that occur in a Java
@@ -317,13 +330,11 @@ class MethodDeclaration(ScopeField):
             parameters = []
         self.name = name
         self.modifiers = modifiers
-        self.type_parameters = type_parameters
         self.parameters = parameters
         self.return_type = return_type
         self.body = body
-        self.abstract = abstract
-        self.extended_dims = extended_dims
-        self.throws = throws
+
+        
 
         ST.insert_in_sym_table(name, idType='function', is_func=True, args=parameters, modifiers=modifiers, return_type=return_type)
         ST.end_scope()
@@ -363,6 +374,10 @@ class VariableDeclarator(SourceElement):
         self.variable = variable
         self.initializer = initializer
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> Update model.py
 class Type(SourceElement):
 
     def __init__(self, name, type_arguments=None, enclosed_in=None,
@@ -386,13 +401,19 @@ class BinaryExpression(Expression):
 
     def __init__(self, operator, lhs, rhs):
         super(BinaryExpression, self).__init__()
-        self._fields = ['operator', 'lhs', 'rhs']
+        self._fields = ['operator', 'lhs', 'rhs','type']
         self.operator = operator
         self.lhs = lhs
         self.rhs = rhs
 
 class Assignment(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        if lhs.type in ['int','double','long','float','char'] and rhs.type in ['int','double','long','float','char'] and operator in ['=','+=','-=','*=','/=','&=','|=','^=','%=','<<=','>>=','>>>='] :
+            self.type = highest_prior(lhs.type,rhs.type)
+        else :
+            print("Type mismatch in assignment.")
+
 
 
 ## BG start
@@ -407,45 +428,89 @@ class Conditional(Expression):
         self.if_false = if_false
 
 class ConditionalOr(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        self.type = 'bool'
 
 class ConditionalAnd(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        self.type = 'bool'
 
 class Or(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        if lhs.type in ['int','char','long','bool'] and rhs.type in ['int','char','long','bool']:
+            self.type = highest_prior(lhs.type,rhs.type)
+        else:
+            print("Error in Or operator operand types.")
 
 
 class Xor(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        if lhs.type in ['int','char','long','bool'] and rhs.type in ['int','char','long','bool']:
+            self.type = highest_prior(lhs.type,rhs.type)
+        else:
+            print("Error in Xor operator operand types.")
 
 
 class And(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        if lhs.type in ['int','char','long','bool'] and rhs.type in ['int','char','long','bool']:
+            self.type = highest_prior(lhs.type,rhs.type)
+        else:
+            print("Error in And operator operand types.")
 
 
 class Equality(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
+            self.type = 'bool'
+        else:
+            print("Error in == operator operand types.")
 
-
-class InstanceOf(BinaryExpression):
-    pass
+# Delete
+#class InstanceOf(BinaryExpression):
+#    pass
 
 
 class Relational(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
+            self.type = 'bool'
+        else:
+            print("Error in relational operator operand types.")
 
 
 class Shift(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        if lhs.type in ['int','char','long'] and rhs.type in ['int','char','long']:
+            self.type = highest_prior(lhs.type,rhs.type)
+        else:
+            print("Error in Shift operator operand types.")
 
 
 class Additive(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
+            self.type = highest_prior(lhs.type,rhs.type)
+        else:
+            print("Error in relational operator operand types.")
 
 
 class Multiplicative(BinaryExpression):
-    pass
+    def __init__(self, operator, lhs, rhs):
+        super().__init__(operator, lhs, rhs)
+        if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
+            self.type = highest_prior(lhs.type,rhs.type)
+        else:
+            print("Error in relational operator operand types.")
 
 
 class Unary(Expression):
@@ -537,6 +602,33 @@ class For(Statement, ScopeField):
         self.update = update
         self.body = body
 
+<<<<<<< HEAD
+=======
+class ForEach(Statement):
+
+    def __init__(self, type, variable, iterable, body, modifiers=None):
+        super(ForEach, self).__init__()
+        self._fields = ['type', 'variable', 'iterable', 'body', 'modifiers']
+        if modifiers is None:
+            modifiers = []
+        self.type = type
+        self.variable = variable
+        self.iterable = iterable
+        self.body = body
+        self.modifiers = modifiers
+
+# TODO: to delete
+# class Assert(Statement):
+
+#     def __init__(self, predicate, message=None):
+#         super(Assert, self).__init__()
+#         self._fields = ['predicate', 'message']
+#         self.predicate = predicate
+#         self.message = message
+
+# TODO: to add more checks for switch
+
+>>>>>>> Update model.py
 class Switch(Statement):
 
     def __init__(self, expression, switch_cases):
@@ -545,7 +637,14 @@ class Switch(Statement):
         self.expression = expression
         self.switch_cases = switch_cases
 
+<<<<<<< HEAD
 class SwitchCase(ScopeField):
+=======
+        if expression.type not in ['int','long','bool','char']:
+            print('Error in switch expression type')
+
+class SwitchCase(SourceElement):
+>>>>>>> Update model.py
 
     def __init__(self, cases, body=None):
         super(SwitchCase, self).__init__()
@@ -587,6 +686,79 @@ class Return(Statement):
         self._fields = ['result']
         self.result = result
 
+<<<<<<< HEAD
+=======
+
+# class Synchronized(Statement):
+
+#     def __init__(self, monitor, body):
+#         super(Synchronized, self).__init__()
+#         self._fields = ['monitor', 'body']
+#         self.monitor = monitor
+#         self.body = body
+
+
+# class Throw(Statement):
+
+#     def __init__(self, exception):
+#         super(Throw, self).__init__()
+#         self._fields = ['exception']
+#         self.exception = exception
+
+
+# class Try(Statement):
+
+#     def __init__(self, block, catches=None, _finally=None, resources=None):
+#         super(Try, self).__init__()
+#         self._fields = ['block', 'catches', '_finally', 'resources']
+#         if catches is None:
+#             catches = []
+#         if resources is None:
+#             resources = []
+#         self.block = block
+#         self.catches = catches
+#         self._finally = _finally
+#         self.resources = resources
+
+#     def accept(self, visitor):
+#         if visitor.visit_Try(self):
+#             for s in self.block:
+#                 s.accept(visitor)
+#         for c in self.catches:
+#             visitor.visit_Catch(c)
+#         if self._finally:
+#             self._finally.accept(visitor)
+
+
+# class Catch(SourceElement):
+
+#     def __init__(self, variable, modifiers=None, types=None, block=None):
+#         super(Catch, self).__init__()
+#         self._fields = ['variable', 'modifiers', 'types', 'block']
+#         if modifiers is None:
+#             modifiers = []
+#         if types is None:
+#             types = []
+#         self.variable = variable
+#         self.modifiers = modifiers
+#         self.types = types
+#         self.block = block
+
+
+# class Resource(SourceElement):
+
+#     def __init__(self, variable, type=None, modifiers=None, initializer=None):
+#         super(Resource, self).__init__()
+#         self._fields = ['variable', 'type', 'modifiers', 'initializer']
+#         if modifiers is None:
+#             modifiers = []
+#         self.variable = variable
+#         self.type = type
+#         self.modifiers = modifiers
+#         self.initializer = initializer
+
+
+>>>>>>> Update model.py
 class ConstructorInvocation(Statement):
     """An explicit invocations of a class's constructor.
 
@@ -632,7 +804,7 @@ class FieldAccess(Expression):
         self.name = name
         self.target = target
 
-
+# TODO array index out of range check
 class ArrayAccess(Expression):
 
     def __init__(self, index, target):
@@ -640,6 +812,9 @@ class ArrayAccess(Expression):
         self._fields = ['index', 'target']
         self.index = index
         self.target = target
+
+        if index.type not in ['int','long']:
+            print('Array index not of type int')
 
 
 class ArrayCreation(Expression):
