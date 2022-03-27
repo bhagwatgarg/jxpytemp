@@ -1,5 +1,3 @@
-widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
-
 # Base node
 class SourceElement(object):
     '''
@@ -10,18 +8,12 @@ class SourceElement(object):
     def __init__(self):
         super(SourceElement, self).__init__()
         self._fields = []
-        # self.width = 0
+        self.width = 0
         self.offset = 0
-        self.symb = {}
-        self.methods = {}
-        self.classes = {}
-        self.parent = None
-        self.scope = None
 
     def __repr__(self):
-        equals = ["{0}={1!r}".format(k, getattr(self, k))
-                  for k in self._fields]
-        # equals.append(f"width={self.width}")
+        equals = ("{0}={1!r}".format(k, getattr(self, k))
+                  for k in self._fields)
         args = ", ".join(equals)
         return "{0}({1})".format(self.__class__.__name__, args)
 
@@ -50,132 +42,12 @@ class SourceElement(object):
                         for elem in field:
                             if isinstance(elem, SourceElement):
                                 elem.accept(visitor)
+                                self.width += elem.width
                     elif isinstance(field, SourceElement):
                         field.accept(visitor)
+                        self.width += field.width
         getattr(visitor, 'leave_' + class_name)(self)
 
-    def itr(self, elem, parent, payload = None, given_name = None):
-        
-        elem.parent = parent
-        
-        if isinstance(payload, dict):
-            for key, value in payload.items():
-                elem.symb[key] = value
-            payload = None
-        
-        body = elem
-        if isinstance(elem, CompilationUnit):
-            body = elem.type_declarations
-            elem.scope = "compilation_unit"
-        elif isinstance(elem, ScopeField):
-            if 'name' in elem._fields:
-                elem.scope = elem.name
-            else:
-                elem.scope = elem.__class__.__name__
-            if 'body' in elem._fields:
-                body = elem.body
-            elif 'block' in elem._fields:
-                body = elem.block
-            elif isinstance(elem, IfThenElse):     
-                if payload == True:
-                    body = elem.if_true
-                else:
-                    body = elem.if_false
-                payload = None
-        
-        if given_name != None:
-            elem.scope = given_name
-        
-        if isinstance(body, Block):
-            body = body.statements
- 
-        for i in body:
-            if isinstance(i, MethodDeclaration) or isinstance(i, ConstructorDeclaration):
-                parameters = {}
-
-                for j in i.parameters:
-                    type = ""
-                    is_array = False
-                    dims = 0
-                    arr_size = []
-                    if isinstance(j.type, Type):
-                        if isinstance(j.type.name, Name):
-                            type = j.type.name.value
-                        else:
-                            type = j.type.name
-                        if j.type.dimensions > 0:
-                            is_array = True
-                            dims = j.type.dimensions
-                    else:
-                        type = j.type
-                    parameters[j.variable.name] = {'type': type, 'is_array': is_array, 'dimensions': dims, 'arr_size' : arr_size}
-                    
-                elem.methods[i.name] = {'n_parameters' : len(i.parameters),\
-                    'parameters' : parameters,\
-                    'return_type' : i.return_type}
-
-                payload = parameters
-                
-            elif isinstance(i, ClassDeclaration):
-                elem.classes[i.name] = {}
-
-            elif isinstance(i, VariableDeclaration) or isinstance(i, FieldDeclaration):
-                type = ""
-                is_array = False
-                dims = 0
-                arr_size = []
-                if isinstance(i.type, Type):
-                    if isinstance(i.type.name, Name):
-                        type = i.type.name.value
-                    else:
-                        type = i.type.name
-                    if i.type.dimensions > 0:
-                        is_array = True
-                        dims = i.type.dimensions
-                else:
-                    if isinstance(i.type, Name):
-                        type = i.type.value
-                    else:
-                        type = i.type
-                
-                for j in i.variable_declarators:
-                    if isinstance(j, VariableDeclarator):
-                        name = j.variable.name
-                        if dims == 0:
-                            dims = j.variable.dimensions
-                        if isinstance(j.initializer, ArrayCreation):
-                            is_array = True
-                            for k in j.initializer.dimensions:
-                                arr_size.append(k.value)
-
-                elem.symb[name] = {'type': type, 'is_array': is_array, 'dimensions': dims, 'arr_size' : arr_size}
-
-            if isinstance(i, ScopeField):
-                if isinstance(i, IfThenElse):
-                    elem.itr(i, elem.scope, True, "if")
-                    temp = i
-                    ct = 0
-                    while isinstance(temp.if_false, IfThenElse):
-                        elem.itr(temp.if_false, elem.scope, True, f"else_if_{ct+1}")
-                        ct += 1
-                        temp = temp.if_false
-                    if temp.if_false != None:
-                        elem.itr(temp.if_false, elem.scope, None, "else")
-                
-                # elif isinstance(i, For):
-
-                
-                else:
-                    elem.itr(i, elem.scope, payload)
-
-        print("Parent:", elem.parent)
-        print("Scope:", elem.scope)
-        print("Classes:", elem.classes)
-        print("Methods:", elem.methods)
-        print("Symbols:", elem.symb)
-
-class ScopeField(SourceElement):
-    pass
 
 class CompilationUnit(SourceElement):
 
@@ -213,7 +85,7 @@ class ImportDeclaration(SourceElement):
         self.on_demand = on_demand
 
 
-class ClassDeclaration(ScopeField):
+class ClassDeclaration(SourceElement):
 
     def __init__(self, name, body, modifiers=None, type_parameters=None,
                  extends=None, implements=None):
@@ -233,7 +105,7 @@ class ClassDeclaration(ScopeField):
         self.extends = extends
         self.implements = implements
 
-class ClassInitializer(ScopeField):
+class ClassInitializer(SourceElement):
 
     def __init__(self, block, static=False):
         super(ClassInitializer, self).__init__()
@@ -241,7 +113,7 @@ class ClassInitializer(ScopeField):
         self.block = block
         self.static = static
 
-class ConstructorDeclaration(ScopeField):
+class ConstructorDeclaration(SourceElement):
 
     def __init__(self, name, block, modifiers=None, type_parameters=None,
                  parameters=None, throws=None):
@@ -275,7 +147,7 @@ class FieldDeclaration(SourceElement):
         self.variable_declarators = variable_declarators
         self.modifiers = modifiers
 
-class MethodDeclaration(ScopeField):
+class MethodDeclaration(SourceElement):
 
     def __init__(self, name, modifiers=None, type_parameters=None,
                  parameters=None, return_type='void', body=None, abstract=False,
@@ -336,6 +208,136 @@ class VariableDeclarator(SourceElement):
         self.variable = variable
         self.initializer = initializer
 
+class Throws(SourceElement):
+
+    def __init__(self, types):
+        super(Throws, self).__init__()
+        self._fields = ['types']
+        self.types = types
+
+class InterfaceDeclaration(SourceElement):
+
+    def __init__(self, name, modifiers=None, extends=None, type_parameters=None,
+                 body=None):
+        super(InterfaceDeclaration, self).__init__()
+        self._fields = [
+            'name', 'modifiers', 'extends', 'type_parameters', 'body']
+        if modifiers is None:
+            modifiers = []
+        if extends is None:
+            extends = []
+        if type_parameters is None:
+            type_parameters = []
+        if body is None:
+            body = []
+        self.name = name
+        self.modifiers = modifiers
+        self.extends = extends
+        self.type_parameters = type_parameters
+        self.body = body
+
+class EnumDeclaration(SourceElement):
+
+    def __init__(self, name, implements=None, modifiers=None,
+                 type_parameters=None, body=None):
+        super(EnumDeclaration, self).__init__()
+        self._fields = [
+            'name', 'implements', 'modifiers', 'type_parameters', 'body']
+        if implements is None:
+            implements = []
+        if modifiers is None:
+            modifiers = []
+        if type_parameters is None:
+            type_parameters = []
+        if body is None:
+            body = []
+        self.name = name
+        self.implements = implements
+        self.modifiers = modifiers
+        self.type_parameters = type_parameters
+        self.body = body
+
+class EnumConstant(SourceElement):
+
+    def __init__(self, name, arguments=None, modifiers=None, body=None):
+        super(EnumConstant, self).__init__()
+        self._fields = ['name', 'arguments', 'modifiers', 'body']
+        if arguments is None:
+            arguments = []
+        if modifiers is None:
+            modifiers = []
+        if body is None:
+            body = []
+        self.name = name
+        self.arguments = arguments
+        self.modifiers = modifiers
+        self.body = body
+
+class AnnotationDeclaration(SourceElement):
+
+    def __init__(self, name, modifiers=None, type_parameters=None, extends=None,
+                 implements=None, body=None):
+        super(AnnotationDeclaration, self).__init__()
+        self._fields = [
+            'name', 'modifiers', 'type_parameters', 'extends', 'implements',
+            'body']
+        if modifiers is None:
+            modifiers = []
+        if type_parameters is None:
+            type_parameters = []
+        if implements is None:
+            implements = []
+        if body is None:
+            body = []
+        self.name = name
+        self.modifiers = modifiers
+        self.type_parameters = type_parameters
+        self.extends = extends
+        self.implements = implements
+        self.body = body
+
+class AnnotationMethodDeclaration(SourceElement):
+
+    def __init__(self, name, type, parameters=None, default=None,
+                 modifiers=None, type_parameters=None, extended_dims=0):
+        super(AnnotationMethodDeclaration, self).__init__()
+        self._fields = ['name', 'type', 'parameters', 'default',
+                        'modifiers', 'type_parameters', 'extended_dims']
+        if parameters is None:
+            parameters = []
+        if modifiers is None:
+            modifiers = []
+        if type_parameters is None:
+            type_parameters = []
+        self.name = name
+        self.type = type
+        self.parameters = parameters
+        self.default = default
+        self.modifiers = modifiers
+        self.type_parameters = type_parameters
+        self.extended_dims = extended_dims
+
+class Annotation(SourceElement):
+
+    def __init__(self, name, members=None, single_member=None):
+        super(Annotation, self).__init__()
+        self._fields = ['name', 'members', 'single_member']
+        if members is None:
+            members = []
+        self.name = name
+        self.members = members
+        self.single_member = single_member
+
+
+class AnnotationMember(SourceElement):
+
+    def __init__(self, name, value):
+        super(SourceElement, self).__init__()
+        self._fields = ['name', 'value']
+        self.name = name
+        self.value = value
+
+
 class Type(SourceElement):
 
     def __init__(self, name, type_arguments=None, enclosed_in=None,
@@ -348,6 +350,38 @@ class Type(SourceElement):
         self.type_arguments = type_arguments
         self.enclosed_in = enclosed_in
         self.dimensions = dimensions
+
+
+class Wildcard(SourceElement):
+
+    def __init__(self, bounds=None):
+        super(Wildcard, self).__init__()
+        self._fields = ['bounds']
+        if bounds is None:
+            bounds = []
+        self.bounds = bounds
+
+
+class WildcardBound(SourceElement):
+
+    def __init__(self, type, extends=False, _super=False):
+        super(WildcardBound, self).__init__()
+        self._fields = ['type', 'extends', '_super']
+        self.type = type
+        self.extends = extends
+        self._super = _super
+
+
+class TypeParameter(SourceElement):
+
+    def __init__(self, name, extends=None):
+        super(TypeParameter, self).__init__()
+        self._fields = ['name', 'extends']
+        if extends is None:
+            extends = []
+        self.name = name
+        self.extends = extends
+
 
 class Expression(SourceElement):
 
@@ -482,7 +516,7 @@ class MethodInvocation(Expression):
         self.type_arguments = type_arguments
         self.target = target
 
-class IfThenElse(Statement, ScopeField):
+class IfThenElse(Statement):
 
     def __init__(self, predicate, if_true=None, if_false=None):
         super(IfThenElse, self).__init__()
@@ -491,7 +525,7 @@ class IfThenElse(Statement, ScopeField):
         self.if_true = if_true
         self.if_false = if_false
 
-class While(Statement, ScopeField):
+class While(Statement):
 
     def __init__(self, predicate, body=None):
         super(While, self).__init__()
@@ -499,7 +533,7 @@ class While(Statement, ScopeField):
         self.predicate = predicate
         self.body = body
 
-class For(Statement, ScopeField):
+class For(Statement):
 
     def __init__(self, init, predicate, update, body):
         super(For, self).__init__()
@@ -509,6 +543,29 @@ class For(Statement, ScopeField):
         self.update = update
         self.body = body
 
+class ForEach(Statement):
+
+    def __init__(self, type, variable, iterable, body, modifiers=None):
+        super(ForEach, self).__init__()
+        self._fields = ['type', 'variable', 'iterable', 'body', 'modifiers']
+        if modifiers is None:
+            modifiers = []
+        self.type = type
+        self.variable = variable
+        self.iterable = iterable
+        self.body = body
+        self.modifiers = modifiers
+
+
+class Assert(Statement):
+
+    def __init__(self, predicate, message=None):
+        super(Assert, self).__init__()
+        self._fields = ['predicate', 'message']
+        self.predicate = predicate
+        self.message = message
+
+
 class Switch(Statement):
 
     def __init__(self, expression, switch_cases):
@@ -517,7 +574,7 @@ class Switch(Statement):
         self.expression = expression
         self.switch_cases = switch_cases
 
-class SwitchCase(ScopeField):
+class SwitchCase(SourceElement):
 
     def __init__(self, cases, body=None):
         super(SwitchCase, self).__init__()
@@ -527,7 +584,7 @@ class SwitchCase(ScopeField):
         self.cases = cases
         self.body = body
 
-class DoWhile(Statement, ScopeField):
+class DoWhile(Statement):
 
     def __init__(self, predicate, body=None):
         super(DoWhile, self).__init__()
@@ -559,6 +616,76 @@ class Return(Statement):
         self._fields = ['result']
         self.result = result
 
+
+class Synchronized(Statement):
+
+    def __init__(self, monitor, body):
+        super(Synchronized, self).__init__()
+        self._fields = ['monitor', 'body']
+        self.monitor = monitor
+        self.body = body
+
+
+class Throw(Statement):
+
+    def __init__(self, exception):
+        super(Throw, self).__init__()
+        self._fields = ['exception']
+        self.exception = exception
+
+
+class Try(Statement):
+
+    def __init__(self, block, catches=None, _finally=None, resources=None):
+        super(Try, self).__init__()
+        self._fields = ['block', 'catches', '_finally', 'resources']
+        if catches is None:
+            catches = []
+        if resources is None:
+            resources = []
+        self.block = block
+        self.catches = catches
+        self._finally = _finally
+        self.resources = resources
+
+    def accept(self, visitor):
+        if visitor.visit_Try(self):
+            for s in self.block:
+                s.accept(visitor)
+        for c in self.catches:
+            visitor.visit_Catch(c)
+        if self._finally:
+            self._finally.accept(visitor)
+
+
+class Catch(SourceElement):
+
+    def __init__(self, variable, modifiers=None, types=None, block=None):
+        super(Catch, self).__init__()
+        self._fields = ['variable', 'modifiers', 'types', 'block']
+        if modifiers is None:
+            modifiers = []
+        if types is None:
+            types = []
+        self.variable = variable
+        self.modifiers = modifiers
+        self.types = types
+        self.block = block
+
+
+class Resource(SourceElement):
+
+    def __init__(self, variable, type=None, modifiers=None, initializer=None):
+        super(Resource, self).__init__()
+        self._fields = ['variable', 'type', 'modifiers', 'initializer']
+        if modifiers is None:
+            modifiers = []
+        self.variable = variable
+        self.type = type
+        self.modifiers = modifiers
+        self.initializer = initializer
+
+
 class ConstructorInvocation(Statement):
     """An explicit invocations of a class's constructor.
 
@@ -576,6 +703,7 @@ class ConstructorInvocation(Statement):
         self.target = target
         self.type_arguments = type_arguments
         self.arguments = arguments
+
 
 class InstanceCreation(Expression):
 
@@ -595,6 +723,7 @@ class InstanceCreation(Expression):
         self.arguments = arguments
         self.body = body
         self.enclosed_in = enclosed_in
+
 
 class FieldAccess(Expression):
 
@@ -632,6 +761,14 @@ class Literal(SourceElement):
         super(Literal, self).__init__()
         self._fields = ['value']
         self.value = value
+
+
+class ClassLiteral(SourceElement):
+
+    def __init__(self, type):
+        super(ClassLiteral, self).__init__()
+        self._fields = ['type']
+        self.type = type
 
 
 class Name(SourceElement):

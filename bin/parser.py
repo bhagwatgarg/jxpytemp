@@ -4,14 +4,10 @@ import ply.yacc as yacc
 from pytest import Instance
 import lexer
 from model import *
-from symbol_table import *
 
 def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
-    
-    p[0].itr(p[0], None)
-    print(p[0])
 
 def p_Literal(p):
     ''' Literal : DECIMAL_LITERAL 
@@ -282,7 +278,7 @@ def p_MethodDeclaration(p):
     '''
     MethodDeclaration : MethodHeader MethodBody
     '''
-    p[0] = MethodDeclaration(p[1]['name'], parameters = p[1]['parameters'], return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
+    p[0] = MethodDeclaration(p[1]['name'], return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
 
     # TODO
     # p[0] = MethodDeclaration(p[1]['name'], parameters=p[1]['parameters'],
@@ -294,10 +290,10 @@ def p_MethodHeader(p):
     MethodHeader : Modifiers Type MethodDeclarator
     | Type MethodDeclarator
     '''
-    if len(p)==4:
-        p[0] = {'modifiers': p[1], 'type': p[2], 'name': p[3]['name'], 'parameters': p[3]['parameters']}
+    if len(p)==3:
+        p[0] = {'modifiers': p[1], 'type': p[2], 'name': p[3]}
     else:
-        p[0] = {'type': p[2], 'name': p[2]['name'], 'modifiers':[], 'parameters': p[2]['parameters']}
+        p[0] = {'type': p[2], 'name': p[2], 'modifiers':[]}
 
 
 def p_MethodHeader2(p):
@@ -305,10 +301,10 @@ def p_MethodHeader2(p):
     MethodHeader : Modifiers VOID MethodDeclarator
     | VOID MethodDeclarator
     '''
-    if len(p) == 4:
-        p[0] = {'modifiers': p[1], 'name': p[3]['name'], 'type':'void', 'parameters': p[3]['parameters']}
+    if len(p)==3:
+        p[0] = {'modifiers': p[1], 'name': p[3], 'type':'void'}
     else:
-        p[0] = {'name': p[2]['name'], 'type':'void', 'modifiers':[], 'parameters': p[2]['parameters']}
+        p[0] = {'name': p[2], 'type':'void', 'modifiers':[]}
 
 
 
@@ -320,7 +316,6 @@ def p_MethodDeclarator(p):
     p[0]={}
     if len(p)==4:
         p[0]['name']=p[1]
-        p[0]['parameters'] = []
     else :
         p[0]['name']=p[1]
         p[0]['parameters']=p[3]

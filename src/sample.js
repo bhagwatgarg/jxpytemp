@@ -1,0 +1,106 @@
+CompilationUnit(
+    package_declaration=None,
+    import_declarations=[
+        ImportDeclaration(
+            name=Name(value="java.lang.String"), static=False, on_demand=False
+        ),
+        ImportDeclaration(name=Name(value="TestCases"), static=False, on_demand=True),
+    ],
+    type_declarations=[
+        ClassDeclaration(
+            name="Main",
+            body=[
+                MethodDeclaration(
+                    name="void",
+                    modifiers=[],
+                    type_parameters=[],
+                    parameters=[],
+                    return_type="void",
+                    body=Block(
+                        statements=[
+                            VariableDeclaration(
+                                type="int",
+                                variable_declarators=[
+                                    VariableDeclarator(
+                                        variable=Variable(name="a", dimensions=0),
+                                        initializer=Literal(value="5"),
+                                    )
+                                ],
+                                modifiers=[],
+                            ),
+                            VariableDeclaration(
+                                type="int",
+                                variable_declarators=[
+                                    VariableDeclarator(
+                                        variable=Variable(name="keys", dimensions=0),
+                                        initializer=ArrayCreation(
+                                            type="int",
+                                            dimensions=[
+                                                Literal(value="5"),
+                                                Literal(value="6"),
+                                            ],
+                                            initializer=None,
+                                        ),
+                                    )
+                                ],
+                                modifiers=[],
+                            ),
+                            VariableDeclaration(
+                                type=Type(
+                                    name="int",
+                                    type_arguments=[],
+                                    enclosed_in=None,
+                                    dimensions=2,
+                                ),
+                                variable_declarators=[
+                                    VariableDeclarator(
+                                        variable=Variable(name="adj", dimensions=0),
+                                        initializer=ArrayInitializer(
+                                            elements=[
+                                                ArrayInitializer(
+                                                    elements=[
+                                                        Literal(value="1"),
+                                                        Literal(value="4"),
+                                                        Literal(value="2"),
+                                                    ]
+                                                ),
+                                                ArrayInitializer(elements=[]),
+                                                ArrayInitializer(
+                                                    elements=[Literal(value="2")]
+                                                ),
+                                                ArrayInitializer(
+                                                    elements=[
+                                                        Literal(value="0"),
+                                                        Literal(value="3"),
+                                                    ]
+                                                ),
+                                                ArrayInitializer(
+                                                    elements=[
+                                                        Literal(value="0"),
+                                                        Literal(value="1"),
+                                                        Literal(value="2"),
+                                                        Literal(value="3"),
+                                                    ]
+                                                ),
+                                            ]
+                                        ),
+                                    )
+                                ],
+                                modifiers=[],
+                            ),
+                        ]
+                    ),
+                    abstract=False,
+                    extended_dims=0,
+                    throws=None,
+                )
+            ],
+            modifiers=[],
+            type_parameters=[],
+            extends=None,
+            implements=[],
+        )
+    ],
+),
+
+CompilationUnit(package_declaration = None, import_declarations = [ImportDeclaration(name = Name(value = 'java.lang.String'), static = False, on_demand = False), ImportDeclaration(name = Name(value = 'TestCases'), static = False, on_demand = True)], type_declarations = [ClassDeclaration(name = 'Main', body = [FieldDeclaration(type = 'int', variable_declarators = [VariableDeclarator(variable = Variable(name = 'a', dimensions = 0), initializer = Literal(value = '4'))], modifiers = []), MethodDeclaration(name = 'main', modifiers = ['public', 'static'], type_parameters = [], parameters = [], return_type = 'void', body = Block(statements = [VariableDeclaration(type = 'int', variable_declarators = [VariableDeclarator(variable = Variable(name = 'b', dimensions = 0), initializer = Literal(value = '5'))], modifiers = []), VariableDeclaration(type = Type(name = 'int', type_arguments = [], enclosed_in = None, dimensions = 2), variable_declarators = [VariableDeclarator(variable = Variable(name = 'keys', dimensions = 0), initializer = ArrayCreation(type = 'int', dimensions = [Literal(value = '5'), Literal(value = '6')], initializer = None))], modifiers = []), VariableDeclaration(type = Type(name = 'int', type_arguments = [], enclosed_in = None, dimensions = 2), variable_declarators = [VariableDeclarator(variable = Variable(name = 'adj', dimensions = 0), initializer = ArrayInitializer(elements = [ArrayInitializer(elements = [Literal(value = '1'), Literal(value = '4'), Literal(value = '2')]), ArrayInitializer(elements = []), ArrayInitializer(elements = [Literal(value = '2')]), ArrayInitializer(elements = [Literal(value = '0'), Literal(value = '3')]), ArrayInitializer(elements = [Literal(value = '0'), Literal(value = '1'), Literal(value = '2'), Literal(value = '3')])]))], modifiers = [])]), abstract = False, extended_dims = 0, throws = None)], modifiers = [], type_parameters = [], extends=None, implements = [])])
