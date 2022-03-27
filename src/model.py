@@ -1,5 +1,5 @@
 widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
-
+count = -1
 # Base node
 class SourceElement(object):
     '''
@@ -10,7 +10,7 @@ class SourceElement(object):
     def __init__(self):
         super(SourceElement, self).__init__()
         self._fields = []
-        # self.width = 0
+        self.width = 0
         self.offset = 0
         self.symb = {}
         self.methods = {}
@@ -56,6 +56,8 @@ class SourceElement(object):
 
     def itr(self, elem, parent, payload = None, given_name = None):
         
+        global count
+        count += 1
         elem.parent = parent
         
         if isinstance(payload, dict):
@@ -72,22 +74,36 @@ class SourceElement(object):
                 elem.scope = elem.name
             else:
                 elem.scope = elem.__class__.__name__
-            if 'body' in elem._fields:
-                body = elem.body
-            elif 'block' in elem._fields:
-                body = elem.block
-            elif isinstance(elem, IfThenElse):     
+
+            if isinstance(elem, IfThenElse):     
                 if payload == True:
                     body = elem.if_true
                 else:
                     body = elem.if_false
                 payload = None
+            elif 'body' in elem._fields:
+                body = elem.body
+            elif 'block' in elem._fields:
+                body = elem.block
+        elif isinstance(elem, Switch):
+            body = elem.switch_cases
+            for i in body:
+                elem.itr(i, elem.parent, None, given_name=f"switch_case_{i.cases[0].value}")
+            return
         
         if given_name != None:
             elem.scope = given_name
         
+        elem.scope += "_" + str(count)
+
         if isinstance(body, Block):
             body = body.statements
+
+        if isinstance(elem, For):
+            body = [elem.init] + body
+
+        if not isinstance(body, list):
+            return
  
         for i in body:
             if isinstance(i, MethodDeclaration) or isinstance(i, ConstructorDeclaration):
@@ -110,9 +126,7 @@ class SourceElement(object):
                         type = j.type
                     parameters[j.variable.name] = {'type': type, 'is_array': is_array, 'dimensions': dims, 'arr_size' : arr_size}
                     
-                elem.methods[i.name] = {'n_parameters' : len(i.parameters),\
-                    'parameters' : parameters,\
-                    'return_type' : i.return_type}
+                elem.methods[i.name] = {'n_parameters' : len(i.parameters), 'parameters' : parameters, 'return_type' : i.return_type}
 
                 payload = parameters
                 
@@ -148,27 +162,28 @@ class SourceElement(object):
                             for k in j.initializer.dimensions:
                                 arr_size.append(k.value)
 
-                elem.symb[name] = {'type': type, 'is_array': is_array, 'dimensions': dims, 'arr_size' : arr_size}
+                    elem.symb[name] = {'type': type, 'is_array': is_array, 'dimensions': dims, 'arr_size' : arr_size}
 
             if isinstance(i, ScopeField):
                 if isinstance(i, IfThenElse):
-                    elem.itr(i, elem.scope, True, "if")
+                    elem.itr(i, elem, True, "if")
                     temp = i
                     ct = 0
                     while isinstance(temp.if_false, IfThenElse):
-                        elem.itr(temp.if_false, elem.scope, True, f"else_if_{ct+1}")
+                        elem.itr(temp.if_false, elem, True, f"else_if_{ct+1}")
                         ct += 1
                         temp = temp.if_false
                     if temp.if_false != None:
-                        elem.itr(temp.if_false, elem.scope, None, "else")
-                
-                # elif isinstance(i, For):
-
+                        elem.itr(temp.if_false, elem, None, "else")
                 
                 else:
-                    elem.itr(i, elem.scope, payload)
+                    elem.itr(i, elem, payload)
+            elif isinstance(i, Switch):
+                elem.itr(i, elem)
 
-        print("Parent:", elem.parent)
+        if elem.scope != "compilation_unit_0":
+            print("Parent:", elem.parent.scope)
+        else: print("Parent:", elem.parent)
         print("Scope:", elem.scope)
         print("Classes:", elem.classes)
         print("Methods:", elem.methods)
@@ -327,7 +342,6 @@ class Variable(SourceElement):
         self.name = name
         self.dimensions = dimensions
 
-
 class VariableDeclarator(SourceElement):
 
     def __init__(self, variable, initializer=None):
@@ -366,7 +380,6 @@ class BinaryExpression(Expression):
 
 class Assignment(BinaryExpression):
     pass
-
 
 class Conditional(Expression):
 
@@ -426,7 +439,6 @@ class Unary(Expression):
         self._fields = ['sign', 'expression']
         self.sign = sign
         self.expression = expression
-
 
 class Cast(Expression):
 

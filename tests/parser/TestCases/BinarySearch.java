@@ -2,7 +2,7 @@
 
 public class BinarySearch{
   public static int search(int[] arr, int num){
-    int a[5];// = {1,2,3,4,5};
+    int a[] = new int[5];// = {1,2,3,4,5};
     int lef=0, righ=5, mid=0;
     while(lef<=righ){
       mid=lef+(righ-lef)/2;

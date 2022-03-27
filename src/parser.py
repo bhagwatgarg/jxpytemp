@@ -6,11 +6,16 @@ import lexer
 from model import *
 from symbol_table import *
 
+ST = ScopeTable()
+
+stackbegin = []
+stackend = []
+
 def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
     
-    p[0].itr(p[0], None)
+    # p[0].itr(p[0], None)
     print(p[0])
 
 def p_Literal(p):
@@ -283,7 +288,7 @@ def p_MethodDeclaration(p):
     MethodDeclaration : MethodHeader MethodBody
     '''
     p[0] = MethodDeclaration(p[1]['name'], parameters = p[1]['parameters'], return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
-
+    # TODO can have ST stuff in model for this
     # TODO
     # p[0] = MethodDeclaration(p[1]['name'], parameters=p[1]['parameters'],
     #                                  extended_dims=p[1]['extended_dims'], type_parameters=p[1]['type_parameters'],
@@ -314,16 +319,26 @@ def p_MethodHeader2(p):
 
 def p_MethodDeclarator(p):
     '''
-    MethodDeclarator : IDENTIFIER LPAREN RPAREN
-    | IDENTIFIER LPAREN FormalParameterList RPAREN
+    MethodDeclarator : IDENTIFIER LPAREN decl_mark RPAREN
+    | IDENTIFIER LPAREN decl_mark FormalParameterList RPAREN
     '''
     p[0]={}
-    if len(p)==4:
+    if len(p)==5:
         p[0]['name']=p[1]
         p[0]['parameters'] = []
     else :
         p[0]['name']=p[1]
-        p[0]['parameters']=p[3]
+        p[0]['parameters']=p[4]
+
+    # TODO have to insert parameter list here
+
+def p_decl_mark(p):
+    '''
+    decl_mark :
+    '''
+    ST.create_new_table(p[-2])
+    stackbegin.append(p[-2])
+    stackend.append(p[-2])
 
 def p_FormalParametersList(p):
     '''
@@ -544,21 +559,21 @@ def p_StatementExpression(p):
 
 def p_IfThenStatement(p):
     '''
-    IfThenStatement : IF LPAREN Expression RPAREN Statement
+    IfThenStatement : IF LPAREN Expression RPAREN begin_scope Statement end_scope
     '''
-    p[0]=IfThenElse(predicate=p[3], if_true=p[5])
+    p[0]=IfThenElse(predicate=p[3], if_true=p[6])
 
 def p_IfThenElseStatement(p):
     '''
-    IfThenElseStatement : IF LPAREN Expression RPAREN StatementNoShortIf ELSE Statement
+    IfThenElseStatement : IF LPAREN Expression RPAREN begin_scope StatementNoShortIf end_scope ELSE begin_scope Statement end_scope
     '''
-    p[0]=IfThenElse(predicate=p[3], if_true=p[5], if_false=p[7])
+    p[0]=IfThenElse(predicate=p[3], if_true=p[6], if_false=p[10])
 
 def p_IfThenElseStatementNoShortIf(p):
     '''
-    IfThenElseStatementNoShortIf : IF LPAREN Expression RPAREN StatementNoShortIf ELSE StatementNoShortIf
+    IfThenElseStatementNoShortIf : IF LPAREN Expression RPAREN begin_scope StatementNoShortIf end_scope ELSE begin_scope StatementNoShortIf end_scope
     '''
-    p[0]=IfThenElse(predicate=p[3], if_true=p[5], if_false=p[7])
+    p[0]=IfThenElse(predicate=p[3], if_true=p[6], if_false=p[10])
 
 def p_SwitchStatement(p):
     '''
@@ -569,18 +584,18 @@ def p_SwitchStatement(p):
 def p_SwitchBlock(p):
     '''
     SwitchBlock : LBRACE RBRACE
-    | LBRACE SwitchBlockStatementGroups SwitchLabels RBRACE
+    | LBRACE SwitchBlockStatementGroups begin_scope SwitchLabels end_scope RBRACE
     | LBRACE SwitchBlockStatementGroups RBRACE
     '''
     if len(p)==3: p[0]=[]
     elif len(p)==4: p[0]=p[2]
-    else: p[0]=p[2]+[SwitchCase(p[3])]
+    else: p[0]=p[2]+[SwitchCase(p[4])]
 
 def p_SwitchBlock2(p):
     '''
-    SwitchBlock : LBRACE SwitchLabels RBRACE
+    SwitchBlock : LBRACE begin_scope SwitchLabels end_scope RBRACE
     '''
-    p[0]=[SwitchCase(p[2])]
+    p[0]=[SwitchCase(p[3])]
 
 
 def p_SwitchBlockStatementGroups(p):
@@ -593,9 +608,9 @@ def p_SwitchBlockStatementGroups(p):
 
 def p_SwitchBlockStatementGroup(p):
     '''
-    SwitchBlockStatementGroup : SwitchLabels BlockStatements
+    SwitchBlockStatementGroup : begin_scope SwitchLabels BlockStatements end_scope
     '''
-    p[0]=SwitchCase(cases=p[1], body=p[2])
+    p[0]=SwitchCase(cases=p[2], body=p[3])
 
 def p_SwitchLabels(p):
     '''
@@ -615,92 +630,98 @@ def p_SwitchLabel(p):
 
 def p_WhileStatement(p):
     '''
-    WhileStatement : WHILE LPAREN Expression RPAREN Statement
+    WhileStatement : WHILE begin_scope LPAREN Expression RPAREN Statement end_scope
     '''
-    p[0]=While(predicate=p[3], body=p[5])
+    p[0]=While(predicate=p[4], body=p[6])
 
 def p_WhileStatementNoShortIf(p):
     '''
-    WhileStatementNoShortIf : WHILE LPAREN Expression RPAREN StatementNoShortIf
+    WhileStatementNoShortIf : WHILE begin_scope LPAREN Expression RPAREN StatementNoShortIf end_scope
     '''
-    p[0]=While(predicate=p[3], body=p[5])
+    p[0]=While(predicate=p[4], body=p[6])
 
 def p_DoStatement(p):
     '''
-    DoStatement : DO Statement WHILE LPAREN Expression RPAREN SEMI
+    DoStatement : DO begin_scope Statement WHILE LPAREN Expression RPAREN end_scope SEMI
     '''
     p[0]=DoWhile(predicate=p[5], body=p[2])
 
 def p_ForStatement(p):
     '''
-    ForStatement : FOR LPAREN ForInit SEMI Expression SEMI ForUpdate RPAREN Statement
-    | FOR LPAREN SEMI Expression SEMI ForUpdate RPAREN Statement
-    | FOR LPAREN ForInit SEMI SEMI ForUpdate RPAREN Statement
-    | FOR LPAREN ForInit SEMI Expression SEMI RPAREN Statement
-    | FOR LPAREN ForInit SEMI SEMI RPAREN Statement
-    | FOR LPAREN SEMI Expression SEMI RPAREN Statement
-    | FOR LPAREN SEMI SEMI ForUpdate RPAREN Statement
-    | FOR LPAREN SEMI SEMI RPAREN Statement
+    ForStatement : FOR begin_scope LPAREN ForInit SEMI Expression SEMI ForUpdate RPAREN Statement end_scope
+    | FOR begin_scope LPAREN SEMI Expression SEMI ForUpdate RPAREN Statement end_scope
+    | FOR begin_scope LPAREN ForInit SEMI SEMI ForUpdate RPAREN Statement end_scope
+    | FOR begin_scope LPAREN ForInit SEMI Expression SEMI RPAREN Statement end_scope
+    | FOR begin_scope LPAREN ForInit SEMI SEMI RPAREN Statement end_scope
+    | FOR begin_scope LPAREN SEMI Expression SEMI RPAREN Statement end_scope
+    | FOR begin_scope LPAREN SEMI SEMI ForUpdate RPAREN Statement end_scope
+    | FOR begin_scope LPAREN SEMI SEMI RPAREN Statement end_scope
     '''
-    init, predicate, update, body=None, None, None, p[-1]
-    if len(p)==10:
-        init=p[3]
-        predicate=p[5]
-        update=p[7]
-    elif len(p)==9:
+    init, predicate, update, body=None, None, None, None
+    if len(p)==12:
+        init=p[4]
+        predicate=p[6]
+        update=p[8]
+        body=p[10]
+    elif len(p)==11:
+        body=p[9]
         # TODO: Check if p[i]==';' or SEMI
-        if p[3]==';':
-            predicate=p[4]
-            update=p[6]
-        elif p[5]==';':
-            init=p[3]
-            update=p[6]
-        else:
-            init=p[3]
+        if p[4]==';':
             predicate=p[5]
-    elif len(p)==8:
-        if p[4]==';' and p[5]==';':
-            init=p[3]
-        elif p[3]==';' and p[5]==';':
-            predicate=p[4]
+            update=p[7]
+        elif p[6]==';':
+            init=p[4]
+            update=p[7]
         else:
-            update=p[5]
+            init=p[4]
+            predicate=p[6]
+    elif len(p)==10:
+        body=p[8]
+        if p[5]==';' and p[6]==';':
+            init=p[4]
+        elif p[4]==';' and p[6]==';':
+            predicate=p[5]
+        else:
+            update=p[6]
     p[0]=For(init=init, predicate=predicate, update=update, body=body)
 
 def p_ForStatementNoShortIf(p):
     '''
-    ForStatementNoShortIf : FOR LPAREN ForInit SEMI Expression SEMI ForUpdate RPAREN StatementNoShortIf
-    | FOR LPAREN SEMI Expression SEMI ForUpdate RPAREN StatementNoShortIf
-    | FOR LPAREN ForInit SEMI SEMI ForUpdate RPAREN StatementNoShortIf
-    | FOR LPAREN ForInit SEMI Expression SEMI RPAREN StatementNoShortIf
-    | FOR LPAREN ForInit SEMI SEMI RPAREN StatementNoShortIf
-    | FOR LPAREN SEMI Expression SEMI RPAREN StatementNoShortIf
-    | FOR LPAREN SEMI SEMI ForUpdate RPAREN StatementNoShortIf
-    | FOR LPAREN SEMI SEMI RPAREN StatementNoShortIf
+    ForStatementNoShortIf : FOR begin_scope LPAREN ForInit SEMI Expression SEMI ForUpdate RPAREN StatementNoShortIf end_scope
+    | FOR begin_scope LPAREN SEMI Expression SEMI ForUpdate RPAREN StatementNoShortIf end_scope
+    | FOR begin_scope LPAREN ForInit SEMI SEMI ForUpdate RPAREN StatementNoShortIf end_scope
+    | FOR begin_scope LPAREN ForInit SEMI Expression SEMI RPAREN StatementNoShortIf end_scope
+    | FOR begin_scope LPAREN ForInit SEMI SEMI RPAREN StatementNoShortIf end_scope
+    | FOR begin_scope LPAREN SEMI Expression SEMI RPAREN StatementNoShortIf end_scope
+    | FOR begin_scope LPAREN SEMI SEMI ForUpdate RPAREN StatementNoShortIf end_scope
+    | FOR begin_scope LPAREN SEMI SEMI RPAREN StatementNoShortIf end_scope
     '''
-    init, predicate, update, body=None, None, None, p[-1]
-    if len(p)==10:
-        init=p[3]
-        predicate=p[5]
-        update=p[7]
-    elif len(p)==9:
+    init, predicate, update, body=None, None, None, None
+    if len(p)==12:
+        init=p[4]
+        predicate=p[6]
+        update=p[8]
+        body=p[10]
+    elif len(p)==11:
+        body=p[9]
         # TODO: Check if p[i]==';' or SEMI
-        if p[3]==';':
-            predicate=p[4]
-            update=p[6]
-        elif p[5]==';':
-            init=p[3]
-            update=p[6]
-        else:
-            init=p[3]
+        if p[4]==';':
             predicate=p[5]
-    elif len(p)==8:
-        if p[4]==';' and p[5]==';':
-            init=p[3]
-        elif p[3]==';' and p[5]==';':
-            predicate=p[4]
+            update=p[7]
+        elif p[6]==';':
+            init=p[4]
+            update=p[7]
         else:
-            update=p[5]
+            init=p[4]
+            predicate=p[6]
+    elif len(p)==10:
+        body=p[8]
+        if p[5]==';' and p[6]==';':
+            init=p[4]
+        elif p[4]==';' and p[6]==';':
+            predicate=p[5]
+        else:
+            update=p[6]
     p[0]=For(init=init, predicate=predicate, update=update, body=body)
 
 def p_ForInit(p):
@@ -1119,6 +1140,25 @@ def p_ConstantExpression(p):
 
 def p_error(p):
     print("Syntax Error in line", p.lineno)
+
+def p_begin_scope(p):
+    '''
+    begin_scope :
+    '''
+    l1 = ST.make_label()
+    l2 = ST.make_label()
+    l3 = ST.make_label()
+    ST.create_new_table(l1)
+    stackbegin.append(l2)
+    stackend.append(l3)
+
+def p_end_scope(p):
+    '''
+    end_scope :
+    '''
+    ST.end_scope()
+    stackbegin.pop()
+    stackend.pop()
 
 
 def main():
