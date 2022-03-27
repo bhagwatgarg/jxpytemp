@@ -1,5 +1,10 @@
 widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
 count = -1
+from new_sym_table import ScopeTable
+
+ST=ScopeTable()
+# all_types=
+
 # Base node
 class SourceElement(object):
     '''
@@ -248,6 +253,8 @@ class ClassDeclaration(ScopeField):
         self.extends = extends
         self.implements = implements
 
+        ST.insert_in_sym_table(idName=name, idType='class', modifiers=modifiers)
+
 class ClassInitializer(ScopeField):
 
     def __init__(self, block, static=False):
@@ -290,6 +297,9 @@ class FieldDeclaration(SourceElement):
         self.variable_declarators = variable_declarators
         self.modifiers = modifiers
 
+        for var in variable_declarators:
+            ST.insert_in_sym_table(idName=var.variable, idType=type, modifiers=modifiers)
+
 class MethodDeclaration(ScopeField):
 
     def __init__(self, name, modifiers=None, type_parameters=None,
@@ -314,6 +324,8 @@ class MethodDeclaration(ScopeField):
         self.abstract = abstract
         self.extended_dims = extended_dims
         self.throws = throws
+
+        ST.insert_in_sym_table(name, idType='function', is_func=True, args=parameters, modifiers=modifiers, return_type=return_type)
 
 class FormalParameter(SourceElement):
 
