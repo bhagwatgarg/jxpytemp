@@ -321,14 +321,14 @@ def p_Goal(p):
     # p[0].itr(p[0], None)
     # print(p[0])
     ST.print_scope_table()
-    # generate_ast(p[0])
-    # prefix='.'
-    # graph.write(prefix+'/graph.dot')
-    # os.system(f"dot -Tpng '{prefix}/graph.dot' -o '{prefix}/graph.png'")
-    # # os.system(f"sfdp -x -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
-    # # os.system(f"sfdp -x -Goverlap=scale -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
-    # # graph.write_png(f'{prefix}graph.png')
-    # os.system(f"xdg-open '{prefix}/graph.png'")
+    generate_ast(p[0])
+    prefix='.'
+    graph.write(prefix+'/graph.dot')
+    os.system(f"dot -Tpng '{prefix}/graph.dot' -o '{prefix}/graph.png'")
+    # os.system(f"sfdp -x -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
+    # os.system(f"sfdp -x -Goverlap=scale -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
+    # graph.write_png(f'{prefix}graph.png')
+    os.system(f"xdg-open '{prefix}/graph.png'")
 
 def p_Literal(p):
     ''' Literal : DECIMAL_LITERAL 
@@ -459,7 +459,7 @@ def p_TypeDeclarations(p):
 
 def p_PackageDeclaration(p):
     '''
-    PackageDeclaration : PACKAGE Name SEMI
+    PackageDeclaration : PACKAGE IDENTIFIER SEMI
     '''
     p[0] = PackageDeclaration(p[2])
 
@@ -473,13 +473,13 @@ def p_ImportDeclaration(p):
 
 def p_SingleTypeImportDeclaration(p):
     '''
-    SingleTypeImportDeclaration : IMPORT Name SEMI
+    SingleTypeImportDeclaration : IMPORT IDENTIFIER SEMI
     '''
     p[0] = ImportDeclaration(p[2])
 
 def p_TypeImportOnDemandDeclaration(p):
     '''
-    TypeImportOnDemandDeclaration : IMPORT Name DOT MUL SEMI
+    TypeImportOnDemandDeclaration : IMPORT IDENTIFIER DOT MUL SEMI
     '''
     p[0] = ImportDeclaration(p[2], on_demand=True)
 

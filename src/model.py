@@ -462,7 +462,7 @@ class BinaryExpression(Expression):
         self.operator = operator
         self.lhs = lhs
         self.rhs = rhs
-
+        self.type = None
 class Assignment(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
@@ -541,6 +541,7 @@ class Relational(BinaryExpression):
             self.type = 'bool'
         else:
             print("Error in relational operator operand types.")
+            print(lhs.type,rhs.type)
 
 
 class Shift(BinaryExpression):
@@ -574,9 +575,10 @@ class Unary(Expression):
 
     def __init__(self, sign, expression):
         super(Unary, self).__init__()
-        self._fields = ['sign', 'expression']
+        self._fields = ['sign', 'expression','type']
         self.sign = sign
         self.expression = expression
+        self.type = expression.type
 
 class Cast(Expression):
 
@@ -762,10 +764,10 @@ class ArrayAccess(Expression):
 
     def __init__(self, index, target):
         super(ArrayAccess, self).__init__()
-        self._fields = ['index', 'target']
+        self._fields = ['index', 'target','type']
         self.index = index
         self.target = target
-
+        self.type = target.type
         if index.type not in ['int','long']:
             print('Array index not of type int')
 
@@ -786,9 +788,14 @@ class Literal(SourceElement):
 
     def __init__(self, value):
         super(Literal, self).__init__()
-        self._fields = ['value']
+        self._fields = ['value','type']
         self.value = value
-
+        if value[0] == "'":
+            self.type = 'char'
+        elif self.value.find('.') == 1:
+            self.type = 'double'
+        else:
+            self.type = 'int'
 
 class Name(SourceElement):
 
@@ -796,12 +803,14 @@ class Name(SourceElement):
         super(Name, self).__init__()
         self._fields = ['value','type']
         self.value = value
-        
+        self.type = None
         global ST
-        if ST.lookup(value) == None:
+        if ST.lookup(value) == None and ST.lookup(value,is_func=True) == None:
             print("Variable ",value, "not declared in current scope")
+        elif ST.lookup(value) != None:
+            self.type = ST.lookup(value)['type']
         else:
-            self.type = ST.lookup(value)['idType']
+            self.type = ST.lookup(value,is_func=True)['type'] 
 
         #lookup for name in symbol table.
         #if name present in table in current scope
