@@ -8,8 +8,6 @@ import lexer
 from model import *
 from new_sym_table import *
 
-stackbegin = []
-stackend = []
 import pydot
 import os
 
@@ -322,15 +320,15 @@ def p_Goal(p):
     
     # p[0].itr(p[0], None)
     # print(p[0])
-    # ST.print_scope_table()
-    generate_ast(p[0])
-    prefix='.'
-    graph.write(prefix+'/graph.dot')
-    os.system(f"dot -Tpng '{prefix}/graph.dot' -o '{prefix}/graph.png'")
-    # os.system(f"sfdp -x -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
-    # os.system(f"sfdp -x -Goverlap=scale -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
-    # graph.write_png(f'{prefix}graph.png')
-    os.system(f"xdg-open '{prefix}/graph.png'")
+    ST.print_scope_table()
+    # generate_ast(p[0])
+    # prefix='.'
+    # graph.write(prefix+'/graph.dot')
+    # os.system(f"dot -Tpng '{prefix}/graph.dot' -o '{prefix}/graph.png'")
+    # # os.system(f"sfdp -x -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
+    # # os.system(f"sfdp -x -Goverlap=scale -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
+    # # graph.write_png(f'{prefix}graph.png')
+    # os.system(f"xdg-open '{prefix}/graph.png'")
 
 def p_Literal(p):
     ''' Literal : DECIMAL_LITERAL 
@@ -520,11 +518,11 @@ def p_Modifier(p):
 
 def p_ClassDeclaration(p):
     '''
-    ClassDeclaration : Modifiers CLASS IDENTIFIER  ClassBody
-    | CLASS IDENTIFIER  ClassBody
+    ClassDeclaration : Modifiers CLASS IDENTIFIER decl_mark_2 ClassBody
+    | CLASS IDENTIFIER decl_mark_2 ClassBody
     '''
-    if len(p) == 5: p[0] = ClassDeclaration(name = p[3], body = p[4], modifiers = p[1])
-    else: p[0] = ClassDeclaration(name = p[2], body = p[3])
+    if len(p) == 6: p[0] = ClassDeclaration(name = p[3], body = p[5], modifiers = p[1])
+    else: p[0] = ClassDeclaration(name = p[2], body = p[4])
 
 def p_ClassBody(p):
     '''
@@ -645,15 +643,23 @@ def p_MethodDeclarator(p):
         p[0]['name']=p[1]
         p[0]['parameters']=p[4]
 
-    # TODO have to insert parameter list here
-
-def p_decl_mark(p):
-    '''
-    decl_mark :
-    '''
-    ST.create_new_table(p[-2])
-    stackbegin.append(p[-2])
-    stackend.append(p[-2])
+    if len(p) == 6:
+        for j in p[4]:
+            type = ""
+            is_array = False
+            dims = 0
+            arr_size = []
+            if isinstance(j.type, Type):
+                if isinstance(j.type.name, Name):
+                    type = j.type.name.value
+                else:
+                    type = j.type.name
+                if j.type.dimensions > 0:
+                    is_array = True
+                    dims = j.type.dimensions
+            else:
+                type = j.type
+            ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
 
 def p_FormalParametersList(p):
     '''
@@ -684,9 +690,9 @@ def p_MethodBody(p):
 
 def p_StaticInitializer(p):
     '''
-    StaticInitializer : STATIC Block
+    StaticInitializer : begin_scope STATIC Block end_scope
     '''
-    p[0] = ClassInitializer(p[2], static = True)
+    p[0] = ClassInitializer(p[3], static = True)
 
 
 ### BG START
@@ -708,16 +714,35 @@ def p_ConstructorDeclaration(p):
 
 def p_ConstructorDeclarator(p):
     '''
-    ConstructorDeclarator : SimpleName LPAREN FormalParameterList RPAREN
-    | SimpleName LPAREN RPAREN
+    ConstructorDeclarator : SimpleName LPAREN decl_mark FormalParameterList RPAREN
+    | SimpleName decl_mark LPAREN RPAREN
     '''
     param_list=[]       # empty list of params
-    if len(p)==5:
-        param_list=p[3]
+    if len(p)==6:
+        param_list=p[4]
     p[0]={
         'simple_name': p[1],
         'formal_parameter_list': param_list
     }
+
+    if len(p) == 6:
+        for j in p[4]:
+            type = ""
+            is_array = False
+            dims = 0
+            arr_size = []
+            if isinstance(j.type, Type):
+                if isinstance(j.type.name, Name):
+                    type = j.type.name.value
+                else:
+                    type = j.type.name
+                if j.type.dimensions > 0:
+                    is_array = True
+                    dims = j.type.dimensions
+            else:
+                type = j.type
+            ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
+
 
 def p_ConstructorBody(p):
     '''
@@ -727,8 +752,6 @@ def p_ConstructorBody(p):
     '''
     constructor_invocation, block_statements=None, None
     if len(p)==4:
-        # if p[2].has_key('argument_list'): constructor_invocation=p[2]
-        # else: block_statements=p[2]
         block_statements=p[2]
     elif len(p)==5:
         constructor_invocation=p[2]
@@ -874,19 +897,19 @@ def p_StatementExpression(p):
 
 def p_IfThenStatement(p):
     '''
-    IfThenStatement : IF LPAREN Expression RPAREN begin_scope Statement end_scope
+    IfThenStatement : IF begin_scope LPAREN Expression RPAREN Statement end_scope
     '''
-    p[0]=IfThenElse(predicate=p[3], if_true=p[6])
+    p[0]=IfThenElse(predicate=p[4], if_true=p[6])
 
 def p_IfThenElseStatement(p):
     '''
-    IfThenElseStatement : IF LPAREN Expression RPAREN begin_scope StatementNoShortIf end_scope ELSE begin_scope Statement end_scope
+    IfThenElseStatement : IF begin_scope LPAREN Expression RPAREN StatementNoShortIf end_scope ELSE begin_scope Statement end_scope
     '''
-    p[0]=IfThenElse(predicate=p[3], if_true=p[6], if_false=p[10])
+    p[0]=IfThenElse(predicate=p[4], if_true=p[6], if_false=p[10])
 
 def p_IfThenElseStatementNoShortIf(p):
     '''
-    IfThenElseStatementNoShortIf : IF LPAREN Expression RPAREN begin_scope StatementNoShortIf end_scope ELSE begin_scope StatementNoShortIf end_scope
+    IfThenElseStatementNoShortIf : IF begin_scope LPAREN Expression RPAREN StatementNoShortIf end_scope ELSE begin_scope StatementNoShortIf end_scope
     '''
     p[0]=IfThenElse(predicate=p[3], if_true=p[6], if_false=p[10])
 
@@ -1456,16 +1479,30 @@ def p_ConstantExpression(p):
 def p_error(p):
     print("Syntax Error in line", p.lineno)
 
+def p_decl_mark(p):
+    '''
+    decl_mark :
+    '''
+    ST.create_new_table(p[-2])
+    stackbegin.append(p[-2])
+    stackend.append(p[-2])
+
+def p_decl_mark_2(p):
+    '''
+    decl_mark_2 :
+    '''
+    ST.create_new_table(p[-1])
+    stackbegin.append(p[-1])
+    stackend.append(p[-1])
+
 def p_begin_scope(p):
     '''
     begin_scope :
     '''
     l1 = ST.make_label()
-    l2 = ST.make_label()
-    l3 = ST.make_label()
-    ST.create_new_table(l1)
-    stackbegin.append(l2)
-    stackend.append(l3)
+    ST.create_new_table(p[-1] + l1)
+    stackbegin.append(p[-1] + l1)
+    stackend.append(p[-1] + l1)
 
 def p_end_scope(p):
     '''

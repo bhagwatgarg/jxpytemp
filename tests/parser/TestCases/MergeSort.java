@@ -1,11 +1,12 @@
 package TestCases;
 
 public class MergeSort{
+  int a;
   public static void mergeSort(int arr[]){
     mergeSort(arr, 0, arr.length-1);
   }
 
-  private static void mergeSort(int arr[], int l, int r){
+  private static void mergeSo(int arr[], int l, int r){
     if(r-l<1)return;
     int mid=l+(r-l)/2;
     mergeSort(arr, l,  mid);

@@ -4,7 +4,6 @@ public class BinarySearch{
   public static int search(int[] arr, int num){
     int a[] = new int[5];// = {1,2,3,4,5};
     int lef=0, righ=5, mid=0;
-    int a = 3;
     while(lef<=righ){
       int a = 5;
       mid=lef+(righ-lef)/2;

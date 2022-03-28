@@ -5,6 +5,9 @@ from new_sym_table import ScopeTable
 ST=ScopeTable()
 # all_types=
 
+stackbegin = []
+stackend = []
+
 # Base node
 import lexer
 priorities={
@@ -266,7 +269,11 @@ class ClassDeclaration(ScopeField):
         self.extends = extends
         self.implements = implements
 
-        ST.insert_in_sym_table(idName=name, idType='class', modifiers=modifiers)
+        parent_scope = ST.get_parent_scope()
+        ST.insert_in_sym_table(idName=name, idType='class', modifiers=modifiers, scope=parent_scope)
+        ST.end_scope()
+        stackbegin.pop()
+        stackend.pop()
 
 class ClassInitializer(ScopeField):
 
@@ -296,6 +303,25 @@ class ConstructorDeclaration(ScopeField):
         self.parameters = parameters
         self.throws = throws
 
+        params = []
+
+        for j in self.parameters:
+            type = ""
+            if isinstance(j.type, Type):
+                if isinstance(j.type.name, Name):
+                    type = j.type.name.value
+                else:
+                    type = j.type.name
+            else:
+                type = j.type
+            params.append({'name' : j.variable.name, 'type': type})
+
+        parent_scope = ST.get_parent_scope()
+        ST.insert_in_sym_table(name, idType='function', is_func=True, args=params, modifiers=modifiers, scope=parent_scope)
+        ST.end_scope()
+        stackbegin.pop()
+        stackend.pop()
+
 class EmptyDeclaration(SourceElement):
     pass
 
@@ -310,20 +336,33 @@ class FieldDeclaration(SourceElement):
         self.variable_declarators = variable_declarators
         self.modifiers = modifiers
 
-        for var in variable_declarators:
-            ST.insert_in_sym_table(idName=var.variable.name, idType=type, modifiers=modifiers)
-#iterate in variable_declarator to check if variable with the name is already in symbol table
-        # global ST
+        type_ = ""
+        is_array = False
+        dims = 0
+        arr_size = []
 
-        # if type.dimensions==0:
-        #     is_array= False
-        # else:
-        #     is_array=True
+        if isinstance(self.type, Type):
+            if isinstance(self.type.name, Name):
+                type_ = self.type.name.value
+            else:
+                type_ = self.type.name
+            if self.type.dimensions > 0:
+                is_array = True
+                dims = self.type.dimensions
+        elif isinstance(self.type, Name):
+            type_ = self.type.value
 
-        # for x in variable_declarators:
-        #     pass
+        for j in self.variable_declarators:
+            if isinstance(j, VariableDeclarator):
+                name = j.variable.name
+                if dims == 0:
+                    dims = j.variable.dimensions
+                if isinstance(j.initializer, ArrayCreation):
+                    is_array = True
+                    for k in j.initializer.dimensions:
+                        arr_size.append(k.value)
             
-
+                ST.insert_in_sym_table(idName=name, idType=type_, is_array=is_array, dims=dims, arr_size=arr_size, modifiers=modifiers)
 
 class MethodDeclaration(ScopeField):
 
@@ -348,8 +387,24 @@ class MethodDeclaration(ScopeField):
 
         
 
-        ST.insert_in_sym_table(name, idType='function', is_func=True, args=parameters, modifiers=modifiers, return_type=return_type)
+        params = []
+
+        for j in self.parameters:
+            type = ""
+            if isinstance(j.type, Type):
+                if isinstance(j.type.name, Name):
+                    type = j.type.name.value
+                else:
+                    type = j.type.name
+            else:
+                type = j.type
+            params.append({'name' : j.variable.name, 'type': type})
+                    
+        parent_scope = ST.get_parent_scope()
+        ST.insert_in_sym_table(idName=name, idType='function', is_func=True, args=params, modifiers=modifiers, return_type=return_type, scope=parent_scope)
         ST.end_scope()
+        stackbegin.pop()
+        stackend.pop()
 
 class FormalParameter(SourceElement):
 
@@ -365,12 +420,6 @@ class FormalParameter(SourceElement):
 
 
 class Variable(SourceElement):
-    # I would like to remove this class. In theory, the dimension could be added
-    # to the type but this means variable declarations have to be changed
-    # somehow. Consider 'int i, j[];'. In this case there currently is only one
-    # type with two variable declarators;This closely resembles the source code.
-    # If the variable is to go away, the type has to be duplicated for every
-    # variable...
 
     def __init__(self, name, dimensions=0):
         super(Variable, self).__init__()

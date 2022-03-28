@@ -49,18 +49,19 @@ class ScopeTable:
 
     def get_temp_var(self):
         prefix = "_"
-        self.temp_var_counter = self.temp_var_counter + 1
-        return str(self.temp_var_counter) + prefix 
+        self.temp_var_counter += 1
+        return prefix + str(self.temp_var_counter)
 
-    def insert_in_sym_table(self, idName, idType, is_func=False, args=None, is_array=False, arr_size=None, scope=None, modifiers=[], return_type=None):
-        #Universal function to insert any symbol into current symbol table
-        #Returns a string representing the new scope name if a new block is about to start; 
-        #else, None
+    def insert_in_sym_table(self, idName, idType, is_func=False, args=None, is_array=False, dims=None, arr_size=None, scope=None, modifiers=[], return_type=None):
+        '''
+        Universal function to insert any symbol into current symbol table
+        Returns a string representing the new scope name if a new block is
+        about to start; otherwise returns None
+        '''
         if scope == None:
             scope = self.curr_scope
         if not is_func:
-            self.scope_and_table_map[scope].add_symbol(
-                idName, idType, is_array, arr_size, modifiers=modifiers)
+            self.scope_and_table_map[scope].add_symbol(idName, idType, is_array, dims, arr_size, modifiers=modifiers)
             return None
         else:
             self.scope_and_table_map[scope].add_function(
@@ -73,8 +74,10 @@ class ScopeTable:
 
 class SymbolTable:
     def __init__(self, scope, parent):
-        #symbol table class for each block in program
-        self.scope = scope
+        '''
+        Symbol table class for each block in program
+        '''
+        self.scope = scope + "_" + str(parent)
         self.parent = parent
         self.symbols = dict()
         self.functions = dict()
@@ -83,15 +86,20 @@ class SymbolTable:
         self.stack_size = 0
         self.table_offset = 0
 
-    def add_symbol(self, idName, idType, is_array=False, arr_size=None, modifiers=[]):
+
+    def add_symbol(self, idName, idType, is_array=False, dims=None, arr_size=None, modifiers=[]):
+        if idName in self.symbols.keys():
+            raise Exception('Variable %s redeclared, check your program' %(idName))
+
         # add the ID to symbols dict if not present earlier
         if idName in self.symbols.keys():
             raise Exception(
                 'Variable %s redeclared, check your program' % (idName))
         self.symbols[idName] = {
-            'type': idType,
-            'is_array': is_array,
-            'arr_size': arr_size,
+            'type' : idType,
+            'is_array' : is_array,
+            'dims' : dims,
+            'arr_size' : arr_size,
             'modifiers': modifiers,
         }
 
