@@ -348,6 +348,7 @@ class FieldDeclaration(SourceElement):
                 type_ = self.type.name
             if self.type.dimensions > 0:
                 is_array = True
+                type=type.name
                 dims = self.type.dimensions
         elif isinstance(self.type, Name):
             type_ = self.type.value
@@ -362,7 +363,7 @@ class FieldDeclaration(SourceElement):
                     for k in j.initializer.dimensions:
                         arr_size.append(k.value)
             
-                ST.insert_in_sym_table(idName=name, idType=type_, is_array=is_array, dims=dims, arr_size=arr_size, modifiers=modifiers)
+                ST.insert_in_sym_table(idName=name, idType=type, is_array=is_array, dims=dims, arr_size=arr_size, modifiers=modifiers)
 
 class MethodDeclaration(ScopeField):
 
@@ -384,7 +385,7 @@ class MethodDeclaration(ScopeField):
         self.parameters = parameters
         self.return_type = return_type
         self.body = body
-
+        self.type_parameters = type_parameters
         
 
         params = []
@@ -402,9 +403,7 @@ class MethodDeclaration(ScopeField):
                     
         parent_scope = ST.get_parent_scope()
         ST.insert_in_sym_table(idName=name, idType='function', is_func=True, args=params, modifiers=modifiers, return_type=return_type, scope=parent_scope)
-        ST.end_scope()
-        stackbegin.pop()
-        stackend.pop()
+
 
 class FormalParameter(SourceElement):
 
@@ -470,7 +469,7 @@ class Assignment(BinaryExpression):
             self.type = highest_prior(lhs.type,rhs.type)
         else :
             print("Type mismatch in assignment.")
-
+            #print(lhs,rhs)
 
 
 ## BG start
@@ -479,10 +478,16 @@ class Conditional(Expression):
 
     def __init__(self, predicate, if_true, if_false):
         super(self.__class__, self).__init__()
-        self._fields = ['predicate', 'if_true', 'if_false']
+        self._fields = ['predicate', 'if_true', 'if_false','type']
+        parent_scope = ST.get_parent_scope()
         self.predicate = predicate
         self.if_true = if_true
         self.if_false = if_false
+
+        if predicate.type in ['int','float','bool','long','double'] and if_true.type == if_false.type:
+            self.type = if_true.type
+        elif if_true.type not in ['int','float','bool','long','double'] or if_false.type not in ['int','float','bool','long','double'] :
+            print("Type error in conditional expression.") 
 
 class ConditionalOr(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
@@ -541,7 +546,7 @@ class Relational(BinaryExpression):
             self.type = 'bool'
         else:
             print("Error in relational operator operand types.")
-            print(lhs.type,rhs.type)
+            # print(lhs,rhs)
 
 
 class Shift(BinaryExpression):
@@ -559,7 +564,7 @@ class Additive(BinaryExpression):
         if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
             self.type = highest_prior(lhs.type,rhs.type)
         else:
-            print("Error in relational operator operand types.")
+            print("Error in additive operator operand types.")
 
 
 class Multiplicative(BinaryExpression):
@@ -568,7 +573,7 @@ class Multiplicative(BinaryExpression):
         if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
             self.type = highest_prior(lhs.type,rhs.type)
         else:
-            print("Error in relational operator operand types.")
+            print("Error in multiplicative operator operand types.")
 
 
 class Unary(Expression):
@@ -584,10 +589,10 @@ class Cast(Expression):
 
     def __init__(self, target, expression):
         super(Cast, self).__init__()
-        self._fields = ['target', 'expression']
+        self._fields = ['target', 'expression','type']
         self.target = target
         self.expression = expression
-
+        self.type = target.name
 
 class Statement(SourceElement):
     pass
@@ -755,9 +760,11 @@ class FieldAccess(Expression):
 
     def __init__(self, name, target):
         super(FieldAccess, self).__init__()
-        self._fields = ['name', 'target']
+        self._fields = ['name', 'target','type']
         self.name = name
         self.target = target
+        self.type = name.type
+
 
 # TODO array index out of range check
 class ArrayAccess(Expression):
@@ -806,7 +813,7 @@ class Name(SourceElement):
         self.type = None
         global ST
         if ST.lookup(value) == None and ST.lookup(value,is_func=True) == None:
-            print("Variable ",value, "not declared in current scope")
+            print("Variable",value, "not declared in current scope")
         elif ST.lookup(value) != None:
             self.type = ST.lookup(value)['type']
         else:

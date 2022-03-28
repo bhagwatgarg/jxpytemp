@@ -20,25 +20,26 @@ class ScopeTable:
         self.scope_and_table_map[self.curr_scope] = self.curr_sym_table
 
     def create_new_table(self, new_label): #If func_name is not provided, use custom label
-        new_sym_table = SymbolTable(new_label, self.curr_scope)
+        new_sym_table = SymbolTable(new_label, self.curr_scope, self.curr_sym_table)
         self.curr_scope = new_label
+        self.curr_sym_table=new_sym_table
         self.scope_and_table_map[self.curr_scope] = new_sym_table
 
     def end_scope(self):
         self.curr_scope = self.scope_and_table_map[self.curr_scope].parent
+        self.curr_sym_table=self.curr_sym_table.parent_table
 
     def lookup(self, symbol, is_func=False):
-        scope = self.curr_scope
-
-        while scope != None:
-            if symbol in self.scope_and_table_map[scope].functions and is_func:
-                return self.scope_and_table_map[scope].functions[symbol]
-                
-            elif symbol in self.scope_and_table_map[scope].symbols and not is_func:
-                return self.scope_and_table_map[scope].symbols[symbol]
-            scope = self.scope_and_table_map[scope].parent
-
-        return None
+        return self._lookup(symbol, is_func, self.curr_sym_table)
+    
+    def _lookup(self, symbol, is_func=False, table=None):
+        if table==None: return None
+        if symbol in table.functions and is_func:
+            return table.functions[symbol]
+            
+        elif symbol in table.symbols and not is_func:
+            return table.symbols[symbol]
+        return self._lookup(symbol, is_func, table.parent_table)
 
     def make_label(self):
         self.label_counter += 1
@@ -66,13 +67,15 @@ class ScopeTable:
             self.scope_and_table_map[scope].add_function(
                 idName, idType, args, modifiers=modifiers, return_type=return_type)
 
+    def print_curr_scope(self):
+        self.curr_sym_table.print_table()
     def print_scope_table(self):
         for key, val in self.scope_and_table_map.items():
             val.print_table()
 
 
 class SymbolTable:
-    def __init__(self, scope, parent):
+    def __init__(self, scope, parent, parent_table=None):
         '''
         Symbol table class for each block in program
         '''
@@ -81,6 +84,7 @@ class SymbolTable:
         self.symbols = dict()
         self.functions = dict()
         self.blocks = set()
+        self.parent_table=parent_table
 
         self.stack_size = 0
         self.table_offset = 0
@@ -117,6 +121,7 @@ class SymbolTable:
             'type' : 'func'
 
         }
+        self.stack_size += 1
 
     def add_block(self, block_name):
         self.blocks.add(block_name)

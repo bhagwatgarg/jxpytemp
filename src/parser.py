@@ -600,22 +600,58 @@ def p_MethodDeclaration(p):
     '''
     MethodDeclaration : MethodHeader MethodBody
     '''
-    p[0] = MethodDeclaration(p[1]['name'], parameters = p[1]['parameters'], return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
+    ST.end_scope()
+    stackbegin.pop()
+    stackend.pop()
+    p[0]=p[1]
+    # print(p[1])
+    p[0].body=p[2]
     # TODO can have ST stuff in model for this
     # TODO
     # p[0] = MethodDeclaration(p[1]['name'], parameters=p[1]['parameters'],
     #                                  extended_dims=p[1]['extended_dims'], type_parameters=p[1]['type_parameters'],
     #                                  return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
 
+# def p_MethodDeclMark(p):
+#     '''
+#     MethodDeclMark :
+#     '''
+#     p[0] = 
+
+
 def p_MethodHeader(p):
     '''
     MethodHeader : Modifiers Type MethodDeclarator
     | Type MethodDeclarator
     '''
+    var={}
     if len(p)==4:
-        p[0] = {'modifiers': p[1], 'type': p[2], 'name': p[3]['name'], 'parameters': p[3]['parameters']}
+        var = {'modifiers': p[1], 'type': p[2], 'name': p[3]['name'], 'parameters': p[3]['parameters']}
     else:
-        p[0] = {'type': p[2], 'name': p[2]['name'], 'modifiers':[], 'parameters': p[2]['parameters']}
+        var = {'type': p[1], 'name': p[2]['name'], 'modifiers':[], 'parameters': p[2]['parameters']}
+    # p[0]=MethodDeclaration(p[-1]['name'], parameters = p[-1]['parameters'], return_type=p[-1]['type'], modifiers=p[-1]['modifiers'], body=None)
+    p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None)
+    ST.create_new_table(var['name'])
+    # print(f"table vreated: {var['name']}")
+    stackbegin.append(var['name'])
+    stackend.append(var['name'])
+    # print(p[0], 'qwer')
+    for j in var['parameters']:
+        type = ""
+        is_array = False
+        dims = 0
+        arr_size = []
+        if isinstance(j.type, Type):
+            if isinstance(j.type.name, Name):
+                type = j.type.name.value
+            else:
+                type = j.type.name
+            if j.type.dimensions > 0:
+                is_array = True
+                dims = j.type.dimensions
+        else:
+            type = j.type
+        ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
 
 
 def p_MethodHeader2(p):
@@ -623,43 +659,71 @@ def p_MethodHeader2(p):
     MethodHeader : Modifiers VOID MethodDeclarator
     | VOID MethodDeclarator
     '''
+    # print(f"Curr Scope: {ST.curr_scope}")
+    var={}
     if len(p) == 4:
-        p[0] = {'modifiers': p[1], 'name': p[3]['name'], 'type':'void', 'parameters': p[3]['parameters']}
+        var = {'modifiers': p[1], 'name': p[3]['name'], 'type':'void', 'parameters': p[3]['parameters']}
     else:
-        p[0] = {'name': p[2]['name'], 'type':'void', 'modifiers':[], 'parameters': p[2]['parameters']}
+        var = {'name': p[2]['name'], 'type':'void', 'modifiers':[], 'parameters': p[2]['parameters']}
+    p[0]=MethodDeclaration(var['name'], parameters = var['parameters'], return_type=var['type'], modifiers=var['modifiers'], body=None)
+    ST.create_new_table(var['name'])
+    # print(f"table vreated: {var['name']}")
+    stackbegin.append(var['name'])
+    stackend.append(var['name'])
+    # print(f"Curr Scope: {ST.curr_scope}")
+    # print(var['parameters'])
+    # print(ST.curr_scope)
+    for j in var['parameters']:
+        type = ""
+        is_array = False
+        dims = 0
+        arr_size = []
+        if isinstance(j.type, Type):
+            if isinstance(j.type.name, Name):
+                type = j.type.name.value
+            else:
+                type = j.type.name
+            if j.type.dimensions > 0:
+                is_array = True
+                dims = j.type.dimensions
+        else:
+            type = j.type
+        ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
+
+
 
 
 
 def p_MethodDeclarator(p):
     '''
-    MethodDeclarator : IDENTIFIER LPAREN decl_mark RPAREN
-    | IDENTIFIER LPAREN decl_mark FormalParameterList RPAREN
+    MethodDeclarator : IDENTIFIER LPAREN RPAREN
+    | IDENTIFIER LPAREN FormalParameterList RPAREN
     '''
     p[0]={}
-    if len(p)==5:
+    if len(p)==4:
         p[0]['name']=p[1]
         p[0]['parameters'] = []
     else :
         p[0]['name']=p[1]
-        p[0]['parameters']=p[4]
+        p[0]['parameters']=p[3]
 
-    if len(p) == 6:
-        for j in p[4]:
-            type = ""
-            is_array = False
-            dims = 0
-            arr_size = []
-            if isinstance(j.type, Type):
-                if isinstance(j.type.name, Name):
-                    type = j.type.name.value
-                else:
-                    type = j.type.name
-                if j.type.dimensions > 0:
-                    is_array = True
-                    dims = j.type.dimensions
-            else:
-                type = j.type
-            ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
+    # if len(p) == 6:
+    #     for j in p[4]:
+    #         type = ""
+    #         is_array = False
+    #         dims = 0
+    #         arr_size = []
+    #         if isinstance(j.type, Type):
+    #             if isinstance(j.type.name, Name):
+    #                 type = j.type.name.value
+    #             else:
+    #                 type = j.type.name
+    #             if j.type.dimensions > 0:
+    #                 is_array = True
+    #                 dims = j.type.dimensions
+    #         else:
+    #             type = j.type
+    #         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
 
 def p_FormalParametersList(p):
     '''
@@ -710,7 +774,7 @@ def p_ConstructorDeclaration(p):
     else:
         declarator=p[1]
         body=p[2]
-    p[0]=ConstructorDeclaration(name=declarator['simple_name'], block=body['block_statements'], modifiers=modifiers, type_parameters=None, parameters=declarator['formal_parameter_list'], throws=None)
+    p[0]=ConstructorDeclaration(name=declarator['simple_name'].value, block=body['block_statements'], modifiers=modifiers, type_parameters=None, parameters=declarator['formal_parameter_list'], throws=None)
 
 def p_ConstructorDeclarator(p):
     '''
@@ -1190,8 +1254,8 @@ def p_Dims(p):
 
 def p_FieldAccess(p):
     '''
-    FieldAccess : Primary DOT IDENTIFIER
-    | SUPER DOT IDENTIFIER
+    FieldAccess : Primary DOT Name
+    | SUPER DOT Name
     '''
     p[0] = FieldAccess(p[3], p[1])
 
@@ -1483,9 +1547,12 @@ def p_decl_mark(p):
     '''
     decl_mark :
     '''
-    ST.create_new_table(p[-2])
-    stackbegin.append(p[-2])
-    stackend.append(p[-2])
+    var=p[-2]
+    if type(p[-2])!=str: var=p[-2].value
+    ST.create_new_table(var)
+    #print(f"table vreated: {var}")
+    stackbegin.append(var)
+    stackend.append(var)
 
 def p_decl_mark_2(p):
     '''
