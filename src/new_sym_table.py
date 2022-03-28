@@ -42,15 +42,14 @@ class ScopeTable:
 
     def make_label(self):
         self.label_counter += 1
-        return str(self.label_counter) + self.label_prefix 
+        return  self.label_prefix + str(self.label_counter)
 
     def get_parent_scope(self):
         return self.scope_and_table_map[self.curr_scope].parent
 
     def get_temp_var(self):
-        prefix = "_"
         self.temp_var_counter += 1
-        return prefix + str(self.temp_var_counter)
+        return str(self.temp_var_counter)
 
     def insert_in_sym_table(self, idName, idType, is_func=False, args=None, is_array=False, dims=None, arr_size=None, scope=None, modifiers=[], return_type=None):
         '''
@@ -77,7 +76,7 @@ class SymbolTable:
         '''
         Symbol table class for each block in program
         '''
-        self.scope = scope + "_" + str(parent)
+        self.scope = scope
         self.parent = parent
         self.symbols = dict()
         self.functions = dict()
