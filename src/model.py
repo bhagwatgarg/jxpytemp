@@ -312,6 +312,18 @@ class FieldDeclaration(SourceElement):
 
         for var in variable_declarators:
             ST.insert_in_sym_table(idName=var.variable.name, idType=type, modifiers=modifiers)
+#iterate in variable_declarator to check if variable with the name is already in symbol table
+        # global ST
+
+        # if type.dimensions==0:
+        #     is_array= False
+        # else:
+        #     is_array=True
+
+        # for x in variable_declarators:
+        #     pass
+            
+
 
 class MethodDeclaration(ScopeField):
 
