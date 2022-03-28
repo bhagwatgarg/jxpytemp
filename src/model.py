@@ -236,7 +236,7 @@ class PackageDeclaration(SourceElement):
         if modifiers is None:
             modifiers = []
         self.name = name
-        self.modifiers = modifiers
+        self.modifiers = modifiers        
 
 
 class ImportDeclaration(SourceElement):
