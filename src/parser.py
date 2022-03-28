@@ -637,11 +637,14 @@ def p_MethodHeader(p):
     stackend.append(var['name'])
     # print(p[0], 'qwer')
     for j in var['parameters']:
+        # print(j)
         type = ""
         is_array = False
         dims = 0
         arr_size = []
         if isinstance(j.type, Type):
+            # if j.name=='arr':
+            #     print(j)
             if isinstance(j.type.name, Name):
                 type = j.type.name.value
             else:
@@ -651,6 +654,9 @@ def p_MethodHeader(p):
                 dims = j.type.dimensions
         else:
             type = j.type
+            dims=j.variable.dimensions
+            if dims>0:
+                is_array=True
         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
 
 
@@ -674,6 +680,7 @@ def p_MethodHeader2(p):
     # print(var['parameters'])
     # print(ST.curr_scope)
     for j in var['parameters']:
+        # print(j)
         type = ""
         is_array = False
         dims = 0
@@ -688,6 +695,10 @@ def p_MethodHeader2(p):
                 dims = j.type.dimensions
         else:
             type = j.type
+            dims=j.variable.dimensions
+            if dims>0:
+                is_array=True
+
         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
 
 

@@ -629,7 +629,8 @@ class ArrayInitializer(SourceElement):
 class MethodInvocation(Expression):
     def __init__(self, name, arguments=None, type_arguments=None, target=None):
         super(MethodInvocation, self).__init__()
-        self._fields = ['name', 'arguments', 'type_arguments', 'target']
+        self._fields = ['name', 'arguments', 'type_arguments', 'target','type']
+        parent_scope = ST.get_parent_scope()
         if arguments is None:
             arguments = []
         if type_arguments is None:
@@ -638,6 +639,17 @@ class MethodInvocation(Expression):
         self.arguments = arguments
         self.type_arguments = type_arguments
         self.target = target
+        self.type=None
+
+        n_params = ST.lookup(name.value,is_func=True)['n_params'] 
+        self.type =ST.lookup(name.value,is_func=True)['return_type'] 
+        params =ST.lookup(name.value,is_func=True)['params'] 
+        if n_params!=len(arguments) :
+            print('Incorrect number of Arguements')
+        else :
+            for i in range(len(arguments)):
+                if arguments[i].type != params[i]['type']:
+                    print('Type of method arguement not correct')
 
 class IfThenElse(Statement, ScopeField):
 
@@ -771,13 +783,26 @@ class ArrayAccess(Expression):
 
     def __init__(self, index, target):
         super(ArrayAccess, self).__init__()
-        self._fields = ['index', 'target','type']
+        self._fields = ['index', 'target','type','depth','dimension']
         self.index = index
         self.target = target
         self.type = target.type
         if index.type not in ['int','long']:
             print('Array index not of type int')
+        
+        #while ST.lookup(target) is not None:
+        #   target=target.target
 
+        if target.__class__ == ArrayAccess:
+            self.depth = target.depth + 1
+            self.dimension = target.dimension
+        else:
+            self.depth = 1
+            value = ST.lookup(target.value)
+            self.dimension = value['dims']
+        if self.depth > self.dimension:
+            print("More than allowed dimension accessed")
+        
 
 class ArrayCreation(Expression):
 
@@ -813,7 +838,7 @@ class Name(SourceElement):
         self.type = None
         global ST
         if ST.lookup(value) == None and ST.lookup(value,is_func=True) == None:
-            print("Variable",value, "not declared in current scope")
+            print("Variable/Function",value, "not declared in current scope")
         elif ST.lookup(value) != None:
             self.type = ST.lookup(value)['type']
         else:

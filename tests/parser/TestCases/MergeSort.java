@@ -24,7 +24,7 @@ public class MergeSort{
   private static void mergeSo(int arr[], int l, int r){
     // if(r-l<1)return;
     int mid=l+(r-l)/2;
-    mergeSo(arr, l,  mid);
+    mergeSo(arr, l, 2);
     mergeSo(arr, mid+1, r);
     merge(arr, l, r);
   }
