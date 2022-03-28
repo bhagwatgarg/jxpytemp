@@ -374,10 +374,6 @@ class VariableDeclarator(SourceElement):
         self.variable = variable
         self.initializer = initializer
 
-<<<<<<< HEAD
-=======
-
->>>>>>> Update model.py
 class Type(SourceElement):
 
     def __init__(self, name, type_arguments=None, enclosed_in=None,
@@ -602,33 +598,6 @@ class For(Statement, ScopeField):
         self.update = update
         self.body = body
 
-<<<<<<< HEAD
-=======
-class ForEach(Statement):
-
-    def __init__(self, type, variable, iterable, body, modifiers=None):
-        super(ForEach, self).__init__()
-        self._fields = ['type', 'variable', 'iterable', 'body', 'modifiers']
-        if modifiers is None:
-            modifiers = []
-        self.type = type
-        self.variable = variable
-        self.iterable = iterable
-        self.body = body
-        self.modifiers = modifiers
-
-# TODO: to delete
-# class Assert(Statement):
-
-#     def __init__(self, predicate, message=None):
-#         super(Assert, self).__init__()
-#         self._fields = ['predicate', 'message']
-#         self.predicate = predicate
-#         self.message = message
-
-# TODO: to add more checks for switch
-
->>>>>>> Update model.py
 class Switch(Statement):
 
     def __init__(self, expression, switch_cases):
@@ -637,14 +606,10 @@ class Switch(Statement):
         self.expression = expression
         self.switch_cases = switch_cases
 
-<<<<<<< HEAD
-class SwitchCase(ScopeField):
-=======
         if expression.type not in ['int','long','bool','char']:
             print('Error in switch expression type')
 
 class SwitchCase(SourceElement):
->>>>>>> Update model.py
 
     def __init__(self, cases, body=None):
         super(SwitchCase, self).__init__()
@@ -686,79 +651,6 @@ class Return(Statement):
         self._fields = ['result']
         self.result = result
 
-<<<<<<< HEAD
-=======
-
-# class Synchronized(Statement):
-
-#     def __init__(self, monitor, body):
-#         super(Synchronized, self).__init__()
-#         self._fields = ['monitor', 'body']
-#         self.monitor = monitor
-#         self.body = body
-
-
-# class Throw(Statement):
-
-#     def __init__(self, exception):
-#         super(Throw, self).__init__()
-#         self._fields = ['exception']
-#         self.exception = exception
-
-
-# class Try(Statement):
-
-#     def __init__(self, block, catches=None, _finally=None, resources=None):
-#         super(Try, self).__init__()
-#         self._fields = ['block', 'catches', '_finally', 'resources']
-#         if catches is None:
-#             catches = []
-#         if resources is None:
-#             resources = []
-#         self.block = block
-#         self.catches = catches
-#         self._finally = _finally
-#         self.resources = resources
-
-#     def accept(self, visitor):
-#         if visitor.visit_Try(self):
-#             for s in self.block:
-#                 s.accept(visitor)
-#         for c in self.catches:
-#             visitor.visit_Catch(c)
-#         if self._finally:
-#             self._finally.accept(visitor)
-
-
-# class Catch(SourceElement):
-
-#     def __init__(self, variable, modifiers=None, types=None, block=None):
-#         super(Catch, self).__init__()
-#         self._fields = ['variable', 'modifiers', 'types', 'block']
-#         if modifiers is None:
-#             modifiers = []
-#         if types is None:
-#             types = []
-#         self.variable = variable
-#         self.modifiers = modifiers
-#         self.types = types
-#         self.block = block
-
-
-# class Resource(SourceElement):
-
-#     def __init__(self, variable, type=None, modifiers=None, initializer=None):
-#         super(Resource, self).__init__()
-#         self._fields = ['variable', 'type', 'modifiers', 'initializer']
-#         if modifiers is None:
-#             modifiers = []
-#         self.variable = variable
-#         self.type = type
-#         self.modifiers = modifiers
-#         self.initializer = initializer
-
-
->>>>>>> Update model.py
 class ConstructorInvocation(Statement):
     """An explicit invocations of a class's constructor.
 
