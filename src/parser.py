@@ -610,7 +610,7 @@ def p_MethodHeader(p):
         var = {'type': p[1], 'name': p[2]['name'], 'modifiers':[], 'parameters': p[2]['parameters']}
     # p[0]=MethodDeclaration(p[-1]['name'], parameters = p[-1]['parameters'], return_type=p[-1]['type'], modifiers=p[-1]['modifiers'], body=None)
     p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None)
-    ST.create_new_table(var['name'])
+    ST.create_new_table(var['name'], scope_type="func")
     # print(f"table vreated: {var['name']}")
     stackbegin.append(var['name'])
     stackend.append(var['name'])
@@ -651,7 +651,7 @@ def p_MethodHeader2(p):
     else:
         var = {'name': p[2]['name'], 'type':'void', 'modifiers':[], 'parameters': p[2]['parameters']}
     p[0]=MethodDeclaration(var['name'], parameters = var['parameters'], return_type=var['type'], modifiers=var['modifiers'], body=None)
-    ST.create_new_table(var['name'])
+    ST.create_new_table(var['name'], scope_type="func")
     # print(f"table vreated: {var['name']}")
     stackbegin.append(var['name'])
     stackend.append(var['name'])
@@ -1546,7 +1546,7 @@ def p_decl_mark_2(p):
     '''
     decl_mark_2 :
     '''
-    ST.create_new_table(p[-1], "class")
+    ST.create_new_table(p[-1], scope_type="class")
     stackbegin.append(p[-1])
     stackend.append(p[-1])
 

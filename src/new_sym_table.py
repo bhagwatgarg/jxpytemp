@@ -19,14 +19,14 @@ class ScopeTable:
         self.label_prefix = '_n'
         self.temp_var_counter = 0
         self.key_counter = 0
-        self.curr_scope = 'compilation_unit_' + str(self.label_counter)
+        self.curr_scope = 'compilation_unit_'
         self.curr_sym_table = SymbolTable(self.curr_scope, parent=None)
         self.scope_and_table_map = dict()
         self.scope_and_table_map[self.curr_scope] = self.curr_sym_table
 
     def create_new_table(self, new_label, scope_type = None): #If func_name is not provided, use custom label
-        new_sym_table = SymbolTable(new_label + "_" + str(self.key_counter), self.curr_scope, self.curr_sym_table, scope_type)
-        self.curr_scope = new_label + "_" + str(self.key_counter)
+        new_sym_table = SymbolTable(new_label, self.curr_scope, self.curr_sym_table, scope_type)
+        self.curr_scope = new_label
         self.curr_sym_table=new_sym_table
         self.key_counter += 1
         self.scope_and_table_map[self.curr_scope] = new_sym_table
@@ -51,7 +51,7 @@ class ScopeTable:
 
     def make_label(self):
         self.label_counter += 1
-        return  self.label_prefix + str(self.label_counter)
+        return  self.label_prefix
 
     def get_parent_scope(self):
         return self.scope_and_table_map[self.curr_scope].parent
@@ -109,11 +109,13 @@ class SymbolTable:
         
         width = 0
         offset = self.offset
-        
-        # if idType in widths.keys():
-        #     width = widths[idType]
-        # elif idType == 'class' and idName in widths.keys():
-        #     width = widths[idName] 
+        try:
+            if idType in widths.keys():
+                width = widths[idType]
+            elif idType == 'class' and idName in widths.keys():
+                width = widths[idName] 
+        except:
+            pass
      
         if is_array:
             for i in arr_size:
@@ -161,21 +163,21 @@ class SymbolTable:
 
     def print_table(self):
 
-        # store = []
+        store = []
 
-        # for key, val in self.symbols.items():
-        #     store.append([key])
-        #     for k, v in val.items():
-        #         store[-1].append(v)
+        for key, val in self.symbols.items():
+            store.append([key])
+            for k, v in val.items():
+                store[-1].append(v)
 
-        # for key, val in self.functions.items():
-        #     store.append([key])
-        #     for k, v in val.items():
-        #         store[-1].append(v)
+        for key, val in self.functions.items():
+            store.append([key])
+            for k, v in val.items():
+                store[-1].append(v)
 
-        # df = pd.DataFrame(store, columns = ['name', 'type', 'is_array', 'dims', 'arr_size', 'modifiers', 'width', 'offset'])
+        df = pd.DataFrame(store, columns = ['name', 'type', 'is_array', 'dims', 'arr_size', 'modifiers', 'width', 'offset'])
 
-        # df.to_csv(f"{self.parent}_{self.scope}.csv", index = False)
+        df.to_csv(f"{self.parent}_{self.scope}.csv", index = False)
 
         print("Parent: %s" %(self.parent))
         print("Scope: %s \nSymbols:" %(self.scope))
