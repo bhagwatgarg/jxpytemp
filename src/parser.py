@@ -14,6 +14,8 @@ import os
 graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
 node_num=0
 
+#TODO change Vairable to =, and type 1 in ast
+
 def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
     curr_obj=p
@@ -65,9 +67,6 @@ def generate_ast(p, parent=None, arr_name=None):
         generate_ast(p.name, curr_val)
         generate_ast(p.body, curr_val, arr_name='Body')
         generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
-        generate_ast(p.type_parameters, curr_val, arr_name='TypeParameters')
-        generate_ast(p.extends, curr_val)
-        generate_ast(p.implements, curr_val)
 
     elif curr_class in [ClassInitializer]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -75,16 +74,6 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.block, curr_val)
         generate_ast(p.static, curr_val)
-
-    elif curr_class in [ConstructorDeclaration]:
-        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
-        node_num+=1
-        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        generate_ast(p.name, curr_val)
-        generate_ast(p.block, curr_val)
-        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
-        generate_ast(p.type_parameters, curr_val, arr_name='TypeParameters')
-        generate_ast(p.parameters, curr_val, arr_name='Parameters')
     
     elif curr_class in [FieldDeclaration]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -100,13 +89,18 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
         generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
-        generate_ast(p.type_parameters, curr_val, arr_name='TypeParameters')
         generate_ast(p.parameters, curr_val, arr_name='Parameters')
         generate_ast(p.return_type, curr_val)
         generate_ast(p.body, curr_val, arr_name='Body')
-        # generate_ast(p.abstract, curr_val)
-        # generate_ast(p.extended_dims, curr_val)
-        # generate_ast(p.throws, curr_val)
+
+    elif curr_class in [ConstructorDeclaration]:
+        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        node_num+=1
+        graph.add_edge(pydot.Edge(str(parent), (curr_val)))
+        generate_ast(p.name, curr_val)
+        generate_ast(p.block, curr_val)
+        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
+        generate_ast(p.parameters, curr_val, arr_name='Parameters')
 
     elif curr_class in [FormalParameter]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -114,8 +108,6 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.variable, curr_val)
         generate_ast(p.type, curr_val)
-        generate_ast(p.vararg, curr_val)
-        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
 
     elif curr_class in [Variable]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -125,7 +117,7 @@ def generate_ast(p, parent=None, arr_name=None):
         generate_ast(p.dimensions, curr_val)
 
     elif curr_class in [VariableDeclarator]:
-        graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
+        graph.add_node(pydot.Node((curr_val), label='='))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.variable, curr_val)
@@ -135,8 +127,6 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        generate_ast(p.type_arguments, curr_val, arr_name='TypeArguments')
-        generate_ast(p.enclosed_in, curr_val)
         generate_ast(p.dimensions, curr_val)
 
     elif issubclass(curr_class, BinaryExpression):
@@ -144,7 +134,6 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_node(pydot.Node((curr_val), label=str(p.operator)))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        # generate_ast(p.operator, curr_val)
         generate_ast(p.lhs, curr_val)
         generate_ast(p.rhs, curr_val)
 
@@ -189,7 +178,6 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
         generate_ast(p.arguments, curr_val, arr_name='Arguments')
-        generate_ast(p.type_arguments, curr_val, arr_name='TypeArguments')
         generate_ast(p.target, curr_val)
 
     elif curr_class in [IfThenElse]:
@@ -255,7 +243,6 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
         generate_ast(p.target, curr_val)
-        generate_ast(p.type_arguments, curr_val, arr_name='TypeArguments')
         generate_ast(p.arguments, curr_val, arr_name='Arguments')
 
     elif curr_class in [FieldAccess]:
@@ -286,12 +273,6 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.expression, curr_val)
 
-
-
-
-
-
-
     elif curr_class in [EmptyDeclaration, Expression]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
@@ -317,7 +298,7 @@ def generate_ast(p, parent=None, arr_name=None):
 def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
-    
+    print(p[0])
     # p[0].itr(p[0], None)
     # print(p[0])
     ST.print_scope_table()
@@ -424,7 +405,6 @@ def p_CompilationUnit2(p):
     CompilationUnit : PackageDeclaration TypeDeclarations
     | ImportDeclarations
     '''
-    # TODO: Can be empty?
     if len(p)==3:
         p[0] = CompilationUnit(package_declaration=p[1], type_declarations=p[2])
     else :
@@ -1078,7 +1058,6 @@ def p_ForStatement(p):
         body=p[10]
     elif len(p)==11:
         body=p[9]
-        # TODO: Check if p[i]==';' or SEMI
         if p[4]==';':
             predicate=p[5]
             update=p[7]
@@ -1117,7 +1096,6 @@ def p_ForStatementNoShortIf(p):
         body=p[10]
     elif len(p)==11:
         body=p[9]
-        # TODO: Check if p[i]==';' or SEMI
         if p[4]==';':
             predicate=p[5]
             update=p[7]
@@ -1569,7 +1547,7 @@ def p_decl_mark_2(p):
     '''
     decl_mark_2 :
     '''
-    ST.create_new_table(p[-1])
+    ST.create_new_table(p[-1], "class")
     stackbegin.append(p[-1])
     stackend.append(p[-1])
 

@@ -22,17 +22,14 @@ priorities={
 def highest_prior(lhs_type, rhs_type):
   return lhs_type if priorities[lhs_type]>priorities[rhs_type] else rhs_type
 
-class SourceElement(object):
+class BaseClass(object):
     '''
-    A SourceElement is the base class for all elements that occur in a Java
-    file parsed by plyj.
+    A BaseClass is the base class for all elements that occur in the program
     '''
 
     def __init__(self):
-        super(SourceElement, self).__init__()
+        super(BaseClass, self).__init__()
         self._fields = []
-        self.width = 0
-        self.offset = 0
         self.symb = {}
         self.methods = {}
         self.classes = {}
@@ -54,26 +51,6 @@ class SourceElement(object):
 
     def __ne__(self, other):
         return not self == other
-
-    def accept(self, visitor):
-        """
-        default implementation that visit the subnodes in the order
-        they are stored in self_field
-        """
-        curr_offset = 0
-        class_name = self.__class__.__name__
-        visit = getattr(visitor, 'visit_' + class_name)
-        if visit(self):
-            for f in self._fields:
-                field = getattr(self, f)
-                if field:
-                    if isinstance(field, list):
-                        for elem in field:
-                            if isinstance(elem, SourceElement):
-                                elem.accept(visitor)
-                    elif isinstance(field, SourceElement):
-                        field.accept(visitor)
-        getattr(visitor, 'leave_' + class_name)(self)
 
     def itr(self, elem, parent, payload = None, given_name = None):
         
@@ -210,16 +187,14 @@ class SourceElement(object):
         print("Methods:", elem.methods)
         print("Symbols:", elem.symb)
 
-class ScopeField(SourceElement):
+class ScopeField(BaseClass):
     pass
 
-class CompilationUnit(SourceElement):
+class CompilationUnit(BaseClass):
 
-    def __init__(self, package_declaration=None, import_declarations=None,
-                 type_declarations=None):
+    def __init__(self, package_declaration=None, import_declarations=None, type_declarations=None):
         super(CompilationUnit, self).__init__()
-        self._fields = [
-            'package_declaration', 'import_declarations', 'type_declarations']
+        self._fields = ['package_declaration', 'import_declarations', 'type_declarations']
         if import_declarations is None:
             import_declarations = []
         if type_declarations is None:
@@ -228,18 +203,14 @@ class CompilationUnit(SourceElement):
         self.import_declarations = import_declarations
         self.type_declarations = type_declarations
 
-class PackageDeclaration(SourceElement):
+class PackageDeclaration(BaseClass):
 
     def __init__(self, name, modifiers=None):
         super(PackageDeclaration, self).__init__()
-        self._fields = ['name', 'modifiers']
-        if modifiers is None:
-            modifiers = []
+        self._fields = ['name']
         self.name = name
-        self.modifiers = modifiers        
 
-
-class ImportDeclaration(SourceElement):
+class ImportDeclaration(BaseClass):
 
     def __init__(self, name, static=False, on_demand=False):
         super(ImportDeclaration, self).__init__()
@@ -248,26 +219,16 @@ class ImportDeclaration(SourceElement):
         self.static = static
         self.on_demand = on_demand
 
-
 class ClassDeclaration(ScopeField):
 
-    def __init__(self, name, body, modifiers=None, type_parameters=None,
-                 extends=None, implements=None):
+    def __init__(self, name, body, modifiers=None, type_parameters=None, extends=None, implements=None):
         super(ClassDeclaration, self).__init__()
-        self._fields = ['name', 'body', 'modifiers',
-                        'type_parameters', 'extends', 'implements']
+        self._fields = ['name', 'body', 'modifiers']
         if modifiers is None:
             modifiers = []
-        if type_parameters is None:
-            type_parameters = []
-        if implements is None:
-            implements = []
         self.name = name
         self.body = body
         self.modifiers = modifiers
-        self.type_parameters = type_parameters
-        self.extends = extends
-        self.implements = implements
 
         parent_scope = ST.get_parent_scope()
         ST.insert_in_sym_table(idName=name, idType='class', modifiers=modifiers, scope=parent_scope)
@@ -283,49 +244,10 @@ class ClassInitializer(ScopeField):
         self.block = block
         self.static = static
 
-class ConstructorDeclaration(ScopeField):
-
-    def __init__(self, name, block, modifiers=None, type_parameters=None,
-                 parameters=None, throws=None):
-        super(ConstructorDeclaration, self).__init__()
-        self._fields = ['name', 'block', 'modifiers',
-                        'type_parameters', 'parameters', 'throws']
-        if modifiers is None:
-            modifiers = []
-        if type_parameters is None:
-            type_parameters = []
-        if parameters is None:
-            parameters = []
-        self.name = name
-        self.block = block
-        self.modifiers = modifiers
-        self.type_parameters = type_parameters
-        self.parameters = parameters
-        self.throws = throws
-
-        params = []
-
-        for j in self.parameters:
-            type = ""
-            if isinstance(j.type, Type):
-                if isinstance(j.type.name, Name):
-                    type = j.type.name.value
-                else:
-                    type = j.type.name
-            else:
-                type = j.type
-            params.append({'name' : j.variable.name, 'type': type})
-
-        parent_scope = ST.get_parent_scope()
-        ST.insert_in_sym_table(name, idType='function', is_func=True, args=params, modifiers=modifiers, scope=parent_scope)
-        ST.end_scope()
-        stackbegin.pop()
-        stackend.pop()
-
-class EmptyDeclaration(SourceElement):
+class EmptyDeclaration(BaseClass):
     pass
 
-class FieldDeclaration(SourceElement):
+class FieldDeclaration(BaseClass):
 
     def __init__(self, type, variable_declarators, modifiers=None):
         super(FieldDeclaration, self).__init__()
@@ -336,7 +258,7 @@ class FieldDeclaration(SourceElement):
         self.variable_declarators = variable_declarators
         self.modifiers = modifiers
 
-        type_ = ""
+        type_ = self.type
         is_array = False
         dims = 0
         arr_size = []
@@ -367,17 +289,11 @@ class FieldDeclaration(SourceElement):
 
 class MethodDeclaration(ScopeField):
 
-    def __init__(self, name, modifiers=None, type_parameters=None,
-                 parameters=None, return_type='void', body=None, abstract=False,
-                 extended_dims=0, throws=None):
+    def __init__(self, name, modifiers=None, parameters=None, return_type='void', body=None):
         super(MethodDeclaration, self).__init__()
-        self._fields = ['name', 'modifiers', 'type_parameters', 'parameters',
-                        'return_type', 'body', 'abstract', 'extended_dims',
-                        'throws']
+        self._fields = ['name', 'modifiers', 'parameters', 'return_type', 'body']
         if modifiers is None:
             modifiers = []
-        if type_parameters is None:
-            type_parameters = []
         if parameters is None:
             parameters = []
         self.name = name
@@ -405,20 +321,49 @@ class MethodDeclaration(ScopeField):
         ST.insert_in_sym_table(idName=name, idType='function', is_func=True, args=params, modifiers=modifiers, return_type=return_type, scope=parent_scope)
 
 
-class FormalParameter(SourceElement):
+class ConstructorDeclaration(ScopeField):
 
-    def __init__(self, variable, type, modifiers=None, vararg=False):
-        super(FormalParameter, self).__init__()
-        self._fields = ['variable', 'type', 'modifiers', 'vararg']
+    def __init__(self, name, block, modifiers=None, parameters=None):
+        super(ConstructorDeclaration, self).__init__()
+        self._fields = ['name', 'block', 'modifiers', 'parameters']
         if modifiers is None:
             modifiers = []
+        if parameters is None:
+            parameters = []
+        self.name = name
+        self.block = block
+        self.modifiers = modifiers
+        self.parameters = parameters
+
+        params = []
+
+        for j in self.parameters:
+            type = ""
+            if isinstance(j.type, Type):
+                if isinstance(j.type.name, Name):
+                    type = j.type.name.value
+                else:
+                    type = j.type.name
+            else:
+                type = j.type
+            params.append({'name' : j.variable.name, 'type': type})
+
+        parent_scope = ST.get_parent_scope()
+        ST.insert_in_sym_table(name, idType='function', is_func=True, args=params, modifiers=modifiers, scope=parent_scope)
+        ST.end_scope()
+        stackbegin.pop()
+        stackend.pop()
+
+class FormalParameter(BaseClass):
+
+    def __init__(self, variable, type):
+        super(FormalParameter, self).__init__()
+        self._fields = ['variable', 'type']
         self.variable = variable
         self.type = type
-        self.modifiers = modifiers
-        self.vararg = vararg
 
 
-class Variable(SourceElement):
+class Variable(BaseClass):
 
     def __init__(self, name, dimensions=0):
         super(Variable, self).__init__()
@@ -426,7 +371,7 @@ class Variable(SourceElement):
         self.name = name
         self.dimensions = dimensions
 
-class VariableDeclarator(SourceElement):
+class VariableDeclarator(BaseClass):
 
     def __init__(self, variable, initializer=None):
         super(VariableDeclarator, self).__init__()
@@ -434,20 +379,15 @@ class VariableDeclarator(SourceElement):
         self.variable = variable
         self.initializer = initializer
 
-class Type(SourceElement):
+class Type(BaseClass):
 
-    def __init__(self, name, type_arguments=None, enclosed_in=None,
-                 dimensions=0):
+    def __init__(self, name, dimensions=0):
         super(Type, self).__init__()
-        self._fields = ['name', 'type_arguments', 'enclosed_in', 'dimensions']
-        if type_arguments is None:
-            type_arguments = []
+        self._fields = ['name', 'dimensions']
         self.name = name
-        self.type_arguments = type_arguments
-        self.enclosed_in = enclosed_in
         self.dimensions = dimensions
 
-class Expression(SourceElement):
+class Expression(BaseClass):
 
     def __init__(self):
         super(Expression, self).__init__()
@@ -462,6 +402,7 @@ class BinaryExpression(Expression):
         self.lhs = lhs
         self.rhs = rhs
         self.type = None
+
 class Assignment(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
@@ -534,10 +475,6 @@ class Equality(BinaryExpression):
         else:
             print("Error in == operator operand types.")
 
-# Delete
-#class InstanceOf(BinaryExpression):
-#    pass
-
 
 class Relational(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
@@ -594,7 +531,7 @@ class Cast(Expression):
         self.expression = expression
         self.type = target.name
 
-class Statement(SourceElement):
+class Statement(BaseClass):
     pass
 
 class Empty(Statement):
@@ -617,7 +554,7 @@ class Block(Statement):
 class VariableDeclaration(Statement, FieldDeclaration):
     pass
 
-class ArrayInitializer(SourceElement):
+class ArrayInitializer(BaseClass):
     def __init__(self, elements=None):
         super(ArrayInitializer, self).__init__()
         self._fields = ['elements']
@@ -633,11 +570,8 @@ class MethodInvocation(Expression):
         parent_scope = ST.get_parent_scope()
         if arguments is None:
             arguments = []
-        if type_arguments is None:
-            type_arguments = []
         self.name = name
         self.arguments = arguments
-        self.type_arguments = type_arguments
         self.target = target
         self.type=None
 
@@ -689,7 +623,7 @@ class Switch(Statement):
         if expression.type not in ['int','long','bool','char']:
             print('Error in switch expression type')
 
-class SwitchCase(SourceElement):
+class SwitchCase(BaseClass):
 
     def __init__(self, cases, body=None):
         super(SwitchCase, self).__init__()
@@ -732,41 +666,28 @@ class Return(Statement):
         self.result = result
 
 class ConstructorInvocation(Statement):
-    """An explicit invocations of a class's constructor.
 
-    This is a variant of either this() or super(), NOT a "new" expression.
-    """
-
-    def __init__(self, name, target=None, type_arguments=None, arguments=None):
+    def __init__(self, name, target=None, arguments=None):
         super(ConstructorInvocation, self).__init__()
-        self._fields = ['name', 'target', 'type_arguments', 'arguments']
-        if type_arguments is None:
-            type_arguments = []
+        self._fields = ['name', 'target', 'arguments']
         if arguments is None:
             arguments = []
         self.name = name
         self.target = target
-        self.type_arguments = type_arguments
         self.arguments = arguments
 
 class InstanceCreation(Expression):
 
-    def __init__(self, type, type_arguments=None, arguments=None, body=None,
-                 enclosed_in=None):
+    def __init__(self, type, arguments=None, body=None):
         super(InstanceCreation, self).__init__()
-        self._fields = [
-            'type', 'type_arguments', 'arguments', 'body', 'enclosed_in']
-        if type_arguments is None:
-            type_arguments = []
+        self._fields = ['type', 'arguments', 'body']
         if arguments is None:
             arguments = []
         if body is None:
             body = []
         self.type = type
-        self.type_arguments = type_arguments
         self.arguments = arguments
         self.body = body
-        self.enclosed_in = enclosed_in
 
 class FieldAccess(Expression):
 
@@ -816,7 +737,7 @@ class ArrayCreation(Expression):
         self.initializer = initializer
 
 
-class Literal(SourceElement):
+class Literal(BaseClass):
 
     def __init__(self, value):
         super(Literal, self).__init__()
@@ -829,24 +750,20 @@ class Literal(SourceElement):
         else:
             self.type = 'int'
 
-class Name(SourceElement):
+class Name(BaseClass):
 
     def __init__(self, value):
         super(Name, self).__init__()
         self._fields = ['value','type']
         self.value = value
         self.type = None
-        global ST
+
         if ST.lookup(value) == None and ST.lookup(value,is_func=True) == None:
             print("Variable/Function",value, "not declared in current scope")
         elif ST.lookup(value) != None:
             self.type = ST.lookup(value)['type']
         else:
             self.type = ST.lookup(value,is_func=True)['type'] 
-
-        #lookup for name in symbol table.
-        #if name present in table in current scope
-        #then no problem else undeclared variable.
 
     def append_name(self, name):
         try:
@@ -860,21 +777,3 @@ class ExpressionStatement(Statement):
         super(ExpressionStatement, self).__init__()
         self._fields = ['expression']
         self.expression = expression
-
-
-class Visitor(object):
-
-    def __init__(self, verbose=False):
-        self.verbose = verbose
-
-    def __getattr__(self, name):
-        if not (name.startswith('visit_') or name.startswith('leave_')):
-            raise AttributeError('name must start with visit_ or leave_ but was {}'
-                                 .format(name))
-
-        def f(element):
-            if self.verbose:
-                msg = 'unimplemented call to {}; ignoring ({})'
-                print(msg.format(name, element))
-            return True
-        return f

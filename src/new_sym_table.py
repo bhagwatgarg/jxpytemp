@@ -1,3 +1,7 @@
+import pandas as pd
+
+widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
+
 class SymbolTableEntry:
     def __init__(self):
         # self.value = None
@@ -12,20 +16,22 @@ class ScopeTable:
     def __init__(self): #list of all symbol tables in program
         
         self.label_counter = 0
-        self.curr_scope = 'start'
-        self.label_prefix = '_l'
+        self.curr_scope = 'compilation_unit'
+        self.label_prefix = '_n'
         self.temp_var_counter = 0
         self.curr_sym_table = SymbolTable(self.curr_scope, parent=None)
         self.scope_and_table_map = dict()
         self.scope_and_table_map[self.curr_scope] = self.curr_sym_table
 
     def create_new_table(self, new_label): #If func_name is not provided, use custom label
-        new_sym_table = SymbolTable(new_label, self.curr_scope, self.curr_sym_table)
+        new_sym_table = SymbolTable(new_label, self.curr_scope, self.curr_sym_table, scope_type)
         self.curr_scope = new_label
         self.curr_sym_table=new_sym_table
         self.scope_and_table_map[self.curr_scope] = new_sym_table
 
     def end_scope(self):
+        if self.scope_and_table_map[self.curr_scope].scope_type == "class": 
+            widths[self.curr_scope] = self.scope_and_table_map[self.curr_scope].width
         self.curr_scope = self.scope_and_table_map[self.curr_scope].parent
         self.curr_sym_table=self.curr_sym_table.parent_table
 
@@ -64,18 +70,18 @@ class ScopeTable:
             self.scope_and_table_map[scope].add_symbol(idName, idType, is_array, dims, arr_size, modifiers=modifiers)
             return None
         else:
-            self.scope_and_table_map[scope].add_function(
-                idName, idType, args, modifiers=modifiers, return_type=return_type)
+            self.scope_and_table_map[scope].add_function(idName, idType, args, modifiers=modifiers, return_type=return_type)
 
     def print_curr_scope(self):
         self.curr_sym_table.print_table()
     def print_scope_table(self):
         for key, val in self.scope_and_table_map.items():
-            val.print_table()
+            if val.scope_type == "func":
+                val.print_table()
 
 
 class SymbolTable:
-    def __init__(self, scope, parent, parent_table=None):
+    def __init__(self, scope, parent, parent_table=None, scope_type=None):
         '''
         Symbol table class for each block in program
         '''
@@ -85,9 +91,10 @@ class SymbolTable:
         self.functions = dict()
         self.blocks = set()
         self.parent_table=parent_table
+        self.scope_type = scope_type
 
-        self.stack_size = 0
-        self.table_offset = 0
+        self.offset = 0
+        self.width = 0
 
 
     def add_symbol(self, idName, idType, is_array=False, dims=None, arr_size=None, modifiers=[]):
@@ -96,30 +103,52 @@ class SymbolTable:
 
         # add the ID to symbols dict if not present earlier
         if idName in self.symbols.keys():
-            raise Exception(
-                'Variable %s redeclared, check your program' % (idName))
+            raise Exception('Variable %s redeclared, check your program' % (idName))
+        
+        width = 0
+        offset = self.offset
+        
+        if idType in widths.keys():
+            width = widths[idType]
+        elif idType == 'class' and idName in widths.keys():
+            width = widths[idName] 
+     
+        if is_array:
+            for i in arr_size:
+                width *= int(i)
+
+        self.offset = self.width
+        self.width += width
+
+        if idType == 'class' and idName not in widths.keys():
+            width = 8
+            self.offset += 8
+
         self.symbols[idName] = {
             'type' : idType,
             'is_array' : is_array,
             'dims' : dims,
             'arr_size' : arr_size,
             'modifiers': modifiers,
+            'width' : width,
+            'offset' : offset,
         }
-
-        self.stack_size += 1
 
     def add_function(self, func_name, type=None, params=None, modifiers=[], return_type=None):
         if func_name in self.functions.keys():
-            raise Exception(
-                'Function %s redeclared, check your program' % (func_name))
+            raise Exception('Function %s redeclared, check your program' % (func_name))
 
+        self.offset = self.width
+        self.width += 8
+        
         self.functions[func_name] = {
             'n_params': len(params),
             'params': params,
             'return_type': return_type,
             'modifiers': modifiers,
-            'type' : 'func'
-
+            'type' : 'func',
+            'width' : 8,
+            'offset' : self.offset,
         }
         self.stack_size += 1
 
@@ -127,11 +156,19 @@ class SymbolTable:
         self.blocks.add(block_name)
 
     def print_table(self):
-        print("Parent: %s" % (self.parent))
-        print("Scope: %s \nSymbols:" % (self.scope))
+
+        store = []
+
         for key, val in self.symbols.items():
-            print(key, val)
-        print("Functions:")
+            store.append([key])
+            for k, v in val.items():
+                store[-1].append(v)
+
         for key, val in self.functions.items():
-            print(key, val)
-        print("*************************")
+            store.append([key])
+            for k, v in val.items():
+                store[-1].append(v)
+
+        df = pd.DataFrame(store, columns = ['name', 'type', 'is_array', 'dims', 'arr_size', 'modifiers', 'width', 'offset'])
+
+        df.to_csv(f"{self.parent}_{self.scope}.csv", index = False)
