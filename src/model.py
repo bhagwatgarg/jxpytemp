@@ -794,8 +794,18 @@ class Name(SourceElement):
 
     def __init__(self, value):
         super(Name, self).__init__()
-        self._fields = ['value']
+        self._fields = ['value','type']
         self.value = value
+        
+        global ST
+        if ST.lookup(value) == None:
+            print("Variable ",value, "not declared in current scope")
+        else:
+            self.type = ST.lookup(value)['idType']
+
+        #lookup for name in symbol table.
+        #if name present in table in current scope
+        #then no problem else undeclared variable.
 
     def append_name(self, name):
         try:
