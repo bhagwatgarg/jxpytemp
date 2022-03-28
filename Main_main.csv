@@ -1,4 +1,0 @@
-name,type,is_array,dims,arr_size,modifiers,width,offset
-args,String,True,1,[],[],0,0
-lol,int,False,0,[],[],4,0
-keys,int,True,2,"['5', '6']",[],120,0

@@ -1,0 +1,2 @@
+name,type,is_array,dims,arr_size,modifiers,width,offset
+a,BinarySearch,True,1,['10'],[],0,0

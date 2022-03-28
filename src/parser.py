@@ -52,7 +52,6 @@ def generate_ast(p, parent=None, arr_name=None):
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
         generate_ast(p.name, curr_val)
-        generate_ast(p.modifiers, curr_val, arr_name='Modifiers')
 
     elif curr_class in [ImportDeclaration]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))

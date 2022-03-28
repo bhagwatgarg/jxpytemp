@@ -1,0 +1,7 @@
+name,type,is_array,dims,arr_size,modifiers,width,offset
+arr,int,True,1,[],[],4,0
+num,int,False,0,[],[],4,0
+a,int,True,1,['5'],[],20,4
+lef,int,False,0,[],[],4,8
+righ,int,False,0,[],[],4,28
+mid,int,False,0,[],[],4,32
