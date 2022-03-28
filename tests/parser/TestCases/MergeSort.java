@@ -2,18 +2,7 @@ package TestCases;
 
 public class MergeSort{
   int a;
-  public static void mergeSort(int arr[]){
-    mergeSort(arr, 0, arr.length-1);
-  }
-
-  private static void mergeSo(int arr[], int l, int r){
-    if(r-l<1)return;
-    int mid=l+(r-l)/2;
-    mergeSort(arr, l,  mid);
-    mergeSort(arr, mid+1, r);
-    merge(arr, l, r);
-  }
-
+  
   private static void merge(int arr[], int l, int r){
     if(r-l<1)return;
     int n=r-l+1, mid=l+(r-l)/2;
@@ -31,5 +20,16 @@ public class MergeSort{
     while(i<n){
       arr[l+i]=b[i++];
     }
+  }
+  private static void mergeSo(int arr[], int l, int r){
+    // if(r-l<1)return;
+    int mid=l+(r-l)/2;
+    mergeSo(arr, l,  mid);
+    mergeSo(arr, mid+1, r);
+    merge(arr, l, r);
+  }
+  
+  public static void mergeSort(int arr[]){
+    mergeSo(arr, 0, arr.length-1);
   }
 }

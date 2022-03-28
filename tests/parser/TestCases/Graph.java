@@ -4,7 +4,7 @@ public class Graph{
   int[][] adj;
   int[] keys;
   private boolean[] visited;
-  public Graph(int vertices, int[] keys, int[][] adj){
+  public void _Graph(int vertices, int[] keys, int[][] adj){
     this.vertices=vertices;
     this.adj=new int[vertices][];
     this.keys=new int[vertices];
@@ -15,8 +15,20 @@ public class Graph{
       for(int j=0; j<adj[i].length; j++)this.adj[i][j]=adj[i][j];
     }
   }
-
-  public boolean dfs(int key){
+  
+    private boolean dfs(int v, int key){
+      if(this.visited[v])return false;
+      this.visited[v]=true;
+      if(this.keys[v]==key)return true;
+      boolean result=false;
+      for(int i=0; i<this.adj[v].length; i++){
+        result=dfs(this.adj[v][i], key);
+        if(result)return result;
+      }
+      return false;
+    }
+  
+  public boolean _dfs(int key){
     boolean result=false;
     for(int i=0; i<this.vertices; i++)this.visited[i]=false;
     for(int i=0; i<this.vertices; i++){
@@ -24,18 +36,6 @@ public class Graph{
         result=dfs(i, key);
         if(result)return true;
       }
-    }
-    return false;
-  }
-
-  private boolean dfs(int v, int key){
-    if(this.visited[v])return false;
-    this.visited[v]=true;
-    if(this.keys[v]==key)return true;
-    boolean result=false;
-    for(int i=0; i<this.adj[v].length; i++){
-      result=dfs(this.adj[v][i], key);
-      if(result)return result;
     }
     return false;
   }

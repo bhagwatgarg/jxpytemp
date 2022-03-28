@@ -37,16 +37,16 @@ public class Operators{
       l_b=l_c^l_d;
     }
     
-    switch(i_a){
-      case 1:
-        i_a=2;
-        break;
-      case 2:
-        i_a=3;
-        break;
-      default:
-        i_a=10;
-    }
+    // switch(i_a){
+    //   case 1:
+    //     i_a=2;
+    //     break;
+    //   case 2:
+    //     i_a=3;
+    //     break;
+    //   default:
+    //     i_a=10;
+    // }
 
     i_d=i_c==i_b?10:20;
 
