@@ -289,9 +289,9 @@ class FieldDeclaration(BaseClass):
 
 class MethodDeclaration(ScopeField):
 
-    def __init__(self, name, modifiers=None, parameters=None, return_type='void', body=None):
+    def __init__(self, name, modifiers=None, parameters=None, return_type='void', body=None, type_parameters=None):
         super(MethodDeclaration, self).__init__()
-        self._fields = ['name', 'modifiers', 'parameters', 'return_type', 'body']
+        self._fields = ['name', 'modifiers', 'parameters', 'return_type', 'body', 'type_parameters']
         if modifiers is None:
             modifiers = []
         if parameters is None:
@@ -574,16 +574,19 @@ class MethodInvocation(Expression):
         self.arguments = arguments
         self.target = target
         self.type=None
-
-        n_params = ST.lookup(name.value,is_func=True)['n_params'] 
-        self.type =ST.lookup(name.value,is_func=True)['return_type'] 
-        params =ST.lookup(name.value,is_func=True)['params'] 
-        if n_params!=len(arguments) :
-            print('Incorrect number of Arguements')
-        else :
-            for i in range(len(arguments)):
-                if arguments[i].type != params[i]['type']:
-                    print('Type of method arguement not correct')
+        self.type_arguments=type_arguments
+        try:
+            n_params = ST.lookup(name.value,is_func=True)['n_params'] 
+            self.type =ST.lookup(name.value,is_func=True)['return_type'] 
+            params =ST.lookup(name.value,is_func=True)['params'] 
+            if n_params!=len(arguments) :
+                print('Incorrect number of Arguements')
+            else :
+                for i in range(len(arguments)):
+                    if arguments[i].type != params[i]['type']:
+                        print('Type of method arguement not correct')
+        except:
+            pass
 
 class IfThenElse(Statement, ScopeField):
 
