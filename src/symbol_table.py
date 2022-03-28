@@ -103,7 +103,8 @@ class SymbolTable:
         self.functions[func_name] = {
             'n_params' : len(params),
             'params' : params,
-            'ret_type' : ret_type
+            'ret_type' : ret_type,
+            'type' : 'func'
         }
 
 
