@@ -115,6 +115,7 @@ class SymbolTable:
             'params': params,
             'return_type': return_type,
             'modifiers': modifiers,
+            'type' : 'func'
 
         }
 
