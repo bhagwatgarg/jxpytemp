@@ -110,10 +110,10 @@ class SymbolTable:
         width = 0
         offset = self.offset
         
-        if idType in widths.keys():
-            width = widths[idType]
-        elif idType == 'class' and idName in widths.keys():
-            width = widths[idName] 
+        # if idType in widths.keys():
+        #     width = widths[idType]
+        # elif idType == 'class' and idName in widths.keys():
+        #     width = widths[idName] 
      
         if is_array:
             for i in arr_size:
@@ -155,7 +155,6 @@ class SymbolTable:
             'width' : 8,
             'offset' : self.offset,
         }
-        self.stack_size += 1
 
     def add_block(self, block_name):
         self.blocks.add(block_name)
