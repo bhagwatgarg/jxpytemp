@@ -19,7 +19,7 @@ public class BinarySearch{
     return -1;
   }
 
-  public static int hello (){
+  public static int _hello (){
 		int arr = 5;
 		return arr;
 	}	

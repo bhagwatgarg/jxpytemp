@@ -2,7 +2,7 @@ import java.lang.String;
 
 import TestCases.*;
 class Main {
-  // int a = 4;
+  int a = 4;
   public static int hello(String[] args, int lol) {
     // System.out.println("Hello world!");
     // ;
