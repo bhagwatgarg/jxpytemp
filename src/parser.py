@@ -617,14 +617,40 @@ def p_MethodHeader(p):
     else:
         var = {'type': p[1], 'name': p[2]['name'], 'modifiers':[], 'parameters': p[2]['parameters']}
     # p[0]=MethodDeclaration(p[-1]['name'], parameters = p[-1]['parameters'], return_type=p[-1]['type'], modifiers=p[-1]['modifiers'], body=None)
+    
+    params = []
+
+    for j in var['parameters']:
+        type = ""
+        dims = 0
+        is_array = False
+        if isinstance(j.type, Type):
+            if isinstance(j.type.name, Name):
+                type = j.type.name.value
+            else:
+                type = j.type.name
+            if j.type.dimensions > 0:
+                is_array = True
+                dims = j.type.dimensions
+        else:
+            type = j.type
+        params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
+                
+    idName = var['name'] + "_" + ST.curr_scope
+
+    for i in params:
+        idName += "_" + i['type'] + "_" + str(i['dims'])
+    
+    var['name'] = idName
+
     ST.create_new_table(var['name'], scope_type="func")
     # print(f"table vreated: {var['name']}")
     stackbegin.append(var['name'])
     stackend.append(var['name'])
     p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None)
     # print(p[0], 'qwer')
+    
     for j in var['parameters']:
-        # print(j)
         type = ""
         is_array = False
         dims = 0
@@ -658,6 +684,32 @@ def p_MethodHeader2(p):
         var = {'modifiers': p[1], 'name': p[3]['name'], 'type':'void', 'parameters': p[3]['parameters']}
     else:
         var = {'name': p[2]['name'], 'type':'void', 'modifiers':[], 'parameters': p[2]['parameters']}
+    
+    params = []
+
+    for j in var['parameters']:
+        type = ""
+        dims = 0
+        is_array = False
+        if isinstance(j.type, Type):
+            if isinstance(j.type.name, Name):
+                type = j.type.name.value
+            else:
+                type = j.type.name
+            if j.type.dimensions > 0:
+                is_array = True
+                dims = j.type.dimensions
+        else:
+            type = j.type
+        params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
+                
+    idName = var['name'] + "_" + ST.curr_scope
+
+    for i in params:
+        idName += "_" + i['type'] + "_" + str(i['dims'])
+    
+    var['name'] = idName
+    
     ST.create_new_table(var['name'], scope_type="func")
     # print(f"table vreated: {var['name']}")
     stackbegin.append(var['name'])
@@ -687,10 +739,6 @@ def p_MethodHeader2(p):
                 is_array=True
 
         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
-
-
-
-
 
 def p_MethodDeclarator(p):
     '''

@@ -19,17 +19,28 @@ public class BinarySearch{
     return -1;
   }
 
-  public static int _hello (){
+  public static int hello (){
 		int arr = 5;
 		return arr;
 	}	
+
+  public static int hello(int a, int b)
+  {
+    return 1;
+  }
+
+  // public static int hello(int a, int b)
+  // {
+  //   return 1;
+  // }
+
 }
 
 class Main{
 	public static int hello (){
 		BinarySearch[] a = new BinarySearch[10];
-		// int[] arr = {1,2,3,4,5};
-		// return a.search(arr, 3);
+		int[] arr = {1,2,3,4,5};
+		return a.search(arr, 3);
     return 1;
 	}	
 }

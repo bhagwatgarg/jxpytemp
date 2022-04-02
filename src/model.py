@@ -285,7 +285,7 @@ class FieldDeclaration(BaseClass):
                     for k in j.initializer.dimensions:
                         arr_size.append(k.value)
             
-                ST.insert_in_sym_table(idName=name, idType=type, is_array=is_array, dims=dims, arr_size=arr_size, modifiers=modifiers)
+                ST.insert_in_sym_table(idName=name, idType=type_, is_array=is_array, dims=dims, arr_size=arr_size, modifiers=modifiers)
 
 class MethodDeclaration(ScopeField):
 
@@ -302,20 +302,24 @@ class MethodDeclaration(ScopeField):
         self.return_type = return_type
         self.body = body
         self.type_parameters = type_parameters
-        
 
         params = []
 
         for j in self.parameters:
             type = ""
+            dims = 0
+            is_array = False
             if isinstance(j.type, Type):
                 if isinstance(j.type.name, Name):
                     type = j.type.name.value
                 else:
                     type = j.type.name
+                if j.type.dimensions > 0:
+                    is_array = True
+                    dims = j.type.dimensions
             else:
                 type = j.type
-            params.append({'name' : j.variable.name, 'type': type})
+            params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
                     
         parent_scope = ST.get_parent_scope()
         ST.insert_in_sym_table(idName=name, idType='function', is_func=True, args=params, modifiers=modifiers, return_type=return_type, scope=parent_scope)
