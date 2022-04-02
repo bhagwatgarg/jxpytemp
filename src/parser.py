@@ -617,11 +617,11 @@ def p_MethodHeader(p):
     else:
         var = {'type': p[1], 'name': p[2]['name'], 'modifiers':[], 'parameters': p[2]['parameters']}
     # p[0]=MethodDeclaration(p[-1]['name'], parameters = p[-1]['parameters'], return_type=p[-1]['type'], modifiers=p[-1]['modifiers'], body=None)
-    p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None)
     ST.create_new_table(var['name'], scope_type="func")
     # print(f"table vreated: {var['name']}")
     stackbegin.append(var['name'])
     stackend.append(var['name'])
+    p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None)
     # print(p[0], 'qwer')
     for j in var['parameters']:
         # print(j)
@@ -658,11 +658,11 @@ def p_MethodHeader2(p):
         var = {'modifiers': p[1], 'name': p[3]['name'], 'type':'void', 'parameters': p[3]['parameters']}
     else:
         var = {'name': p[2]['name'], 'type':'void', 'modifiers':[], 'parameters': p[2]['parameters']}
-    p[0]=MethodDeclaration(var['name'], parameters = var['parameters'], return_type=var['type'], modifiers=var['modifiers'], body=None)
     ST.create_new_table(var['name'], scope_type="func")
     # print(f"table vreated: {var['name']}")
     stackbegin.append(var['name'])
     stackend.append(var['name'])
+    p[0]=MethodDeclaration(var['name'], parameters = var['parameters'], return_type=var['type'], modifiers=var['modifiers'], body=None)
     # print(f"Curr Scope: {ST.curr_scope}")
     # print(var['parameters'])
     # print(ST.curr_scope)
