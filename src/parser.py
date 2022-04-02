@@ -57,7 +57,7 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
-        generate_ast(p.name, curr_val)
+        generate_ast('.'.join(p.name), curr_val)
 
     elif curr_class in [ClassDeclaration]:
         graph.add_node(pydot.Node((curr_val), label=curr_class.__name__))
@@ -297,7 +297,7 @@ def generate_ast(p, parent=None, arr_name=None):
 def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
-    print(p[0])
+    # print(p[0])
     # p[0].itr(p[0], None)
     # print(p[0])
     ST.print_scope_table()
@@ -308,7 +308,7 @@ def p_Goal(p):
     # os.system(f"sfdp -x -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
     # os.system(f"sfdp -x -Goverlap=scale -Tpng '{prefix}/graph.dot' > '{prefix}/graph.png'")
     # graph.write_png(f'{prefix}graph.png')
-    os.system(f"xdg-open '{prefix}/graph.png'")
+    # os.system(f"xdg-open '{prefix}/graph.png'")
 
 def p_Literal(p):
     ''' Literal : DECIMAL_LITERAL 
@@ -452,15 +452,23 @@ def p_ImportDeclaration(p):
 
 def p_SingleTypeImportDeclaration(p):
     '''
-    SingleTypeImportDeclaration : IMPORT IDENTIFIER SEMI
+    SingleTypeImportDeclaration : IMPORT import_identifier SEMI
     '''
     p[0] = ImportDeclaration(p[2])
 
 def p_TypeImportOnDemandDeclaration(p):
     '''
-    TypeImportOnDemandDeclaration : IMPORT IDENTIFIER DOT MUL SEMI
+    TypeImportOnDemandDeclaration : IMPORT import_identifier DOT MUL SEMI
     '''
     p[0] = ImportDeclaration(p[2], on_demand=True)
+
+def p_import_identifier(p):
+    '''
+    import_identifier : import_identifier DOT IDENTIFIER
+    | IDENTIFIER
+    '''
+    if len(p)==2: p[0]=[p[1]]
+    else: p[0]=p[1]+[p[3]]
 
 def p_TypeDeclaration(p):
     '''
