@@ -413,7 +413,7 @@ class Assignment(BinaryExpression):
             self.type = highest_prior(lhs.type,rhs.type)
         else :
             print("Type mismatch in assignment.")
-            #print(lhs,rhs)
+            print(lhs,rhs)
 
 
 ## BG start
@@ -570,7 +570,36 @@ class MethodInvocation(Expression):
     def __init__(self, name, arguments=None, type_arguments=None, target=None):
         super(MethodInvocation, self).__init__()
         self._fields = ['name', 'arguments', 'type_arguments', 'target','type']
-        parent_scope = ST.get_parent_scope()
+        a = name.value
+        temp = ST.curr_scope
+        temp_table = ST.scope_and_table_map[ST.curr_scope]
+        f_type=None
+        if '.' in a:
+            a = a.split(".")
+            for var in a:
+                #print(var,ST.curr_scope)
+                if f_type in ['int','float','bool','char','long','double']:
+                    print("primitive type")
+                if ST.lookup(var) == None and ST.lookup(var+'_'+ST.curr_scope,is_func=True) == None:
+                    print("Variable/Function",var, "not declared in current scope")
+                    break
+                elif ST.lookup(var) != None and ST.lookup(var)['type'] not in ['int','float','bool','char','long','double']:
+                    k = ST.lookup(var)['type']
+                    ST.curr_scope = k
+                    ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
+                    f_type = k
+                elif ST.lookup(var+'_'+ST.curr_scope,is_func=True) != None:
+                    t=ST.curr_scope
+                    ST.curr_scope = ST.lookup(var+'_'+ST.curr_scope,is_func=True)['name']
+                    f_type = ST.lookup(var+'_'+t,is_func=True)['return_type']
+                    ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
+                elif ST.lookup(var) != None and ST.lookup(var)['type'] in ['int','float','bool','char','long','double']:
+                    f_type = ST.lookup(var)['type']
+                    
+            self.type = f_type
+            name.value = var
+
+        # print(ST.curr_scope)
         if arguments is None:
             arguments = []
         self.name = name
@@ -579,17 +608,24 @@ class MethodInvocation(Expression):
         self.type=None
         self.type_arguments=type_arguments
         try:
-            n_params = ST.lookup(name.value,is_func=True)['n_params'] 
-            self.type =ST.lookup(name.value,is_func=True)['return_type'] 
-            params =ST.lookup(name.value,is_func=True)['params'] 
-            if n_params!=len(arguments) :
-                print('Incorrect number of Arguements')
+            #print(name.value + '_' + ST.curr_scope)
+            if ST.lookup(ST.curr_scope,is_func=True) is None:
+                print("Not a function")
             else :
-                for i in range(len(arguments)):
-                    if arguments[i].type != params[i]['type']:
-                        print('Type of method arguement not correct')
+                n_params = ST.lookup(ST.curr_scope,is_func=True)['n_params'] 
+                self.type = ST.lookup(ST.curr_scope,is_func=True)['return_type'] 
+                params = ST.lookup(ST.curr_scope,is_func=True)['params'] 
+                if n_params!=len(arguments) :
+                    print('Incorrect number of Arguements')
+                else :
+                    for i in range(len(arguments)):
+                        if arguments[i].type != params[i]['type']:
+                            print('Type of method arguement not correct')
         except:
             pass
+        
+        ST.curr_scope = temp
+        ST.curr_sym_table = temp_table
 
 class IfThenElse(Statement, ScopeField):
 
@@ -702,7 +738,11 @@ class FieldAccess(Expression):
         self._fields = ['name', 'target','type']
         self.name = name
         self.target = target
-        self.type = name.type
+        self.type = None
+        
+        if target == 'this':
+            self.type = name.type
+
 
 
 # TODO array index out of range check
@@ -776,6 +816,41 @@ class Name(BaseClass):
             self.value = self.value + '.' + name.value
         except:
             self.value = self.value + '.' + name
+
+            a = self.value
+            a = a.split(".")
+            temp = ST.curr_scope
+            temp_table = ST.scope_and_table_map[ST.curr_scope]
+            f_type = None
+            #print(a)
+            for var in a:
+                #print(var,ST.curr_scope)
+                if f_type in ['int','float','bool','char','long','double']:
+                    print("primitive type")
+                if ST.lookup(var) == None and ST.lookup(var+'_'+ST.curr_scope,is_func=True) == None:
+                    print("Variable/Function",var, "not declared in current scope")
+                    break
+                elif ST.lookup(var) != None and ST.lookup(var)['type'] not in ['int','float','bool','char','long','double']:
+                    k = ST.lookup(var)['type']
+                    ST.curr_scope = k
+                    ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
+                    f_type = k
+                elif ST.lookup(var+'_'+ST.curr_scope,is_func=True) != None:
+                    t=ST.curr_scope
+                    ST.curr_scope = ST.lookup(var+'_'+ST.curr_scope,is_func=True)['name']
+                    f_type = ST.lookup(var+'_'+t,is_func=True)['return_type']
+                    ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
+                elif ST.lookup(var) != None and ST.lookup(var)['type'] in ['int','float','bool','char','long','double']:
+                    f_type = ST.lookup(var)['type']
+                    
+            ST.curr_scope = temp
+            ST.curr_sym_table = temp_table
+            self.type = f_type
+                
+                    
+                
+
+
 
 
 class ExpressionStatement(Statement):
