@@ -11,8 +11,6 @@ import os
 graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
 node_num=0
 
-#TODO change Vairable to =, and type 1 in ast
-
 def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
     curr_obj=p
@@ -284,10 +282,6 @@ def generate_ast(p, parent=None, arr_name=None):
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
     else:
         pass
-        # print(p)
-        # graph.add_node(pydot.Node((curr_val), label=str(curr_obj)))
-        # node_num+=1
-        # graph.add_edge(pydot.Edge(str(parent), (curr_val)))
 
 #   CompilationUnit().
 
@@ -295,9 +289,7 @@ def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
     # print(p[0])
-    # p[0].itr(p[0], None)
-    # print(p[0])
-    ST.print_scope_table()
+    # ST.print_scope_table()
     generate_ast(p[0])
     prefix='.'
     graph.write(prefix+'/graph.dot')

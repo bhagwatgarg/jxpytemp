@@ -66,9 +66,11 @@ class ScopeTable:
             return None
         else:
             self.scope_and_table_map[scope].add_function(idName, idType, args, modifiers=modifiers, return_type=return_type,scope=scope)
-
+    def print_scope(self, scope_name=None):
+        self.scope_and_table_map[scope_name].print_table()
     def print_curr_scope(self):
-        self.curr_sym_table.print_table()
+        self.print_scope(self.curr_scope)
+        # self.curr_sym_table.print_table()
     def print_scope_table(self):
         for key, val in self.scope_and_table_map.items():
             # if val.scope_type == "func":
