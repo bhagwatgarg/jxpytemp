@@ -65,7 +65,7 @@ class ScopeTable:
             self.scope_and_table_map[scope].add_symbol(idName, idType, is_array, dims, arr_size, modifiers=modifiers)
             return None
         else:
-            self.scope_and_table_map[scope].add_function(idName, idType, args, modifiers=modifiers, return_type=return_type)
+            self.scope_and_table_map[scope].add_function(idName, idType, args, modifiers=modifiers, return_type=return_type,scope=scope)
 
     def print_curr_scope(self):
         self.curr_sym_table.print_table()
@@ -134,7 +134,7 @@ class SymbolTable:
             'offset' : offset,
         }
 
-    def add_function(self, func_name, type=None, params=None, modifiers=[], return_type=None):
+    def add_function(self, func_name, type=None, params=None, modifiers=[], return_type=None,scope=None):
         if func_name in self.functions.keys():
             raise Exception('Function %s redeclared, check your program' % (func_name))
 
@@ -149,7 +149,10 @@ class SymbolTable:
             'type' : 'func',
             'width' : 8,
             'offset' : self.offset,
+            'scope' : scope,
+            'name' : func_name,
         }
+
 
     def add_block(self, block_name):
         self.blocks.add(block_name)
