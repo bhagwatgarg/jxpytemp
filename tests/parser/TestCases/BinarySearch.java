@@ -6,6 +6,10 @@ public class BinarySearch{
   // char po, pl;
   // float x,y,z;
   double hi;
+
+  public class lol {
+    int a;
+  }
   public static int search(int[] arr, int num){
     int a[] = new int[5];// = {1,2,3,4,5};
     int lef=0, righ=5, mid=0;

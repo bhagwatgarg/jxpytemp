@@ -1,12 +1,9 @@
-import grp
-# from msilib.schema import Binary
 import sys
-import ply.lex as lex
 import ply.yacc as yacc
-from pytest import Instance
 import lexer
 from model import *
 from new_sym_table import *
+from tac import *
 
 import pydot
 import os

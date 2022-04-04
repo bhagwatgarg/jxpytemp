@@ -1,15 +1,14 @@
 widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
 count = -1
 from new_sym_table import ScopeTable
+from tac import TAC
 
-ST=ScopeTable()
+ST = ScopeTable()
 # all_types=
 
 stackbegin = []
 stackend = []
 
-# Base node
-import lexer
 priorities={
   'double':5,
   'float':4,
