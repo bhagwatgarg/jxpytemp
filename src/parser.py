@@ -3,7 +3,7 @@ import ply.yacc as yacc
 import lexer
 from model import *
 from new_sym_table import *
-from tac import *
+
 
 import pydot
 import os
@@ -1508,12 +1508,13 @@ def p_ConditionalAndExpression(p):
 def p_ConditionalOrExpression(p):
     '''
     ConditionalOrExpression : ConditionalAndExpression
-    | ConditionalOrExpression OR ConditionalAndExpression
+    | ConditionalOrExpression OR OrMarker ConditionalAndExpression
     '''
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = ConditionalOr(p[2], p[1], p[3])
+        p[0] = ConditionalOr(p[2], p[1], p[4])
+        tac.backpatch()
 
 def p_ConditionalExpression(p):
     '''
