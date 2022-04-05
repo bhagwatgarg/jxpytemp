@@ -1,4 +1,4 @@
-// package TestCases;
+package TestCases;
 
 public class BinarySearch{
 
@@ -6,10 +6,9 @@ public class BinarySearch{
   // char po, pl;
   // float x,y,z;
   double hi;
+  boolean a = true;
+  // int b = NULL;
 
-  public class lol {
-    int a;
-  }
   public static int search(int[] arr, int num){
     int a[] = new int[5];// = {1,2,3,4,5};
     int lef=0, righ=5, mid=0;
@@ -44,7 +43,6 @@ class Main{
 	public static int hello (){
 		BinarySearch[] a = new BinarySearch[10];
 		int[] arr = {1,2,3,4,5};
-		return a.search(arr, 3);
-    return 1;
+		return a[0].search(arr);
 	}	
 }

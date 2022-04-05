@@ -805,8 +805,14 @@ class Literal(BaseClass):
         self.value = value
         if value[0] == "'":
             self.type = 'char'
+        elif value[0] == '"':
+            self.type = 'str'
         elif self.value.find('.') == 1:
             self.type = 'double'
+        elif value == "NULL":
+            self.type = 'null'
+        elif value == 'true' or value == 'false':
+            self.type = 'bool'
         else:
             self.type = 'int'
 
@@ -870,12 +876,6 @@ class Name(BaseClass):
             ST.curr_scope = temp
             ST.curr_sym_table = temp_table
             self.type = f_type
-                
-                    
-                
-
-
-
 
 class ExpressionStatement(Statement):
     def __init__(self, expression):

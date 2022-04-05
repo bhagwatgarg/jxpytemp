@@ -289,7 +289,7 @@ def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
     # print(p[0])
-    # ST.print_scope_table()
+    ST.print_scope_table()
     generate_ast(p[0])
     prefix='.'
     graph.write(prefix+'/graph.dot')
@@ -307,6 +307,7 @@ def p_Literal(p):
     | BOOL_LITERAL 
     | CHAR_LITERAL 
     | STRING_LITERAL 
+    | NULL
     '''
     p[0] = Literal(p[1])
 
@@ -327,6 +328,7 @@ def p_NumericType(p):
     | FloatingPointType
     '''
     p[0] = p[1]
+
 def p_IntegralType(p):
     ''' IntegralType : BYTE
     | SHORT
@@ -374,7 +376,6 @@ def p_QualifiedName(p):
     p[1].append_name(p[3])
     p[0] = p[1]
 
-
 def p_CompilationUnit(p):
     '''
     CompilationUnit : PackageDeclaration ImportDeclarations TypeDeclarations
@@ -397,6 +398,7 @@ def p_CompilationUnit2(p):
         p[0] = CompilationUnit(package_declaration=p[1], type_declarations=p[2])
     else :
         p[0] = CompilationUnit(import_declarations=p[1])
+
 def p_CompilationUnit3(p):
     '''
     CompilationUnit :  ImportDeclarations TypeDeclarations
@@ -456,8 +458,8 @@ def p_import_identifier(p):
     import_identifier : import_identifier DOT IDENTIFIER
     | IDENTIFIER
     '''
-    if len(p)==2: p[0]=[p[1]]
-    else: p[0]=p[1]+[p[3]]
+    if len(p) == 2: p[0] = [p[1]]
+    else: p[0] = p[1] + [p[3]]
 
 def p_TypeDeclaration(p):
     '''

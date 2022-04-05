@@ -17,6 +17,7 @@ keywords = {
     'else':'ELSE',
     'final':'FINAL',
     'float':'FLOAT',
+    'null' : 'NULL',
     'for':'FOR',
     'if':'IF',
     'import':'IMPORT',
