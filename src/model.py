@@ -1,10 +1,6 @@
 widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
 count = -1
-from new_sym_table import ScopeTable
-from tac import TAC
-
-ST = ScopeTable()
-# all_types=
+from tac import *
 
 stackbegin = []
 stackend = []

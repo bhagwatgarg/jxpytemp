@@ -2,8 +2,6 @@ import sys
 import ply.yacc as yacc
 import lexer
 from model import *
-from new_sym_table import *
-
 
 import pydot
 import os

@@ -1,11 +1,7 @@
-import sys
-import pdb
-import SymbolTable
-
+from new_sym_table import ScopeTable
 
 global ST
-ST = SymbolTable.SymbolTable()
-
+ST = ScopeTable()
 
 class TAC:
 
