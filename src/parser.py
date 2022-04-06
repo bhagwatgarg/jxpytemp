@@ -9,6 +9,7 @@ import os
 graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
 node_num=0
 
+
 def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
     curr_obj=p
@@ -996,21 +997,44 @@ def p_StatementExpression(p):
 
 def p_IfThenStatement(p):
     '''
-    IfThenStatement : IF begin_scope LPAREN Expression RPAREN Statement end_scope
+    IfThenStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 Statement ifMark1 end_scope 
     '''
-    p[0]=IfThenElse(predicate=p[4], if_true=p[6])
+    p[0]=IfThenElse(predicate=p[4], if_true=p[7])
+    tac.backpatch(p[4].truelist,p[6])
+    tac.backpatch(p[4].falselist,p[8])
+
+def p_ifMark1(p):
+        '''ifMark1 : '''
+        p[0] = p[-1] + ST.make_label()
+        tac.emit('label :','','',p[0])
+
+def p_ifMark2(p):
+        '''ifMark2 : '''
+        tac.emit('label :', '', '',  p[-2][0])
+
+def p_ifMark3(p):
+    '''label_for_if3 : '''
+    l1 = ST.make_label()
+    l2 = ST.make_label()
+    p[0] = [p[-1]+l1, p[-1]+l2]
+    tac.emit('goto','','',p[-1]+l1)
+    tac.emit('label :','', '', p[-1]+l2)
 
 def p_IfThenElseStatement(p):
     '''
-    IfThenElseStatement : IF begin_scope LPAREN Expression RPAREN StatementNoShortIf end_scope ELSE begin_scope Statement end_scope
+    IfThenElseStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope Statement ifMark2 end_scope
     '''
-    p[0]=IfThenElse(predicate=p[4], if_true=p[6], if_false=p[10])
+    p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
+    tac.backpatch(p[4].truelist,p[6])
+    tac.backpatch(p[4].falselist,p[10][1])
 
 def p_IfThenElseStatementNoShortIf(p):
     '''
-    IfThenElseStatementNoShortIf : IF begin_scope LPAREN Expression RPAREN StatementNoShortIf end_scope ELSE begin_scope StatementNoShortIf end_scope
+    IfThenElseStatementNoShortIf : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope StatementNoShortIf ifMark2 end_scope
     '''
-    p[0]=IfThenElse(predicate=p[3], if_true=p[6], if_false=p[10])
+    p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
+    tac.backpatch(p[4].truelist,p[6])
+    tac.backpatch(p[4].falselist,p[10][1])
 
 def p_SwitchStatement(p):
     '''
@@ -1496,23 +1520,33 @@ def p_InclusiveOrExpression(p):
 def p_ConditionalAndExpression(p):
     '''
     ConditionalAndExpression : InclusiveOrExpression
-    | ConditionalAndExpression AND InclusiveOrExpression
+    | ConditionalAndExpression AND ConMarker InclusiveOrExpression
     '''
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = ConditionalAnd(p[2], p[1], p[3])
+        p[0] = ConditionalAnd(p[2], p[1], p[4])
+        tac.backpatch(p[1].truelist,p[3])
+        p[0].truelist = p[4].truelist
+        p[0].falselist = p[1].falselist+p[4].falselist
 
 def p_ConditionalOrExpression(p):
     '''
     ConditionalOrExpression : ConditionalAndExpression
-    | ConditionalOrExpression OR OrMarker ConditionalAndExpression
+    | ConditionalOrExpression OR ConMarker ConditionalAndExpression
     '''
     if len(p) == 2:
         p[0] = p[1]
     else:
         p[0] = ConditionalOr(p[2], p[1], p[4])
-        tac.backpatch()
+        tac.backpatch(p[1].falselist,p[3])
+        p[0].truelist = p[1].truelist+p[4].truelist
+        p[0].falselist = p[4].falselist
+
+def p_ConMarker(p):
+        '''ConMarker : '''
+        p[0] = p[-1] + ST.make_label()
+        tac.emit('label :','','',p[0])
 
 def p_ConditionalExpression(p):
     '''

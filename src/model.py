@@ -5,6 +5,8 @@ from tac import *
 stackbegin = []
 stackend = []
 
+tac = TAC()
+
 priorities={
   'double':5,
   'float':4,
@@ -257,6 +259,7 @@ class FieldDeclaration(BaseClass):
         is_array = False
         dims = 0
         arr_size = []
+        width = 1 
 
         if isinstance(self.type, Type):
             if isinstance(self.type.name, Name):
@@ -279,8 +282,13 @@ class FieldDeclaration(BaseClass):
                     is_array = True
                     for k in j.initializer.dimensions:
                         arr_size.append(k.value)
-            
+                        width *= int(k.value)
+                    tac.emit(j.variable.name+'_'+str(ST.curr_scope),width,'','declare')
+                elif j.initializer:
+                    tac.emit(j.variable.name+'_'+str(ST.curr_scope),j.initializer.place,'','=')
+
                 ST.insert_in_sym_table(idName=name, idType=type_, is_array=is_array, dims=dims, arr_size=arr_size, modifiers=modifiers)
+                
 
 class MethodDeclaration(ScopeField):
 
@@ -396,11 +404,14 @@ class BinaryExpression(Expression):
 
     def __init__(self, operator, lhs, rhs):
         super(BinaryExpression, self).__init__()
-        self._fields = ['operator', 'lhs', 'rhs','type']
+        self._fields = ['operator', 'lhs', 'rhs','type','place','place','truelist','falselist']
         self.operator = operator
         self.lhs = lhs
         self.rhs = rhs
         self.type = None
+        self.place = None
+        self.truelist = []
+        self.falselist = []
 
 class Assignment(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
@@ -408,6 +419,8 @@ class Assignment(BinaryExpression):
         if lhs.type!=rhs.type:
             if lhs.type in ['int','double','long','float','char'] and rhs.type in ['int','double','long','float','char'] and operator in ['=','+=','-=','*=','/=','&=','|=','^=','%=','<<=','>>=','>>>='] :
                 self.type = highest_prior(lhs.type,rhs.type)
+                self.place = rhs.place
+                tac.emit(lhs.place,rhs.place,'',operator)
             else :
                 print("Type mismatch in assignment.")
                 print(lhs,rhs)
@@ -434,17 +447,26 @@ class ConditionalOr(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
         self.type = 'bool'
+        name = ST.get_temp_var()
+        self.place = name
+        tac.emit(name, lhs.place, rhs.place, operator)
 
 class ConditionalAnd(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
         self.type = 'bool'
+        name = ST.get_temp_var()
+        self.place = name
+        tac.emit(name, lhs.place, rhs.place, operator)
 
 class Or(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long','bool'] and rhs.type in ['int','char','long','bool']:
             self.type = highest_prior(lhs.type,rhs.type)
+            name = ST.get_temp_var()
+            self.place = name
+            tac.emit(name, lhs.place, rhs.place, operator)
         else:
             print("Error in Or operator operand types.")
 
@@ -454,6 +476,9 @@ class Xor(BinaryExpression):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long','bool'] and rhs.type in ['int','char','long','bool']:
             self.type = highest_prior(lhs.type,rhs.type)
+            name = ST.get_temp_var()
+            self.place = name
+            tac.emit(name, lhs.place, rhs.place, operator)
         else:
             print("Error in Xor operator operand types.")
 
@@ -463,6 +488,9 @@ class And(BinaryExpression):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long','bool'] and rhs.type in ['int','char','long','bool']:
             self.type = highest_prior(lhs.type,rhs.type)
+            name = ST.get_temp_var()
+            self.place = name
+            tac.emit(name, lhs.place, rhs.place, operator)
         else:
             print("Error in And operator operand types.")
 
@@ -472,6 +500,10 @@ class Equality(BinaryExpression):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
             self.type = 'bool'
+            self.falselist = [len(tac.code)]
+            tac.emit("ifgoto",self.place,'eq0','')
+            self.truelist = [len(tac.code)]
+            tac.emit("goto",'','','')
         else:
             print("Error in == operator operand types.")
 
@@ -481,6 +513,10 @@ class Relational(BinaryExpression):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
             self.type = 'bool'
+            self.falselist = [len(tac.code)]
+            tac.emit("ifgoto",self.place,'eq0','')
+            self.truelist = [len(tac.code)]
+            tac.emit("goto",'','','')
         else:
             print("Error in relational operator operand types.")
             # print(lhs,rhs)
@@ -491,6 +527,9 @@ class Shift(BinaryExpression):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long'] and rhs.type in ['int','char','long']:
             self.type = highest_prior(lhs.type,rhs.type)
+            name = ST.get_temp_var()
+            self.place = name
+            tac.emit(name, lhs.place, rhs.place, operator)
         else:
             print("Error in Shift operator operand types.")
 
@@ -500,6 +539,9 @@ class Additive(BinaryExpression):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
             self.type = highest_prior(lhs.type,rhs.type)
+            name = ST.get_temp_var()
+            self.place = name
+            tac.emit(name, lhs.place, rhs.place, operator)
         else:
             print("Error in additive operator operand types.")
 
@@ -509,6 +551,9 @@ class Multiplicative(BinaryExpression):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
             self.type = highest_prior(lhs.type,rhs.type)
+            name = ST.get_temp_var()
+            self.place = name
+            tac.emit(name, lhs.place, rhs.place, operator)
         else:
             print("Error in multiplicative operator operand types.")
 
@@ -517,19 +562,41 @@ class Unary(Expression):
 
     def __init__(self, sign, expression):
         super(Unary, self).__init__()
-        self._fields = ['sign', 'expression','type']
+        self._fields = ['sign', 'expression','type','place']
         self.sign = sign
         self.expression = expression
         self.type = expression.type
+        self.place = expression.place
+
+        temp =  ST.get_temp_var()
+        if "++" in sign or "--" in sign:
+            if "++" == sign[1:3] or "--" == sign[1:3]:
+                temp1 = ST.get_temp_var()
+                tac.emit(temp1,expression.place,' ','=')
+                self.place = temp1
+            if "++" in sign:
+                tac.emit(temp,expression.place,'1','+')
+                tac.emit(expression.place, temp, ' ' , '=')
+            elif "--" in sign:
+                tac.emit(temp,expression.place,'1','-')
+                tac.emit(expression.place, temp, ' ' , '=')
+        elif "-" in sign:
+            if isinstance(self.expression ,Literal):
+                self.place = '-' + self.expression.place
+            else:
+                tac.emit('neg',expression.place,' ',' ')
+
+
 
 class Cast(Expression):
 
     def __init__(self, target, expression):
         super(Cast, self).__init__()
-        self._fields = ['target', 'expression','type']
+        self._fields = ['target', 'expression','type','place']
         self.target = target
         self.expression = expression
         self.type = target.name
+        self.place = expression.place
 
 class Statement(BaseClass):
     pass
@@ -566,7 +633,7 @@ class ArrayInitializer(BaseClass):
 class MethodInvocation(Expression):
     def __init__(self, name, arguments=None, type_arguments=None, target=None):
         super(MethodInvocation, self).__init__()
-        self._fields = ['name', 'arguments', 'type_arguments', 'target','type']
+        self._fields = ['name', 'arguments', 'type_arguments', 'target','type','place']
         a=name
         if type(name)!=str:
             a = name.value
@@ -636,6 +703,14 @@ class MethodInvocation(Expression):
         
         ST.curr_scope = temp
         ST.curr_sym_table = temp_table
+
+        for x in reversed(self.arguments):
+            tac.emit('push',x.place,'','')
+        tac.emit('call',name+str(len(arguments)),'','')
+        temp = ST.get_temp_var()
+        if ST.lookup(name,is_func=True)['return_type'] != 'void':
+            tac.emit('pop',temp,'','')
+        self.place = temp
 
 class IfThenElse(Statement, ScopeField):
 
@@ -714,8 +789,11 @@ class Return(Statement):
 
     def __init__(self, result=None):
         super(Return, self).__init__()
-        self._fields = ['result']
+        self._fields = ['result','type']
         self.result = result
+        self.type = 'void'
+        tac.emit('ret',result.place,'','')
+
 
 class ConstructorInvocation(Statement):
 
@@ -760,7 +838,7 @@ class ArrayAccess(Expression):
 
     def __init__(self, index, target):
         super(ArrayAccess, self).__init__()
-        self._fields = ['index', 'target','type','depth','dimension']
+        self._fields = ['index', 'target','type','depth','dimension','place']
         self.index = index
         self.target = target
         self.type = target.type
