@@ -628,7 +628,7 @@ def p_MethodHeader(p):
     idName = var['name'] + "_" + ST.curr_scope
 
     for i in params:
-        idName += "_" + i['type'] + "_" + str(i['dims'])
+        idName += "_" + i['type']
     
     var['name'] = idName
 
@@ -695,7 +695,7 @@ def p_MethodHeader2(p):
     idName = var['name'] + "_" + ST.curr_scope
 
     for i in params:
-        idName += "_" + i['type'] + "_" + str(i['dims'])
+        idName += "_" + i['type']
     
     var['name'] = idName
     
@@ -1294,10 +1294,10 @@ def p_FieldAccess(p):
 
 def p_MethodInvocation(p):
     '''
-    MethodInvocation : Name LPAREN ArgumentList RPAREN
-    | Name LPAREN RPAREN
-    | Primary DOT IDENTIFIER LPAREN ArgumentList RPAREN
+    MethodInvocation : Primary DOT IDENTIFIER LPAREN ArgumentList RPAREN
+    | Name LPAREN ArgumentList RPAREN
     | Primary DOT IDENTIFIER LPAREN RPAREN
+    | Name LPAREN RPAREN
     '''
     if len(p)==5:
         p[0] = MethodInvocation(p[1], arguments=p[3])

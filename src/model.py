@@ -17,6 +17,14 @@ priorities={
 def highest_prior(lhs_type, rhs_type):
   return lhs_type if priorities[lhs_type]>priorities[rhs_type] else rhs_type
 
+def get_func_name(id, params):
+    idName = id + "_" + ST.curr_scope
+    if params==None: params=[]
+    for i in params:
+        idName += "_" + i.type
+    return idName
+
+
 class BaseClass(object):
     '''
     A BaseClass is the base class for all elements that occur in the program
@@ -573,32 +581,40 @@ class MethodInvocation(Expression):
         temp = ST.curr_scope
         temp_table = ST.scope_and_table_map[ST.curr_scope]
         f_type=None
-        if '.' in a:
+        if target != None:
+            if target=='this':
+                t=ST.scope_and_table_map[ST.curr_scope]
+
+                while t.scope_type!='class':
+                    t=t.parent_table
+                ST.curr_scope=t.scope
+            elif hasattr(target, 'type'):
+                ST.curr_scope=target.type
+            ST.curr_sym_table=ST.scope_and_table_map[ST.curr_scope]
+        # if '.' in a:
+        if True:
             a = a.split(".")
             for var in a:
-                #print(var,ST.curr_scope)
                 if f_type in ['int','float','bool','char','long','double']:
                     print("primitive type")
-                if ST.lookup(var) == None and ST.lookup(var+'_'+ST.curr_scope,is_func=True) == None:
-                    # print(f"Current Scope: {ST.curr_scope}")
-                    print("Variable/Function",var, "not declared in current scope")
+                if ST.lookup(var) == None and ST.lookup(get_func_name(var, arguments),is_func=True) == None:
+                    print("Variable/Function",var, f"not declared in current scope {ST.curr_scope} (1)")
                     break
                 elif ST.lookup(var) != None and ST.lookup(var)['type'] not in ['int','float','bool','char','long','double']:
                     if 'private' in ST.lookup(var)['modifiers']:
                         print(f"Tried to access a 'private' variable '{var}' from outside")
                         break
                     k = ST.lookup(var)['type']
-                    print(var, k)
                     ST.curr_scope = k
                     ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
                     f_type = k
-                elif ST.lookup(var+'_'+ST.curr_scope,is_func=True) != None:
-                    if 'private' in ST.lookup(var+'_'+ST.curr_scope,is_func=True)['modifiers']:
+                elif ST.lookup(get_func_name(var, arguments), is_func=True) != None:
+                    if 'private' in ST.lookup(get_func_name(var, arguments), is_func=True)['modifiers']:
                         print(f"Tried to access a 'private' function '{var}' from outside")
                         break
                     t=ST.curr_scope
-                    ST.curr_scope = ST.lookup(var+'_'+ST.curr_scope,is_func=True)['name']
-                    f_type = ST.lookup(var+'_'+t,is_func=True)['return_type']
+                    f_type = ST.lookup(get_func_name(var, arguments),is_func=True)['return_type']
+                    ST.curr_scope = ST.lookup(get_func_name(var, arguments),is_func=True)['name']
                     ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
                 elif ST.lookup(var) != None and ST.lookup(var)['type'] in ['int','float','bool','char','long','double']:
                     if 'private' in ST.lookup(var)['modifiers']:
@@ -607,9 +623,19 @@ class MethodInvocation(Expression):
                     f_type = ST.lookup(var)['type']
                     
             self.type = f_type
-            name.value = var
 
-        # print(ST.curr_scope)
+            # TODO: WHY?
+            if hasattr(name, 'value'):
+                name.value = var
+            else: name=Name(var)
+        # else:
+        #     if hasattr(target, 'type'):
+        #         ST.curr_scope=target.type
+        #         ST.curr_sym_table=ST.scope_and_table_map[ST.curr_scope]
+        #     else:
+        #         ST.curr_scope=temp
+        #         ST.curr_sym_table=temp_table
+
         if arguments is None:
             arguments = []
         self.name = name
@@ -618,8 +644,7 @@ class MethodInvocation(Expression):
         self.type=None
         self.type_arguments=type_arguments
         try:
-            #print(name.value + '_' + ST.curr_scope)
-            if ST.lookup(ST.curr_scope,is_func=True) is None:
+            if ST.lookup(ST.curr_scope ,is_func=True) is None:
                 print("Not a function")
             else :
                 n_params = ST.lookup(ST.curr_scope,is_func=True)['n_params'] 
@@ -814,19 +839,18 @@ class Literal(BaseClass):
 
 class Name(BaseClass):
 
-    def __init__(self, value):
+    def __init__(self, value, type=None):
         super(Name, self).__init__()
         self._fields = ['value','type']
         self.value = value
-        self.type = None
-
-        if ST.lookup(value) == None and ST.lookup(value+'_'+ST.curr_scope,is_func=True) == None:
-            print(ST.print_scope(ST.get_parent_scope()))
-            print("Variable/Function",value, "not declared in current scope")
-        elif ST.lookup(value) != None:
+        self.type = type
+        if type: return
+        # if ST.lookup(value) == None and ST.lookup(value+'_'+ST.curr_scope,is_func=True) == None:
+            # print("Variable/Function",value, f"not declared in current scope {ST.curr_scope} (2)")
+        if ST.lookup(value) != None:
             self.type = ST.lookup(value)['type']
         else:
-            self.type = ST.lookup(value+'_'+ST.curr_scope,is_func=True)['type'] 
+            self.type = "$func"
 
     def append_name(self, name):
         try:
@@ -834,44 +858,38 @@ class Name(BaseClass):
         except:
             self.value = self.value + '.' + name
 
-            a = self.value
-            a = a.split(".")
-            temp = ST.curr_scope
-            temp_table = ST.scope_and_table_map[ST.curr_scope]
-            f_type = None
-            #print(a)
-            for var in a:
-                print(var,ST.curr_scope)
-                if f_type in ['int','float','bool','char','long','double']:
-                    print("primitive type")
-                if ST.lookup(var) == None and ST.lookup(var+'_'+ST.curr_scope,is_func=True) == None:
-                    print("Variable/Function",var, "not declared in current scope")
+        a = self.value
+        a = a.split(".")
+        temp = ST.curr_scope
+        temp_table = ST.scope_and_table_map[ST.curr_scope]
+        f_type = None
+        for var in a:
+            if f_type in ['int','float','bool','char','long','double']:
+                print("primitive type")
+            if ST.lookup(var) != None and ST.lookup(var)['type'] not in ['int','float','bool','char','long','double']:
+                if 'private' in ST.lookup(var)['modifiers']:
+                    print(f"Tried to access a 'private' variable '{var}' from outside")
                     break
-                elif ST.lookup(var) != None and ST.lookup(var)['type'] not in ['int','float','bool','char','long','double']:
-                    if 'private' in ST.lookup(var)['modifiers']:
-                        print(f"Tried to access a 'private' variable '{var}' from outside")
-                        break
-                    k = ST.lookup(var)['type']
-                    ST.curr_scope = k
-                    ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
-                    f_type = k
-                elif ST.lookup(var+'_'+ST.curr_scope,is_func=True) != None:
-                    if 'private' in ST.lookup(var+'_'+ST.curr_scope,is_func=True)['modifiers']:
-                        print(f"Tried to access a 'private' function '{var}' from outside")
-                        break
-                    t=ST.curr_scope
-                    ST.curr_scope = ST.lookup(var+'_'+ST.curr_scope,is_func=True)['name']
-                    f_type = ST.lookup(var+'_'+t,is_func=True)['return_type']
-                    ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
-                elif ST.lookup(var) != None and ST.lookup(var)['type'] in ['int','float','bool','char','long','double']:
-                    if 'private' in ST.lookup(var)['modifiers']:
-                        print(f"Tried to access a 'private' variable '{var}' from outside")
-                        break
-                    f_type = ST.lookup(var)['type']
+                k = ST.lookup(var)['type']
+                ST.curr_scope = k
+                ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
+                f_type = k
+            elif ST.lookup(var) != None and ST.lookup(var)['type'] in ['int','float','bool','char','long','double']:
+                if 'private' in ST.lookup(var)['modifiers']:
+                    print(f"Tried to access a 'private' variable '{var}' from outside")
+                    break
+                f_type = ST.lookup(var)['type']
+            else:
+                f_type='$func'
+
+        ST.curr_scope = temp
+        ST.curr_sym_table = temp_table
+        self.type = f_type
                     
-            ST.curr_scope = temp
-            ST.curr_sym_table = temp_table
-            self.type = f_type
+                
+
+
+
 
 class ExpressionStatement(Statement):
     def __init__(self, expression):

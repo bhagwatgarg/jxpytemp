@@ -1,4 +1,4 @@
-package TestCases;
+// package TestCases;
 
 public class BinarySearch{
 
@@ -9,12 +9,9 @@ public class BinarySearch{
   boolean a = true;
   // int b = NULL;
 
-<<<<<<< HEAD
-  public static int search(int[] arr, int num){
-=======
   public int search(int[] arr, int num){
->>>>>>> Method Invocation and Overloading working (again)
     int a[] = new int[5];// = {1,2,3,4,5};
+    this.search(arr, num);
     int lef=0, righ=5, mid=0;
     while(lef<=righ){
       int a = 5;
@@ -26,28 +23,40 @@ public class BinarySearch{
     return -1;
   }
 
-  public static int hello (){
+  public int hello (){
+    int[] ar = {1,2,3,4,5};
+		this.search(ar, 3);
+    this.hello();
 		int arr = 5;
 		return arr;
 	}	
 
-  // public static int hello(int a, int b)
-  // {
-  //   return 1;
-  // }
+  public static int hello(int a, int b)
+  {
+    return 1;
+  }
 
-  // public static int hello(int a, int b)
-  // {
-  //   return 1;
-  // }
+  public static int hello(int a)
+  {
+    return 1;
+  }
 
+}
+
+class BinaryWrapper{
+  BinarySearch a;
+  int i;
+  void search(int[] arr, int b){}
 }
 
 class Main{
 	public static int hello (){
-		BinarySearch a = new BinarySearch();
+		// BinarySearch a = new BinarySearch();
+    BinaryWrapper a=new BinaryWrapper();
 		int[] arr = {1,2,3,4,5};
 		a.search(arr, 3);
+    a.a.search(arr, 2);
+    // a.i=2;
     return 1;
 	}	
 }
