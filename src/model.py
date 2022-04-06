@@ -2,8 +2,10 @@ widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
 count = -1
 from tac import *
 
-stackbegin = []
-stackend = []
+tac = TAC()
+
+# stackbegin = []
+# stackend = []
 
 priorities={
   'double':5,
@@ -236,8 +238,8 @@ class ClassDeclaration(ScopeField):
         parent_scope = ST.get_parent_scope()
         ST.insert_in_sym_table(idName=name, idType='class', modifiers=modifiers, scope=parent_scope)
         ST.end_scope()
-        stackbegin.pop()
-        stackend.pop()
+        # stackbegin.pop()
+        # stackend.pop()
 
 class ClassInitializer(ScopeField):
 
@@ -358,8 +360,8 @@ class ConstructorDeclaration(ScopeField):
         parent_scope = ST.get_parent_scope()
         ST.insert_in_sym_table(name, idType='function', is_func=True, args=params, modifiers=modifiers, scope=parent_scope)
         ST.end_scope()
-        stackbegin.pop()
-        stackend.pop()
+        # stackbegin.pop()
+        # stackend.pop()
 
 class FormalParameter(BaseClass):
 

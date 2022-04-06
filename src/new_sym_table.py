@@ -44,14 +44,14 @@ class ScopeTable:
 
     def make_label(self):
         self.label_counter += 1
-        return  self.label_prefix
+        return  self.label_prefix + self.label_counter
 
     def get_parent_scope(self):
         return self.scope_and_table_map[self.curr_scope].parent
 
     def get_temp_var(self):
         self.temp_var_counter += 1
-        return str(self.temp_var_counter)
+        return 'label' + str(self.temp_var_counter)
 
     def insert_in_sym_table(self, idName, idType, is_func=False, args=None, is_array=False, dims=None, arr_size=None, scope=None, modifiers=[], return_type=None):
         '''
