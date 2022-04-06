@@ -596,7 +596,7 @@ class Unary(Expression):
             else:
                 tac.emit('neg',expression.place,' ',' ')
 
-
+# TODO shift operations
 
 class Cast(Expression):
 
@@ -667,6 +667,8 @@ class MethodInvocation(Expression):
                 if f_type in ['int','float','bool','char','long','double']:
                     print("primitive type")
                 if ST.lookup(var) == None and ST.lookup(get_func_name(var, arguments),is_func=True) == None:
+                    print(arguments)
+                    print(get_func_name(var, arguments))
                     print("Variable/Function",var, f"not declared in current scope {ST.curr_scope} (1)")
                     break
                 elif ST.lookup(var) != None and ST.lookup(var)['type'] not in ['int','float','bool','char','long','double']:
@@ -732,10 +734,10 @@ class MethodInvocation(Expression):
         ST.curr_sym_table = temp_table
 
         for x in reversed(self.arguments):
-            tac.emit('push',x.place,'','')
-        tac.emit('call',name+str(len(arguments)),'','')
+            tac.emit('push',x,'','')
+        tac.emit('call',name.value+str(len(arguments)),'','')
         temp = ST.get_temp_var()
-        if ST.lookup(name,is_func=True)['return_type'] != 'void':
+        if ST.lookup(name.value ,is_func=True) != None and ST.lookup(name.value ,is_func=True)['return_type'] != 'void':
             tac.emit('pop',temp,'','')
         self.place = temp
 
@@ -818,6 +820,8 @@ class Return(Statement):
         super(Return, self).__init__()
         self._fields = ['result','type']
         self.result = result
+        # ST.lookup(result)
+        # TODO: Maybe:
         self.type = 'void'
         tac.emit('ret',result.place,'','')
 
@@ -837,7 +841,7 @@ class InstanceCreation(Expression):
 
     def __init__(self, type, arguments=None, body=None):
         super(InstanceCreation, self).__init__()
-        self._fields = ['type', 'arguments', 'body']
+        self._fields = ['type', 'arguments', 'body', 'place']
         if arguments is None:
             arguments = []
         if body is None:
@@ -845,6 +849,7 @@ class InstanceCreation(Expression):
         self.type = type
         self.arguments = arguments
         self.body = body
+        self.place=ST.get_temp_var()
 
 class FieldAccess(Expression):
 
@@ -902,8 +907,9 @@ class Literal(BaseClass):
 
     def __init__(self, value):
         super(Literal, self).__init__()
-        self._fields = ['value','type']
+        self._fields = ['value','type', 'place']
         self.value = value
+        self.place = value
         if value[0] == "'":
             self.type = 'char'
         elif value[0] == '"':
@@ -924,6 +930,7 @@ class Name(BaseClass):
         self._fields = ['value','type']
         self.value = value
         self.type = type
+        self.place=value+'_'+ST.curr_scope
         if type: return
         # if ST.lookup(value) == None and ST.lookup(value+'_'+ST.curr_scope,is_func=True) == None:
             # print("Variable/Function",value, f"not declared in current scope {ST.curr_scope} (2)")

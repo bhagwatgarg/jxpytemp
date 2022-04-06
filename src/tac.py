@@ -21,10 +21,11 @@ class TAC:
         #import pdb; pdb.set_trace()
         if 'temp' == rhs[0:5]:
             ind = int(rhs[4])
-            ST.tempNo[ind] = 0 #Free this temporary
+            # TODO tempNo
+            # ST.tempNo[ind] = 0 #Free this temporary
         if 'temp' in rhs1[0:5]:
             ind = int(rhs1[4])
-            ST.tempNo[ind] = 0 #Free this temporary
+            # ST.tempNo[ind] = 0 #Free this temporary
 
 
     def backpatch(self,list1,label):
