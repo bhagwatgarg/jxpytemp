@@ -9,6 +9,8 @@ import os
 graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
 node_num=0
 
+breaks = []
+continues = []
 
 def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
@@ -381,9 +383,9 @@ def p_CompilationUnit(p):
     | PackageDeclaration ImportDeclarations
     | PackageDeclaration
     '''
-    if len(p)==4:
+    if len(p)==4 :
         p[0] = CompilationUnit(package_declaration=p[1], import_declarations=p[2], type_declarations=p[3])
-    elif len(p)==3:
+    elif len(p)==3 :
         p[0] = CompilationUnit(package_declaration=p[1], import_declarations=p[2])
     else :
         p[0] = CompilationUnit(package_declaration=p[1])
@@ -578,8 +580,8 @@ def p_MethodDeclaration(p):
     MethodDeclaration : MethodHeader MethodBody
     '''
     ST.end_scope()
-    stackbegin.pop()
-    stackend.pop()
+    # stackbegin.pop()
+    # stackend.pop()
     p[0]=p[1]
     # print(p[1])
     p[0].body=p[2]
@@ -629,14 +631,14 @@ def p_MethodHeader(p):
     idName = var['name'] + "_" + ST.curr_scope
 
     for i in params:
-        idName += "_" + i['type'] + "_" + str(i['dims'])
+        idName += "_" + i['type']
     
     var['name'] = idName
 
     ST.create_new_table(var['name'], scope_type="func")
     # print(f"table vreated: {var['name']}")
-    stackbegin.append(var['name'])
-    stackend.append(var['name'])
+    # stackbegin.append(var['name'])
+    # stackend.append(var['name'])
     p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None)
     # print(p[0], 'qwer')
     
@@ -696,14 +698,14 @@ def p_MethodHeader2(p):
     idName = var['name'] + "_" + ST.curr_scope
 
     for i in params:
-        idName += "_" + i['type'] + "_" + str(i['dims'])
+        idName += "_" + i['type']
     
     var['name'] = idName
     
     ST.create_new_table(var['name'], scope_type="func")
     # print(f"table vreated: {var['name']}")
-    stackbegin.append(var['name'])
-    stackend.append(var['name'])
+    # stackbegin.append(var['name'])
+    # stackend.append(var['name'])
     p[0]=MethodDeclaration(var['name'], parameters = var['parameters'], return_type=var['type'], modifiers=var['modifiers'], body=None)
     # print(f"Curr Scope: {ST.curr_scope}")
     # print(var['parameters'])
@@ -1091,97 +1093,252 @@ def p_SwitchLabel(p):
 
 def p_WhileStatement(p):
     '''
-    WhileStatement : WHILE begin_scope LPAREN Expression RPAREN Statement end_scope
+    WhileStatement : WHILE prep_fw_stack LPAREN begin_scope while_l1 Expression RPAREN while_l1 Statement end_scope while_l2
     '''
-    p[0]=While(predicate=p[4], body=p[6])
+    p[0]=While(predicate=p[6], body=p[9])
+
+    tac.backpatch(continues[-1], p[5])
+    tac.backpatch(breaks[-1], p[11])
+    
+    tac.backpatch(p[6].truelist, p[8])
+    tac.backpatch(p[6].falselist, p[11])
+
+    continues.pop()
+    breaks.pop()
 
 def p_WhileStatementNoShortIf(p):
     '''
-    WhileStatementNoShortIf : WHILE begin_scope LPAREN Expression RPAREN StatementNoShortIf end_scope
+    WhileStatementNoShortIf : WHILE prep_fw_stack LPAREN begin_scope while_l1 Expression RPAREN while_l1 StatementNoShortIf end_scope while_l2
     '''
-    p[0]=While(predicate=p[4], body=p[6])
+    p[0]=While(predicate=p[6], body=p[9])
+
+    tac.backpatch(continues[-1], p[5])
+    tac.backpatch(breaks[-1], p[11])
+    
+    tac.backpatch(p[6].truelist, p[8])
+    tac.backpatch(p[6].falselist, p[11])
+
+    continues.pop()
+    breaks.pop()
+
+def p_prep_fw_stack(p):
+    '''
+    prep_fw_stack : 
+    '''
+    continues.append([])
+    breaks.append([])
+
+def p_while_l1(p):
+    '''
+    while_l1 : 
+    '''
+    label = 'while_' + ST.make_label()
+    p[0] = label
+    tac.emit('label :', '', '', label)
+
+def p_while_l2(p):
+    '''
+    while_l2 :
+    '''
+    label = 'while_' + ST.make_label()
+    p[0] = label
+    tac.emit('goto','', '', p[-6])
+    tac.emit('label :', '', '', label)
 
 def p_DoStatement(p):
     '''
-    DoStatement : DO begin_scope Statement WHILE LPAREN Expression RPAREN end_scope SEMI
+    DoStatement : DO prep_fw_stack begin_scope dwhile_l1 Statement WHILE LPAREN dwhile_l1 Expression RPAREN SEMI end_scope dwhile_l2
     '''
-    p[0]=DoWhile(predicate=p[5], body=p[2])
+    p[0]=DoWhile(predicate=p[9], body=p[5])
+
+    tac.backpatch(continues[-1], p[8])
+    tac.backpatch(breaks[-1], p[13])
+    
+    tac.backpatch(p[6].truelist, p[4])
+    tac.backpatch(p[6].falselist, p[13])
+
+    continues.pop()
+    breaks.pop()
+
+def p_dwhile_l1(p):
+    '''
+    dwhile_l1 : 
+    '''
+    label = 'dowhile_' + ST.make_label()
+    p[0] = label
+    tac.emit('label :', '', '', label)
+
+def p_dwhile_l2(p):
+    '''
+    dwhile_l2 :
+    '''
+    label = 'dowhile_' + ST.make_label()
+    p[0] = label
+    tac.emit('goto','', '', p[-5])
+    tac.emit('label :', '', '', label)
 
 def p_ForStatement(p):
     '''
-    ForStatement : FOR begin_scope LPAREN ForInit SEMI Expression SEMI ForUpdate RPAREN Statement end_scope
-    | FOR begin_scope LPAREN SEMI Expression SEMI ForUpdate RPAREN Statement end_scope
-    | FOR begin_scope LPAREN ForInit SEMI SEMI ForUpdate RPAREN Statement end_scope
-    | FOR begin_scope LPAREN ForInit SEMI Expression SEMI RPAREN Statement end_scope
-    | FOR begin_scope LPAREN ForInit SEMI SEMI RPAREN Statement end_scope
-    | FOR begin_scope LPAREN SEMI Expression SEMI RPAREN Statement end_scope
-    | FOR begin_scope LPAREN SEMI SEMI ForUpdate RPAREN Statement end_scope
-    | FOR begin_scope LPAREN SEMI SEMI RPAREN Statement end_scope
+    ForStatement : FOR prep_fw_stack LPAREN begin_scope ForInit SEMI for_l1 Expression SEMI for_l1 ForUpdate for_l3 RPAREN for_l1 Statement end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope SEMI for_l1 Expression SEMI for_l1 ForUpdate for_l3 RPAREN for_l1 Statement end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope ForInit SEMI for_l1 SEMI for_l1 ForUpdate for_l3 RPAREN for_l1 Statement end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope ForInit SEMI for_l1 Expression SEMI for_l1 for_l3 RPAREN for_l1 Statement end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope ForInit SEMI for_l1 SEMI for_l1 for_l3 RPAREN for_l1 Statement end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope SEMI for_l1 Expression SEMI for_l1 for_l3 RPAREN for_l1 Statement end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope SEMI for_l1 SEMI for_l1 ForUpdate for_l3 RPAREN for_l1 Statement end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope SEMI for_l1 SEMI for_l1 for_l3 RPAREN for_l1 Statement end_scope for_l2
     '''
-    init, predicate, update, body=None, None, None, None
-    if len(p)==12:
-        init=p[4]
-        predicate=p[6]
-        update=p[8]
-        body=p[10]
-    elif len(p)==11:
-        body=p[9]
-        if p[4]==';':
-            predicate=p[5]
-            update=p[7]
-        elif p[6]==';':
-            init=p[4]
-            update=p[7]
+    init, predicate, update, body, conts, brks, tl_jumps =None, None, None, None, None, None, None
+    if len(p) == 18:
+        init = p[5]
+        predicate = p[8]
+        update = p[11]
+        body = p[15]
+        conts = p[10]
+        brks = p[17]
+        tl_jumps = p[14]
+    elif len(p) == 17:
+        body = p[14]
+        brks = p[16]
+        tl_jumps = p[13]
+        if p[5] ==';':
+            predicate = p[7]
+            update = p[10]
+            conts = p[9]
+        elif p[8] ==';':
+            init = p[5]
+            update = p[10]
+            conts = p[9]
         else:
-            init=p[4]
-            predicate=p[6]
-    elif len(p)==10:
-        body=p[8]
-        if p[5]==';' and p[6]==';':
-            init=p[4]
-        elif p[4]==';' and p[6]==';':
-            predicate=p[5]
+            init = p[5]
+            predicate = p[7]
+            conts = p[10]
+    elif len(p) == 16:
+        body = p[13]
+        brks = p[15]
+        tl_jumps = p[12]
+        if p[6] == ';' and p[8] == ';':
+            init = p[5]
+            conts = p[9]
+        elif p[5] == ';' and p[8] == ';':
+            predicate = p[7]
+            conts = p[9]
         else:
-            update=p[6]
-    p[0]=For(init=init, predicate=predicate, update=update, body=body)
+            update = p[9]
+            conts = p[8]
+    elif len(p) == 15:
+        body = p[12]
+        brks = p[14]
+        tl_jumps = p[11]
+        conts = p[8]
+
+    p[0] = For(init = init, predicate = predicate, update = update, body = body)
+
+    tac.backpatch(continues[-1], conts)
+    tac.backpatch(breaks[-1], brks)
+
+    tac.backpatch(predicate.truelist, tl_jumps)
+    tac.backpatch(predicate.falselist, brks)
+
+    continues.pop()
+    breaks.pop()
 
 def p_ForStatementNoShortIf(p):
     '''
-    ForStatementNoShortIf : FOR begin_scope LPAREN ForInit SEMI Expression SEMI ForUpdate RPAREN StatementNoShortIf end_scope
-    | FOR begin_scope LPAREN SEMI Expression SEMI ForUpdate RPAREN StatementNoShortIf end_scope
-    | FOR begin_scope LPAREN ForInit SEMI SEMI ForUpdate RPAREN StatementNoShortIf end_scope
-    | FOR begin_scope LPAREN ForInit SEMI Expression SEMI RPAREN StatementNoShortIf end_scope
-    | FOR begin_scope LPAREN ForInit SEMI SEMI RPAREN StatementNoShortIf end_scope
-    | FOR begin_scope LPAREN SEMI Expression SEMI RPAREN StatementNoShortIf end_scope
-    | FOR begin_scope LPAREN SEMI SEMI ForUpdate RPAREN StatementNoShortIf end_scope
-    | FOR begin_scope LPAREN SEMI SEMI RPAREN StatementNoShortIf end_scope
+    ForStatementNoShortIf : FOR prep_fw_stack LPAREN begin_scope ForInit SEMI for_l1 Expression SEMI for_l1 ForUpdate for_l3 RPAREN for_l1 StatementNoShortIf end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope SEMI for_l1 Expression SEMI for_l1 ForUpdate for_l3 RPAREN for_l1 StatementNoShortIf end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope ForInit SEMI for_l1 SEMI for_l1 ForUpdate for_l3 RPAREN for_l1 StatementNoShortIf end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope ForInit SEMI for_l1 Expression SEMI for_l1 for_l3 RPAREN for_l1 StatementNoShortIf end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope ForInit SEMI for_l1 SEMI for_l1 for_l3 RPAREN for_l1 StatementNoShortIf end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope SEMI for_l1 Expression SEMI for_l1 for_l3 RPAREN for_l1 StatementNoShortIf end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope SEMI for_l1 SEMI for_l1 ForUpdate for_l3 RPAREN for_l1 StatementNoShortIf end_scope for_l2
+    | FOR prep_fw_stack LPAREN begin_scope SEMI for_l1 SEMI for_l1 for_l3 RPAREN for_l1 StatementNoShortIf end_scope for_l2
     '''
-    init, predicate, update, body=None, None, None, None
-    if len(p)==12:
-        init=p[4]
-        predicate=p[6]
-        update=p[8]
-        body=p[10]
-    elif len(p)==11:
-        body=p[9]
-        if p[4]==';':
-            predicate=p[5]
-            update=p[7]
-        elif p[6]==';':
-            init=p[4]
-            update=p[7]
+    init, predicate, update, body, conts, brks, tl_jumps =None, None, None, None, None, None, None
+    if len(p) == 18:
+        init = p[5]
+        predicate = p[8]
+        update = p[11]
+        body = p[15]
+        conts = p[10]
+        brks = p[17]
+        tl_jumps = p[14]
+    elif len(p) == 17:
+        body = p[14]
+        brks = p[16]
+        tl_jumps = p[13]
+        if p[5] ==';':
+            predicate = p[7]
+            update = p[10]
+            conts = p[9]
+        elif p[8] ==';':
+            init = p[5]
+            update = p[10]
+            conts = p[9]
         else:
-            init=p[4]
-            predicate=p[6]
-    elif len(p)==10:
-        body=p[8]
-        if p[5]==';' and p[6]==';':
-            init=p[4]
-        elif p[4]==';' and p[6]==';':
-            predicate=p[5]
+            init = p[5]
+            predicate = p[7]
+            conts = p[10]
+    elif len(p) == 16:
+        body = p[13]
+        brks = p[15]
+        tl_jumps = p[12]
+        if p[6] == ';' and p[8] == ';':
+            init = p[5]
+            conts = p[9]
+        elif p[5] == ';' and p[8] == ';':
+            predicate = p[7]
+            conts = p[9]
         else:
-            update=p[6]
-    p[0]=For(init=init, predicate=predicate, update=update, body=body)
+            update = p[9]
+            conts = p[8]
+    elif len(p) == 15:
+        body = p[12]
+        brks = p[14]
+        tl_jumps = p[11]
+        conts = p[8]
+
+    p[0] = For(init = init, predicate = predicate, update = update, body = body)
+
+    tac.backpatch(continues[-1], conts)
+    tac.backpatch(breaks[-1], brks)
+
+    tac.backpatch(predicate.truelist, tl_jumps)
+    tac.backpatch(predicate.falselist, brks)
+
+    continues.pop()
+    breaks.pop()
+
+def p_for_l1(p):
+    '''
+    for_l1 : 
+    '''
+    label = 'for_' + ST.make_label()
+    p[0] = label
+    tac.emit('label :', '', '', label)
+
+def p_for_l2(p):
+    '''
+    for_l2 :
+    '''
+    label = 'for_' + ST.make_label()
+    p[0] = label
+    if p[-6] == ';':
+        tac.emit('goto', '', '', p[-5])
+    else:
+        tac.emit('goto','', '', p[-6])
+    tac.emit('label :', '', '', label)
+
+def p_for_l3(p):
+    '''
+    for_l3 :
+    '''
+    if p[-6] == ';':
+        tac.emit('goto','', '', p[-5])
+    elif p[-5] == ';':
+        tac.emit('goto','', '', p[-4])
+    else:
+        tac.emit('goto','', '', p[-3])
 
 def p_ForInit(p):
     '''
@@ -1209,8 +1366,11 @@ def p_BreakStatement(p):
     BreakStatement : BREAK IDENTIFIER SEMI
     | BREAK SEMI
     '''
-    if len(p)==4: p[0]=Break(label=p[2])
-    else: p[0]=Break()
+    if len(p) == 3: 
+        breaks[-1].append(len(tac.code))
+        tac.emit('goto', '', '', '')
+        p[0] = Break()
+    else: p[0] = Break(label = p[2])
 
 
 ### BG END
@@ -1221,6 +1381,8 @@ def p_ContinueStatement(p):
     | CONTINUE SEMI
     '''
     if len(p) == 3:
+        continues[-1].append(len(tac.code))
+        tac.emit('goto', '', '', '')
         p[0] = Continue()
     else:
         p[0] = Continue(p[2])
@@ -1318,10 +1480,10 @@ def p_FieldAccess(p):
 
 def p_MethodInvocation(p):
     '''
-    MethodInvocation : Name LPAREN ArgumentList RPAREN
-    | Name LPAREN RPAREN
-    | Primary DOT IDENTIFIER LPAREN ArgumentList RPAREN
+    MethodInvocation : Primary DOT IDENTIFIER LPAREN ArgumentList RPAREN
+    | Name LPAREN ArgumentList RPAREN
     | Primary DOT IDENTIFIER LPAREN RPAREN
+    | Name LPAREN RPAREN
     '''
     if len(p)==5:
         p[0] = MethodInvocation(p[1], arguments=p[3])
@@ -1619,16 +1781,16 @@ def p_decl_mark(p):
     if type(p[-2])!=str: var=p[-2].value
     ST.create_new_table(var)
     #print(f"table vreated: {var}")
-    stackbegin.append(var)
-    stackend.append(var)
+    # stackbegin.append(var)
+    # stackend.append(var)
 
 def p_decl_mark_2(p):
     '''
     decl_mark_2 :
     '''
     ST.create_new_table(p[-1], scope_type="class")
-    stackbegin.append(p[-1])
-    stackend.append(p[-1])
+    # stackbegin.append(p[-1])
+    # stackend.append(p[-1])
 
 def p_begin_scope(p):
     '''
@@ -1636,16 +1798,16 @@ def p_begin_scope(p):
     '''
     l1 = ST.make_label()
     ST.create_new_table(p[-1] + l1)
-    stackbegin.append(p[-1] + l1)
-    stackend.append(p[-1] + l1)
+    # stackbegin.append(p[-1] + l1)
+    # stackend.append(p[-1] + l1)
 
 def p_end_scope(p):
     '''
     end_scope :
     '''
     ST.end_scope()
-    stackbegin.pop()
-    stackend.pop()
+    # stackbegin.pop()
+    # stackend.pop()
 
 
 def main():
