@@ -426,7 +426,7 @@ class BinaryExpression(Expression):
 class Assignment(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
-        if lhs.type!=rhs.type:
+        if lhs.type==rhs.type:
             if lhs.type in ['int','double','long','float','char'] and rhs.type in ['int','double','long','float','char'] and operator in ['=','+=','-=','*=','/=','&=','|=','^=','%=','<<=','>>=','>>>='] :
                 self.type = highest_prior(lhs.type,rhs.type)
                 self.place = rhs.place
@@ -509,6 +509,9 @@ class Equality(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
+            name = ST.get_temp_var()
+            self.place = name
+            tac.emit(name, lhs.place, rhs.place, operator)
             self.type = 'bool'
             self.falselist = [len(tac.code)]
             tac.emit("ifgoto",self.place,'eq0','')
@@ -522,6 +525,9 @@ class Relational(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
         if lhs.type in ['int','char','long','bool','float','double'] and rhs.type in ['int','char','long','bool','float','double']:
+            name = ST.get_temp_var()
+            self.place = name
+            tac.emit(name, lhs.place, rhs.place, operator)
             self.type = 'bool'
             self.falselist = [len(tac.code)]
             tac.emit("ifgoto",self.place,'eq0','')
@@ -644,6 +650,7 @@ class MethodInvocation(Expression):
     def __init__(self, name, arguments=None, type_arguments=None, target=None):
         super(MethodInvocation, self).__init__()
         self._fields = ['name', 'arguments', 'type_arguments', 'target','type','place']
+        func_name=None
         a=name
         if type(name)!=str:
             a = name.value
@@ -683,6 +690,7 @@ class MethodInvocation(Expression):
                     if 'private' in ST.lookup(get_func_name(var, arguments), is_func=True)['modifiers']:
                         print(f"Tried to access a 'private' function '{var}' from outside")
                         break
+                    func_name=get_func_name(var, arguments)
                     t=ST.curr_scope
                     f_type = ST.lookup(get_func_name(var, arguments),is_func=True)['return_type']
                     ST.curr_scope = ST.lookup(get_func_name(var, arguments),is_func=True)['name']
@@ -737,7 +745,7 @@ class MethodInvocation(Expression):
             tac.emit('push',x,'','')
         tac.emit('call',name.value+str(len(arguments)),'','')
         temp = ST.get_temp_var()
-        if ST.lookup(name.value ,is_func=True) != None and ST.lookup(name.value ,is_func=True)['return_type'] != 'void':
+        if func_name != None and ST.lookup(func_name ,is_func=True)['return_type'] != 'void':
             tac.emit('pop',temp,'','')
         self.place = temp
 
@@ -870,7 +878,7 @@ class ArrayAccess(Expression):
 
     def __init__(self, index, target):
         super(ArrayAccess, self).__init__()
-        self._fields = ['index', 'target','type','depth','dimension','place']
+        self._fields = ['index', 'target','type','depth','dimension','place','pass_dimension','len']
         self.index = index
         self.target = target
         self.type = target.type
@@ -889,6 +897,41 @@ class ArrayAccess(Expression):
             self.dimension = value['dims']
         if self.depth > self.dimension:
             print("More than allowed dimension accessed")
+        
+        #TODO change the code
+        if self.depth == 1:
+            #this line is for array name to get propogated to all array access
+            self.array = target.place
+            value = ST.lookup(target.value)
+            dimensions = value['arr_size']
+            self.pass_dimension = dimensions
+
+            length = 1
+            #import pdb; pdb.set_trace()
+            for x in dimensions[self.depth:]:
+                length *= int(x)
+            temp = ST.get_temp_var()
+            tac.emit(temp,index.place,4*length,'*')
+
+            self.len = temp
+            self.place = self.array + '['+temp+']'
+
+        else:
+            dimensions = target.pass_dimension
+            length = 1
+            for x in dimensions[self.depth:]:
+                length *= int(x)
+            temp = ST.getTemp('int')
+            tac.emit(temp,index.place,4*length,'*')
+            temp1  =ST.get_temp_var()
+            #here we can optimize by using temo again
+            tac.emit(temp1,temp,target.len,'+')
+            self.place = temp1
+            self.array = target.array
+            if self.depth == len(dimensions):
+                self.place = self.array + '['+temp1+']'
+            self.pass_dimension = dimensions
+            self.len = temp1
         
 
 class ArrayCreation(Expression):

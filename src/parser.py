@@ -740,9 +740,15 @@ def p_MethodDeclarator(p):
     if len(p)==4:
         p[0]['name']=p[1]
         p[0]['parameters'] = []
+        tac.emit('func',p[1]+str(0),[],'')
     else :
         p[0]['name']=p[1]
         p[0]['parameters']=p[3]
+    
+        q = []
+        for x in p[3]:
+            q = q + [x.variable.name + '_'+str(ST.curr_scope)]
+        tac.emit('func',p[1]+str(len(p[3])),q,'')
 
     # if len(p) == 6:
     #     for j in p[4]:
