@@ -43,7 +43,7 @@ class ScopeTable:
 
     def make_label(self):
         self.label_counter += 1
-        return  self.label_prefix + self.label_counter
+        return  self.label_prefix + str(self.label_counter)
 
     def get_parent_scope(self):
         return self.scope_and_table_map[self.curr_scope].parent

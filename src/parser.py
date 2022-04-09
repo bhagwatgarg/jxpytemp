@@ -290,7 +290,7 @@ def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
     # print(p[0])
-    ST.print_scope_table()
+    # ST.print_scope_table()
     generate_ast(p[0])
     prefix='.'
     graph.write(prefix+'/graph.dot')
@@ -571,7 +571,6 @@ def p_VariableDeclaratorId(p):
 def p_VariableInitializer(p):
     '''
     VariableInitializer : Expression
-    | ArrayInitializer
     '''
     p[0] = p[1]
 
@@ -741,9 +740,15 @@ def p_MethodDeclarator(p):
     if len(p)==4:
         p[0]['name']=p[1]
         p[0]['parameters'] = []
+        tac.emit('func',p[1]+str(0),[],'')
     else :
         p[0]['name']=p[1]
         p[0]['parameters']=p[3]
+    
+        q = []
+        for x in p[3]:
+            q = q + [x.variable.name + '_'+str(ST.curr_scope)]
+        tac.emit('func',p[1]+str(len(p[3])),q,'')
 
     # if len(p) == 6:
     #     for j in p[4]:
@@ -872,14 +877,14 @@ def p_ExplicitConstructorInvocation(p):
     if len(p)==6: arg_list=p[3]
     p[0]={'argument_list': arg_list}
 
-def p_ArrayInitializer(p):
-    '''
-    ArrayInitializer : LBRACE VariableInitializers RBRACE
-    | LBRACE RBRACE
-    '''
-    variable_initializers=[]
-    if len(p)==4: variable_initializers=p[2]
-    p[0]=ArrayInitializer(variable_initializers)
+# def p_ArrayInitializer(p):
+#     '''
+#     ArrayInitializer : LBRACE VariableInitializers RBRACE
+#     | LBRACE RBRACE
+#     '''
+#     variable_initializers=[]
+#     if len(p)==4: variable_initializers=p[2]
+#     p[0]=ArrayInitializer(variable_initializers)
 
 def p_VariableInitializers(p):
     '''
@@ -1007,24 +1012,24 @@ def p_IfThenStatement(p):
 
 def p_ifMark1(p):
         '''ifMark1 : '''
-        p[0] = p[-1] + ST.make_label()
+        p[0] = 'if1_'+ST.make_label()
         tac.emit('label :','','',p[0])
 
 def p_ifMark2(p):
         '''ifMark2 : '''
-        tac.emit('label :', '', '',  p[-2][0])
+        tac.emit('label :', '', '',  p[-4][0])
 
 def p_ifMark3(p):
-    '''label_for_if3 : '''
+    '''ifMark3 : '''
     l1 = ST.make_label()
     l2 = ST.make_label()
-    p[0] = [p[-1]+l1, p[-1]+l2]
+    p[0] = ['if3_'+l1, 'if3_'+l2]
     tac.emit('goto','','',p[-1]+l1)
     tac.emit('label :','', '', p[-1]+l2)
 
 def p_IfThenElseStatement(p):
     '''
-    IfThenElseStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope Statement ifMark2 end_scope
+    IfThenElseStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope Statement end_scope ifMark2
     '''
     p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
     tac.backpatch(p[4].truelist,p[6])
@@ -1032,7 +1037,7 @@ def p_IfThenElseStatement(p):
 
 def p_IfThenElseStatementNoShortIf(p):
     '''
-    IfThenElseStatementNoShortIf : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope StatementNoShortIf ifMark2 end_scope
+    IfThenElseStatementNoShortIf : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope StatementNoShortIf end_scope ifMark2
     '''
     p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
     tac.backpatch(p[4].truelist,p[6])
@@ -1797,7 +1802,7 @@ def p_begin_scope(p):
     begin_scope :
     '''
     l1 = ST.make_label()
-    ST.create_new_table(p[-1] + l1)
+    ST.create_new_table(l1)
     # stackbegin.append(p[-1] + l1)
     # stackend.append(p[-1] + l1)
 
@@ -1818,6 +1823,8 @@ def main():
     code = open(inputfile, 'r').read()
     code += "\n"
     parser.parse(code, debug=0)
+    for c in tac.code:
+        print(c)
 
 
 if __name__ == "__main__":
