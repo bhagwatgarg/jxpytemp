@@ -4,11 +4,6 @@ from tac import *
 
 tac = TAC()
 
-# stackbegin = []
-# stackend = []
-
-tac = TAC()
-
 priorities={
   'double':5,
   'float':4,

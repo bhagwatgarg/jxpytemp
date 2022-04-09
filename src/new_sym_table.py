@@ -3,7 +3,7 @@ import pandas as pd
 widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
 
 class ScopeTable:
-    def __init__(self): #list of all symbol tables in program
+    def __init__(self): 
         
         self.label_counter = 0
         self.label_prefix = '_n'
@@ -11,33 +11,32 @@ class ScopeTable:
         self.key_counter = 0
         self.curr_scope = 'compilation_unit'
         self.curr_sym_table = SymbolTable(self.curr_scope, parent=None)
-        self.scope_and_table_map = dict()
+        self.scope_and_table_map = {}
         self.scope_and_table_map[self.curr_scope] = self.curr_sym_table
 
     def create_new_table(self, new_label, scope_type = None): #If func_name is not provided, use custom label
         label = new_label
         # if scope_type == "func":
         #     label = new_label + '_' + self.scope_and_table_map[self.curr_scope].scope
-        new_sym_table = SymbolTable(label, self.curr_scope, self.curr_sym_table, scope_type)
         self.curr_scope = label
-        self.curr_sym_table = new_sym_table
+        self.curr_sym_table = SymbolTable(label, self.curr_scope, self.curr_sym_table, scope_type)
         self.key_counter += 1
-        self.scope_and_table_map[self.curr_scope] = new_sym_table
+        self.scope_and_table_map[self.curr_scope] = self.curr_sym_table
 
     def end_scope(self):
         if self.scope_and_table_map[self.curr_scope].scope_type == "class": 
             widths[self.curr_scope] = self.scope_and_table_map[self.curr_scope].width
         self.curr_scope = self.scope_and_table_map[self.curr_scope].parent
-        self.curr_sym_table=self.curr_sym_table.parent_table
+        self.curr_sym_table = self.curr_sym_table.parent_table
 
     def lookup(self, symbol, is_func=False):
         return self._lookup(symbol, is_func, self.curr_sym_table)
     
     def _lookup(self, symbol, is_func=False, table=None):
-        if table==None: return None
+        if table == None: 
+            return None
         if symbol in table.functions and is_func:
-            return table.functions[symbol]
-            
+            return table.functions[symbol]   
         elif symbol in table.symbols and not is_func:
             return table.symbols[symbol]
         return self._lookup(symbol, is_func, table.parent_table)
@@ -54,11 +53,7 @@ class ScopeTable:
         return 'temp' + str(self.temp_var_counter)
 
     def insert_in_sym_table(self, idName, idType, is_func=False, args=None, is_array=False, dims=None, arr_size=None, scope=None, modifiers=[], return_type=None):
-        '''
-        Universal function to insert any symbol into current symbol table
-        Returns a string representing the new scope name if a new block is
-        about to start; otherwise returns None
-        '''
+
         if scope == None:
             scope = self.curr_scope
         if not is_func:
@@ -66,11 +61,7 @@ class ScopeTable:
             return None
         else:
             self.scope_and_table_map[scope].add_function(idName, idType, args, modifiers=modifiers, return_type=return_type,scope=scope)
-    def print_scope(self, scope_name=None):
-        self.scope_and_table_map[scope_name].print_table()
-    def print_curr_scope(self):
-        self.print_scope(self.curr_scope)
-        # self.curr_sym_table.print_table()
+    
     def print_scope_table(self):
         for key, val in self.scope_and_table_map.items():
             # if val.scope_type == "func":
@@ -79,15 +70,13 @@ class ScopeTable:
 
 class SymbolTable:
     def __init__(self, scope, parent, parent_table=None, scope_type=None):
-        '''
-        Symbol table class for each block in program
-        '''
+
         self.scope = scope
         self.parent = parent
-        self.symbols = dict()
-        self.functions = dict()
+        self.symbols = {}
+        self.functions = {}
         self.blocks = set()
-        self.parent_table=parent_table
+        self.parent_table = parent_table
         self.scope_type = scope_type
 
         self.offset = 0
@@ -96,12 +85,9 @@ class SymbolTable:
 
     def add_symbol(self, idName, idType, is_array=False, dims=None, arr_size=None, modifiers=[]):
         if idName in self.symbols.keys():
-            raise Exception('Variable %s redeclared, check your program' %(idName))
+            raise Exception('Variable %s redeclared' %(idName))
 
         # add the ID to symbols dict if not present earlier
-        if idName in self.symbols.keys():
-            raise Exception('Variable %s redeclared, check your program' % (idName))
-        
         width = 0
         offset = self.offset
         try:
