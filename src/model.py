@@ -921,7 +921,7 @@ class ArrayAccess(Expression):
             length = 1
             for x in dimensions[self.depth:]:
                 length *= int(x)
-            temp = ST.getTemp('int')
+            temp = ST.get_temp_var()
             tac.emit(temp,index.place,4*length,'*')
             temp1  =ST.get_temp_var()
             #here we can optimize by using temo again
