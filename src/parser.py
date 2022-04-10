@@ -627,10 +627,10 @@ def p_MethodHeader(p):
             type = j.type
         params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
                 
-    idName = var['name'] + "_" + ST.curr_scope
+    idName = var['name'] + "$" + ST.curr_scope
 
     for i in params:
-        idName += "_" + i['type']
+        idName += "$" + i['type']
     
     var['name'] = idName
 
@@ -694,10 +694,10 @@ def p_MethodHeader2(p):
             type = j.type
         params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
                 
-    idName = var['name'] + "_" + ST.curr_scope
+    idName = var['name'] + "$" + ST.curr_scope
 
     for i in params:
-        idName += "_" + i['type']
+        idName += "$" + i['type']
     
     var['name'] = idName
     
@@ -747,7 +747,7 @@ def p_MethodDeclarator(p):
     
         q = []
         for x in p[3]:
-            q = q + [x.variable.name + '_'+str(ST.curr_scope)]
+            q = q + [x.variable.name + '$'+str(ST.curr_scope)]
         tac.emit('func',p[1]+str(len(p[3])),q,'')
 
     # if len(p) == 6:

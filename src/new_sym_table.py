@@ -18,11 +18,11 @@ class ScopeTable:
         label = new_label
         # if scope_type == "func":
         #     label = new_label + '_' + self.scope_and_table_map[self.curr_scope].scope
+        new_sym_table = SymbolTable(label, self.curr_scope, self.curr_sym_table, scope_type)
         self.curr_scope = label
-        self.curr_sym_table = SymbolTable(label, self.curr_scope, self.curr_sym_table, scope_type)
+        self.curr_sym_table = new_sym_table
         self.key_counter += 1
-        self.scope_and_table_map[self.curr_scope] = self.curr_sym_table
-
+        self.scope_and_table_map[self.curr_scope] = new_sym_table
     def end_scope(self):
         if self.scope_and_table_map[self.curr_scope].scope_type == "class": 
             widths[self.curr_scope] = self.scope_and_table_map[self.curr_scope].width
@@ -62,6 +62,11 @@ class ScopeTable:
         else:
             self.scope_and_table_map[scope].add_function(idName, idType, args, modifiers=modifiers, return_type=return_type,scope=scope)
     
+    def check_func_prefix(self, id):
+        for k, v in self.curr_sym_table.functions:
+            if k.split('$')[0]==id: return True
+        return False
+
     def print_scope_table(self):
         for key, val in self.scope_and_table_map.items():
             # if val.scope_type == "func":
