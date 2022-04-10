@@ -666,6 +666,8 @@ class MethodInvocation(Expression):
         if True:
             a = a.split(".")
             for var in a:
+                print("here",var)
+                print(get_func_name(var, arguments))
                 if f_type in ['int','float','bool','char','long','double']:
                     print("primitive type")
                 if ST.lookup(var) == None and ST.lookup(get_func_name(var, arguments),is_func=True) == None:

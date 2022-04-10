@@ -290,7 +290,7 @@ def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
     # print(p[0])
-    # ST.print_scope_table()
+    #ST.print_scope_table()
     generate_ast(p[0])
     prefix='.'
     graph.write(prefix+'/graph.dot')
@@ -1159,8 +1159,8 @@ def p_DoStatement(p):
     tac.backpatch(continues[-1], p[8])
     tac.backpatch(breaks[-1], p[13])
     
-    tac.backpatch(p[6].truelist, p[4])
-    tac.backpatch(p[6].falselist, p[13])
+    tac.backpatch(p[9].truelist, p[4])
+    tac.backpatch(p[9].falselist, p[13])
 
     continues.pop()
     breaks.pop()
@@ -1328,8 +1328,8 @@ def p_for_l2(p):
     '''
     label = 'for_' + ST.make_label()
     p[0] = label
-    if p[-6] == ';':
-        tac.emit('goto', '', '', p[-5])
+    if p[-8] == ';':
+        tac.emit('goto', '', '', p[-7])
     else:
         tac.emit('goto','', '', p[-6])
     tac.emit('label :', '', '', label)
