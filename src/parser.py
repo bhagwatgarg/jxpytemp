@@ -584,11 +584,6 @@ def p_MethodDeclaration(p):
     p[0]=p[1]
     # print(p[1])
     p[0].body=p[2]
-    # TODO can have ST stuff in model for this
-    # TODO
-    # p[0] = MethodDeclaration(p[1]['name'], parameters=p[1]['parameters'],
-    #                                  extended_dims=p[1]['extended_dims'], type_parameters=p[1]['type_parameters'],
-    #                                  return_type=p[1]['type'], modifiers=p[1]['modifiers'], body=p[2])
 
 # def p_MethodDeclMark(p):
 #     '''

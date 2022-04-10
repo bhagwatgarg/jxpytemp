@@ -437,11 +437,12 @@ class Conditional(Expression):
 
     def __init__(self, predicate, if_true, if_false):
         super(self.__class__, self).__init__()
-        self._fields = ['predicate', 'if_true', 'if_false','type']
+        self._fields = ['predicate', 'if_true', 'if_false','type', 'place']
         parent_scope = ST.get_parent_scope()
         self.predicate = predicate
         self.if_true = if_true
         self.if_false = if_false
+        self.place=None
 
         if predicate.type in ['int','float','bool','long','double'] and if_true.type == if_false.type:
             self.type = if_true.type
@@ -825,8 +826,6 @@ class Return(Statement):
         super(Return, self).__init__()
         self._fields = ['result','type']
         self.result = result
-        # ST.lookup(result)
-        # TODO: Maybe:
         self.type = 'void'
         tac.emit('ret',result.place,'','')
 
