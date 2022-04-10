@@ -742,7 +742,7 @@ class MethodInvocation(Expression):
             tac.emit('push',x,'','')
         tac.emit('call',name.value+str(len(arguments)),'','')
         temp = ST.get_temp_var()
-        if func_name != None and ST.lookup(func_name ,is_func=True)['return_type'] != 'void':
+        if func_name != None and ST.lookup(func_name ,is_func=True) != None and ST.lookup(func_name ,is_func=True)['return_type'] != 'void':
             tac.emit('pop',temp,'','')
         self.place = temp
 
