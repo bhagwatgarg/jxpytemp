@@ -1,5 +1,5 @@
 class _Node{
-  int n;
+  int n, p ,q;
   // _Node next;
 }
 

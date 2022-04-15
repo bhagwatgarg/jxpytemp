@@ -290,7 +290,7 @@ def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
     # print(p[0])
-    # ST.print_scope_table()
+    ST.print_scope_table()
     generate_ast(p[0])
     prefix='.'
     graph.write(prefix+'/graph.dot')

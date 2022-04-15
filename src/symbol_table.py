@@ -101,15 +101,14 @@ class SymbolTable:
             raise Exception('Variable %s redeclared' %(idName))
 
         # add the ID to symbols dict if not present earlier
-        width = 0
-        offset = self.offset
-        try:
-            if idType in widths.keys():
-                width = widths[idType]
-            elif idType == 'class' and idName in widths.keys():
-                width = widths[idName] 
-        except:
-            pass
+        width = 8
+        # offset = self.offset
+        
+        if idType in widths.keys():
+            width = widths[idType]
+        elif idType == 'class' and idName in widths.keys():
+            width = widths[idName] 
+        
      
         if is_array:
             for i in arr_size:
@@ -121,10 +120,6 @@ class SymbolTable:
         self.offset = self.width
         self.width += width
 
-        if idType == 'class' and idName not in widths.keys():
-            width = 8
-            self.offset += 8
-
         self.symbols[idName] = {
             'type' : idType,
             'is_array' : is_array,
@@ -132,9 +127,12 @@ class SymbolTable:
             'arr_size' : arr_size,
             'modifiers': modifiers,
             'width' : width,
-            'offset' : offset,
+            'offset' : self.offset,
             'scope': self.scope
         }
+
+        if idType == 'class' and idName not in widths.keys():
+            self.offset += 8
 
     def add_function(self, func_name, type=None, params=None, modifiers=[], return_type=None,scope=None):
         if func_name in self.functions.keys():
