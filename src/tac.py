@@ -19,3 +19,7 @@ class TAC:
     def backpatch(self, lst, label):
         for i in lst:
             self.code[i][3] = label
+    
+    def print(self):
+        for c in self.code:
+            print(c)

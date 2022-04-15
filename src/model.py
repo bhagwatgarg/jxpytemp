@@ -1,4 +1,5 @@
 widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
+primitives=['int','float','bool','char','long','double']
 count = -1
 from tac import *
 
@@ -122,6 +123,7 @@ class BaseClass(object):
                         if j.type.dimensions > 0:
                             is_array = True
                             dims = j.type.dimensions
+                    elif isinstance(j.type, Name): type=j.type.value
                     else:
                         type = j.type
                     parameters[j.variable.name] = {'type': type, 'is_array': is_array, 'dimensions': dims, 'arr_size' : arr_size}
@@ -293,7 +295,8 @@ class FieldDeclaration(BaseClass):
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),j.initializer.place,'','=')
 
                 ST.insert_in_sym_table(idName=name, idType=type_, is_array=is_array, dims=dims, arr_size=arr_size, modifiers=modifiers)
-                
+        self.type=type_
+        # if((type_)!=str.ty): print(type_)
 
 class MethodDeclaration(ScopeField):
 
@@ -325,6 +328,7 @@ class MethodDeclaration(ScopeField):
                 if j.type.dimensions > 0:
                     is_array = True
                     dims = j.type.dimensions
+            elif isinstance(j.type, Name): type=j.type.value
             else:
                 type = j.type
             params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
@@ -356,6 +360,7 @@ class ConstructorDeclaration(ScopeField):
                     type = j.type.name.value
                 else:
                     type = j.type.name
+            elif isinstance(j.type, Name): type=j.type.value
             else:
                 type = j.type
             params.append({'name' : j.variable.name, 'type': type})
@@ -421,14 +426,16 @@ class BinaryExpression(Expression):
 class Assignment(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
-        if lhs.type==rhs.type:
-            if lhs.type in ['int','double','long','float','char'] and rhs.type in ['int','double','long','float','char'] and operator in ['=','+=','-=','*=','/=','&=','|=','^=','%=','<<=','>>=','>>>='] :
-                self.type = highest_prior(lhs.type,rhs.type)
-                self.place = rhs.place
-                tac.emit(lhs.place,rhs.place,'',operator)
-            else :
-                print("Type mismatch in assignment.")
-                print(lhs,rhs)
+        if lhs.type in ['int','double','long','float','char'] and rhs.type in ['int','double','long','float','char'] and operator in ['=','+=','-=','*=','/=','&=','|=','^=','%=','<<=','>>=','>>>='] :
+            self.type = highest_prior(lhs.type,rhs.type)
+            self.place = rhs.place
+            tac.emit(lhs.place,rhs.place,'',operator)
+        elif lhs.type!=rhs.type:
+            print("Type mismatch in assignment.")
+            print(lhs,rhs)
+        else:
+            # ST.print_scope_table()
+            tac.emit(lhs.place,rhs.place,'',operator)
 
 
 ## BG start
@@ -531,7 +538,6 @@ class Relational(BinaryExpression):
             tac.emit("goto",'','','')
         else:
             print("Error in relational operator operand types.")
-            # print(lhs,rhs)
 
 
 class Shift(BinaryExpression):
@@ -672,14 +678,12 @@ class MethodInvocation(Expression):
             for var in a:
                 # print("here",var)
                 # print(get_func_name(var, arguments))
-                if f_type in ['int','float','bool','char','long','double']:
+                if f_type in primitives:
                     print("primitive type")
                 if ST.lookup(var) == None and ST.lookup(get_func_name(var, arguments),is_func=True) == None:
-                    print(arguments)
-                    print(get_func_name(var, arguments))
                     print("Variable/Function",var, f"not declared in current scope {ST.curr_scope} (1)")
                     break
-                elif ST.lookup(var) != None and ST.lookup(var)['type'] not in ['int','float','bool','char','long','double']:
+                elif ST.lookup(var) != None and ST.lookup(var)['type'] not in primitives:
                     if 'private' in ST.lookup(var)['modifiers']:
                         print(f"Tried to access a 'private' variable '{var}' from outside")
                         break
@@ -696,7 +700,7 @@ class MethodInvocation(Expression):
                     f_type = ST.lookup(get_func_name(var, arguments),is_func=True)['return_type']
                     ST.curr_scope = ST.lookup(get_func_name(var, arguments),is_func=True)['name']
                     ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
-                elif ST.lookup(var) != None and ST.lookup(var)['type'] in ['int','float','bool','char','long','double']:
+                elif ST.lookup(var) != None and ST.lookup(var)['type'] in primitives:
                     if 'private' in ST.lookup(var)['modifiers']:
                         print(f"Tried to access a 'private' variable '{var}' from outside")
                         break
@@ -736,16 +740,29 @@ class MethodInvocation(Expression):
                     for i in range(len(arguments)):
                         if arguments[i].type != params[i]['type']:
                             print('Type of method arguement not correct')
+                            print(arguments[i].type, params[i]['type'])
         except:
             pass
         
-        ST.curr_scope = temp
-        ST.curr_sym_table = temp_table
 
         for x in reversed(self.arguments):
-            tac.emit('push',x,'','')
-        tac.emit('push',varx,'','')
-        tac.emit('call',name.value+str(len(arguments)),'','')
+            # TODO: if x is name
+            if isinstance(x, Literal): tac.emit('push',x.value,'','')
+
+            else: tac.emit('push1',x,'','')
+        # tac.emit('push',varx,'','')
+        # TODO
+        old_var=ST.get_last_label()
+        new_var=ST.make_label()
+        tac.emit(new_var, old_var, '', '=')
+        tac.emit(new_var, 'OFFSET OF '+name.value+str(len(arguments)), '', '-=')
+        tac.emit('push',new_var,'','')
+        ST.curr_scope=ST.get_parent_scope()
+        ST.curr_sym_table=ST.curr_sym_table.parent_table
+        tac.emit('call',get_func_name(name.value, arguments),'','')
+
+        ST.curr_scope = temp
+        ST.curr_sym_table = temp_table
         temp = ST.get_temp_var()
         if func_name != None and ST.lookup(func_name ,is_func=True) != None and ST.lookup(func_name ,is_func=True)['return_type'] != 'void':
             tac.emit('pop',temp,'','')
@@ -831,7 +848,16 @@ class Return(Statement):
         self._fields = ['result','type']
         self.result = result
         self.type = 'void'
-        tac.emit('ret',result.place,'','')
+        if result: self.type=result.type
+        # TODO symbol table
+        res=ST.get_curr_func()
+        if not res:
+            print("Not in a function")
+        elif res['return_type']==self.type or (res['return_type'] in primitives and self.type in primitives): pass
+        else: print("Return type mismatch")
+
+        if result: tac.emit('ret',result.place,'','')
+        else: tac.emit('ret','','','')
 
 
 class ConstructorInvocation(Statement):
@@ -858,7 +884,7 @@ class InstanceCreation(Expression):
         self.arguments = arguments
         self.body = body
         self.place=ST.get_temp_var()
-        tac.emit(self.place,"","",'declare')
+        tac.emit(self.place, type,"",'declare')
 
 class FieldAccess(Expression):
 
@@ -1011,9 +1037,9 @@ class Name(BaseClass):
         temp_table = ST.scope_and_table_map[ST.curr_scope]
         f_type = None
         for var in a:
-            if f_type in ['int','float','bool','char','long','double']:
+            if f_type in primitives:
                 print("primitive type")
-            if ST.lookup(var) != None and ST.lookup(var)['type'] not in ['int','float','bool','char','long','double']:
+            if ST.lookup(var) != None and ST.lookup(var)['type'] not in primitives:
                 if 'private' in ST.lookup(var)['modifiers']:
                     print(f"Tried to access a 'private' variable '{var}' from outside")
                     break
@@ -1021,7 +1047,7 @@ class Name(BaseClass):
                 ST.curr_scope = k
                 ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
                 f_type = k
-            elif ST.lookup(var) != None and ST.lookup(var)['type'] in ['int','float','bool','char','long','double']:
+            elif ST.lookup(var) != None and ST.lookup(var)['type'] in primitives:
                 if 'private' in ST.lookup(var)['modifiers']:
                     print(f"Tried to access a 'private' variable '{var}' from outside")
                     break
@@ -1032,11 +1058,23 @@ class Name(BaseClass):
                 print(f"{var} not declared in current scope")
 
 
+        print(self.value, self.type, self.place, name)
+        # Say, temp var stores the address of the variable
+        # for field access, first of all copy self.place to a new variable
+        # increment the new variable with offset
+        # dereference the variable and store it in new variable
+        # TODO: compute offset
+        new_var=ST.make_label()
+        offset=ST.get_offset(self.type, name)
+        tac.emit(new_var, '', self.place, '=')
+        tac.emit(new_var, '', 'TODO:OFFSET of '+name+str(offset), '+=')
+        if f_type not in primitives: tac.emit(new_var, '', new_var, 'DEREFERENCE')
+        # emit self.place = self.type.offset
+        # tac.emit()
+        self.place=new_var
         ST.curr_scope = temp
         ST.curr_sym_table = temp_table
         self.type = f_type
-                    
-                
 
 
 

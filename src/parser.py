@@ -12,6 +12,8 @@ node_num=0
 breaks = []
 continues = []
 
+# TODO int+
+
 def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
     curr_obj=p
@@ -355,7 +357,7 @@ def p_ClassType(p):
     '''
     ClassType : Name
     '''
-    p[0] = p[1]
+    p[0] = p[1].value
 
 def p_ArrayType(p):
     ''' ArrayType : PrimitiveType Dims
@@ -582,6 +584,9 @@ def p_MethodDeclaration(p):
     # stackbegin.pop()
     # stackend.pop()
     p[0]=p[1]
+    func=p[1].name
+    # ST.update_param_names(func)
+    # print('!!', ST.curr_sym_table.functions[func])
     # print(p[1])
     p[0].body=p[2]
 
@@ -611,8 +616,11 @@ def p_MethodHeader(p):
         dims = 0
         is_array = False
         if isinstance(j.type, Type):
+            print(j.type)
             if isinstance(j.type.name, Name):
                 type = j.type.name.value
+                print(type)
+            elif isinstance(j.type, Name): type=j.type.value
             else:
                 type = j.type.name
             if j.type.dimensions > 0:
@@ -652,11 +660,14 @@ def p_MethodHeader(p):
                 is_array = True
                 dims = j.type.dimensions
         else:
-            type = j.type
+            if isinstance(j.type, Name): type=j.type.value
+            else: type = j.type
             dims=j.variable.dimensions
             if dims>0:
                 is_array=True
         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
+    # ST.update_param_names(var['name'])
+    # tac.emit('func',var['name']+str(len(var['parameters'])),ST.get_curr_func()['params'],'')
 
 
 def p_MethodHeader2(p):
@@ -685,6 +696,7 @@ def p_MethodHeader2(p):
             if j.type.dimensions > 0:
                 is_array = True
                 dims = j.type.dimensions
+        elif isinstance(j.type, Name): type=j.type.value
         else:
             type = j.type
         params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
@@ -692,7 +704,9 @@ def p_MethodHeader2(p):
     idName = var['name'] + "$" + ST.curr_scope
 
     for i in params:
-        idName += "$" + i['type']
+        i_type=i['type']
+        if isinstance(i_type, Name) and i_type.type==None: print(i)
+        idName += "$" + i_type
     
     var['name'] = idName
     
@@ -719,12 +733,17 @@ def p_MethodHeader2(p):
                 is_array = True
                 dims = j.type.dimensions
         else:
-            type = j.type
+            if isinstance(j.type, Name): type=j.type.value
+            else: type = j.type
             dims=j.variable.dimensions
             if dims>0:
                 is_array=True
 
+        print(j.variable.name+'$'+var['name'])
         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
+    # ST.update_param_names(var['name'])
+    # tac.emit('func',var['name']+str(len(var['parameters'])),ST.get_curr_func()['params'],'')
+
 
 def p_MethodDeclarator(p):
     '''
@@ -735,16 +754,24 @@ def p_MethodDeclarator(p):
     if len(p)==4:
         p[0]['name']=p[1]
         p[0]['parameters'] = []
-        tac.emit('func',p[1]+str(0),[],'')
+        tac.emit('func',get_func_name(p[0]['name'], p[0]['parameters']),[],'')
     else :
         p[0]['name']=p[1]
         p[0]['parameters']=p[3]
     
         q = []
+        s=''
         for x in p[3]:
-            q = q + [x.variable.name + '$'+str(ST.curr_scope)]
-        tac.emit('func',p[1]+str(len(p[3])),q,'')
+            q = q + [x.variable.name + '$'+get_func_name(p[0]['name'], p[0]['parameters'])]
 
+    # for i in p[0]['parameters']:
+    #     i_type=i['type']
+    #     if isinstance(i_type, Name) and i_type.type==None: print(i)
+    #     idName += "$" + i_type
+    
+    # var['name'] = idName
+    # get_func_name(p[0]['name'], p[0]['parameters'])
+        tac.emit('func', get_func_name(p[0]['name'], p[0]['parameters']),q,'')
     # if len(p) == 6:
     #     for j in p[4]:
     #         type = ""
@@ -841,6 +868,7 @@ def p_ConstructorDeclarator(p):
                 if j.type.dimensions > 0:
                     is_array = True
                     dims = j.type.dimensions
+            elif isinstance(j.type, Name): type=j.type.value
             else:
                 type = j.type
             ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
@@ -1424,7 +1452,7 @@ def p_ClassInstanceCreationExpression(p):
     ClassInstanceCreationExpression : NEW ClassType LPAREN RPAREN
     | NEW ClassType LPAREN ArgumentList RPAREN
     '''
-    if len(p) == 5: p[0] = InstanceCreation(type = [2])
+    if len(p) == 5: p[0] = InstanceCreation(type = p[2])
     else: p[0] = InstanceCreation(type = p[2], arguments = p[4])
 
 def p_ArgumentList(p):
@@ -1818,8 +1846,7 @@ def main():
     code = open(inputfile, 'r').read()
     code += "\n"
     parser.parse(code, debug=0)
-    for c in tac.code:
-        print(c)
+    tac.print()
 
 
 if __name__ == "__main__":

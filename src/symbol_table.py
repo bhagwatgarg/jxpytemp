@@ -1,4 +1,6 @@
+from black import target_version_option_callback
 import pandas as pd
+# from model import Name
 
 widths = {'int':4, 'float':8, 'short':4, 'long':8, 'double':8, 'char':1}
 
@@ -6,7 +8,7 @@ class ScopeTable:
     def __init__(self): 
         
         self.label_counter = 0
-        self.label_prefix = '_n'
+        self.label_prefix = '$n_'
         self.temp_var_counter = 0
         self.key_counter = 0
         self.curr_scope = 'compilation_unit'
@@ -62,6 +64,7 @@ class ScopeTable:
 
         if scope == None:
             scope = self.curr_scope
+        if(hasattr(idType, 'type')): idType=idType.type
         if not is_func:
             self.scope_and_table_map[scope].add_symbol(idName, idType, is_array, dims, arr_size, modifiers=modifiers)
             return None
@@ -79,6 +82,46 @@ class ScopeTable:
         for key, val in self.scope_and_table_map.items():
             # if val.scope_type == "func":
                 val.print_table()
+    
+    def get_offset(self, scope, label):
+        table=self.curr_sym_table
+        while(table):
+            if table.scope!=scope:
+                table=table.parent_table
+                continue
+            if label in table.symbols.keys():
+                return table.symbols[label]['offset']
+            if label in table.functions.keys():
+                return table.functions[label]['offset']
+            return None
+        return None
+    
+    def get_last_label(self, sub=1):
+        return self.label_prefix+str(self.label_counter-sub+1)
+
+    def get_curr_func(self):
+        table=self.curr_sym_table
+        while table:
+            if table.scope_type=='func':
+                func_name=table.scope
+                table=table.parent_table
+                return table.functions[func_name]
+            table=table.parent_table
+        return None
+    
+    def update_param_names(self, id):
+        # if self.curr_sym_table.functions=={}: return False
+        # print(self.curr_sym_table.functions)
+        for k in self.curr_sym_table.functions.keys():
+            print(id, k)
+            if k.split('$')[0]==id:
+                suffix='$'+k
+                # print(suffix)
+                obj=self.curr_sym_table.functions[k]
+                for i in range(len(obj['params'])):
+                    print(obj['params'][i]['name'])
+                    obj['params'][i]['name']=obj['params'][i]['name'].split('$')[0]+suffix
+        return
 
 
 class SymbolTable:
