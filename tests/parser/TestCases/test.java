@@ -24,7 +24,7 @@ public class BinarySearch{
   }
 
   public int hello (){
-    int[] ar = {1,2,3,4,5};
+    int[] ar = new int[10];
 		this.search(ar, 3);
     this.hello();
 		int arr = 5;
@@ -53,7 +53,7 @@ class Main{
 	public static int hello (){
 		// BinarySearch a = new BinarySearch();
     BinaryWrapper a=new BinaryWrapper();
-		int[] arr = {1,2,3,4,5};
+		int[] arr = new int[10];
 		a.search(arr, 3);
     a.a.search(arr, 2);
     // a.i=2;
