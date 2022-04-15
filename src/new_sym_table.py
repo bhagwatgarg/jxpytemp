@@ -18,8 +18,8 @@ class ScopeTable:
         label = new_label
         # if scope_type == "func":
         #     label = new_label + '_' + self.scope_and_table_map[self.curr_scope].scope
-        self.curr_scope = label
         self.curr_sym_table = SymbolTable(label, self.curr_scope, self.curr_sym_table, scope_type)
+        self.curr_scope = label
         self.key_counter += 1
         self.scope_and_table_map[self.curr_scope] = self.curr_sym_table
 
