@@ -17,10 +17,10 @@ def highest_prior(lhs_type, rhs_type):
   return lhs_type if priorities[lhs_type]>priorities[rhs_type] else rhs_type
 
 def get_func_name(id, params):
-    idName = id + "_" + ST.curr_scope
+    idName = id + "$" + ST.curr_scope
     if params==None: params=[]
     for i in params:
-        idName += "_" + i.type
+        idName += "$" + i.type
     return idName
 
 
@@ -288,9 +288,9 @@ class FieldDeclaration(BaseClass):
                     for k in j.initializer.dimensions:
                         arr_size.append(k.value)
                         width *= int(k.value)
-                    tac.emit(j.variable.name+'_'+str(ST.curr_scope),width,'','declare')
+                    tac.emit(j.variable.name+'$'+str(ST.curr_scope),width,'','declare')
                 elif j.initializer:
-                    tac.emit(j.variable.name+'_'+str(ST.curr_scope),j.initializer.place,'','=')
+                    tac.emit(j.variable.name+'$'+str(ST.curr_scope),j.initializer.place,'','=')
 
                 ST.insert_in_sym_table(idName=name, idType=type_, is_array=is_array, dims=dims, arr_size=arr_size, modifiers=modifiers)
                 
@@ -437,11 +437,12 @@ class Conditional(Expression):
 
     def __init__(self, predicate, if_true, if_false):
         super(self.__class__, self).__init__()
-        self._fields = ['predicate', 'if_true', 'if_false','type']
+        self._fields = ['predicate', 'if_true', 'if_false','type', 'place']
         parent_scope = ST.get_parent_scope()
         self.predicate = predicate
         self.if_true = if_true
         self.if_false = if_false
+        self.place=None
 
         if predicate.type in ['int','float','bool','long','double'] and if_true.type == if_false.type:
             self.type = if_true.type
@@ -825,8 +826,6 @@ class Return(Statement):
         super(Return, self).__init__()
         self._fields = ['result','type']
         self.result = result
-        # ST.lookup(result)
-        # TODO: Maybe:
         self.type = 'void'
         tac.emit('ret',result.place,'','')
 
@@ -970,7 +969,7 @@ class Name(BaseClass):
         self._fields = ['value','type']
         self.value = value
         self.type = type
-        self.place=value+'_'+ST.curr_scope
+        self.place=value+'$'+ST.curr_scope
         if type: return
         # if ST.lookup(value) == None and ST.lookup(value+'_'+ST.curr_scope,is_func=True) == None:
             # print("Variable/Function",value, f"not declared in current scope {ST.curr_scope} (2)")
@@ -1006,8 +1005,11 @@ class Name(BaseClass):
                     print(f"Tried to access a 'private' variable '{var}' from outside")
                     break
                 f_type = ST.lookup(var)['type']
-            else:
+            elif ST.check_func_prefix(var)==True:
                 f_type='$func'
+            else:
+                print(f"{var} not declared in current scope")
+
 
         ST.curr_scope = temp
         ST.curr_sym_table = temp_table

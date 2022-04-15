@@ -1,4 +1,4 @@
-from new_sym_table import ScopeTable
+from symbol_table import ScopeTable
 
 global ST
 ST = ScopeTable()
