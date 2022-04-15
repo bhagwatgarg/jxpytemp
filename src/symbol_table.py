@@ -14,6 +14,12 @@ class ScopeTable:
         self.scope_and_table_map = {}
         self.scope_and_table_map[self.curr_scope] = self.curr_sym_table
 
+    def get_parent_class(self):
+        temp=self.curr_sym_table
+        while(temp.scope_type!='class'):
+            temp=temp.parent_table
+        return temp.scope
+    
     def create_new_table(self, new_label, scope_type = None): #If func_name is not provided, use custom label
         label = new_label
         # if scope_type == "func":
@@ -63,7 +69,9 @@ class ScopeTable:
             self.scope_and_table_map[scope].add_function(idName, idType, args, modifiers=modifiers, return_type=return_type,scope=scope)
     
     def check_func_prefix(self, id):
-        for k, v in self.curr_sym_table.functions:
+        # if self.curr_sym_table.functions=={}: return False
+        # print(self.curr_sym_table.functions)
+        for k in self.curr_sym_table.functions.keys():
             if k.split('$')[0]==id: return True
         return False
 
@@ -125,6 +133,7 @@ class SymbolTable:
             'modifiers': modifiers,
             'width' : width,
             'offset' : offset,
+            'scope': self.scope
         }
 
     def add_function(self, func_name, type=None, params=None, modifiers=[], return_type=None,scope=None):

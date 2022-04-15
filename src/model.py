@@ -653,6 +653,7 @@ class MethodInvocation(Expression):
         temp = ST.curr_scope
         temp_table = ST.scope_and_table_map[ST.curr_scope]
         f_type=None
+        varx=""
         if target != None:
             if target=='this':
                 t=ST.scope_and_table_map[ST.curr_scope]
@@ -665,10 +666,12 @@ class MethodInvocation(Expression):
             ST.curr_sym_table=ST.scope_and_table_map[ST.curr_scope]
         # if '.' in a:
         if True:
+            #TODO recursive field access
             a = a.split(".")
+            varx=a[0]
             for var in a:
-                print("here",var)
-                print(get_func_name(var, arguments))
+                # print("here",var)
+                # print(get_func_name(var, arguments))
                 if f_type in ['int','float','bool','char','long','double']:
                     print("primitive type")
                 if ST.lookup(var) == None and ST.lookup(get_func_name(var, arguments),is_func=True) == None:
@@ -741,6 +744,7 @@ class MethodInvocation(Expression):
 
         for x in reversed(self.arguments):
             tac.emit('push',x,'','')
+        tac.emit('push',varx,'','')
         tac.emit('call',name.value+str(len(arguments)),'','')
         temp = ST.get_temp_var()
         if func_name != None and ST.lookup(func_name ,is_func=True) != None and ST.lookup(func_name ,is_func=True)['return_type'] != 'void':
@@ -854,6 +858,7 @@ class InstanceCreation(Expression):
         self.arguments = arguments
         self.body = body
         self.place=ST.get_temp_var()
+        tac.emit(self.place,"","",'declare')
 
 class FieldAccess(Expression):
 
@@ -862,10 +867,13 @@ class FieldAccess(Expression):
         self._fields = ['name', 'target','type']
         self.name = name
         self.target = target
+        if target==None: target=''
         self.type = None
+        self.place=target+'.'+name.value+'$'+ST.curr_scope
         
         if target == 'this':
             self.type = name.type
+            self.place=name.value+'$'+ST.get_parent_class()
 
 
 
@@ -969,7 +977,20 @@ class Name(BaseClass):
         self._fields = ['value','type']
         self.value = value
         self.type = type
-        self.place=value+'$'+ST.curr_scope
+        var=None
+        var2=value
+        if ST.lookup(value)!=None:
+            # print(ST.lookup(value))
+            var=value+'$'+ST.lookup(value)['scope']
+        elif ST.lookup(value, is_func=True)!=None:
+            var=get_func_name(value)+'$'+ST.lookup(value, is_func=True)['scope']
+            # TODO
+            # var2=get_func_name(value)
+        else:
+            # TODO
+            # print("Not in Scope")
+            return
+        self.place=var
         if type: return
         # if ST.lookup(value) == None and ST.lookup(value+'_'+ST.curr_scope,is_func=True) == None:
             # print("Variable/Function",value, f"not declared in current scope {ST.curr_scope} (2)")
