@@ -122,6 +122,14 @@ class ScopeTable:
                     print(obj['params'][i]['name'])
                     obj['params'][i]['name']=obj['params'][i]['name'].split('$')[0]+suffix
         return
+    
+    def check_parent_child_relationship(self, parent, child):
+        print(parent, child)
+        table=self.scope_and_table_map[child]
+        while table:
+            if table.scope==parent: return True
+            table=table.parent_table
+        return False
 
 
 class SymbolTable:

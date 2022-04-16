@@ -672,7 +672,6 @@ class MethodInvocation(Expression):
             ST.curr_sym_table=ST.scope_and_table_map[ST.curr_scope]
         # if '.' in a:
         if True:
-            #TODO recursive field access
             a = a.split(".")
             varx=a[0]
             for var in a:
@@ -683,15 +682,15 @@ class MethodInvocation(Expression):
                     print("Variable/Function",var, f"not declared in current scope {ST.curr_scope} (1)")
                     break
                 elif ST.lookup(var) != None and ST.lookup(var)['type'] not in primitives:
-                    if 'private' in ST.lookup(var)['modifiers'] and len(a)!=1:
-                        print(f"Tried to access a 'private' variable '{var}' from outside")
+                    if 'private' in ST.lookup(var)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(var)['scope'], temp):
+                        print(f"Tried to access a 'private' variable '{var}' from outside 1")
                         break
                     k = ST.lookup(var)['type']
                     ST.curr_scope = k
                     ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
                     f_type = k
                 elif ST.lookup(get_func_name(var, arguments), is_func=True) != None:
-                    if 'private' in ST.lookup(get_func_name(var, arguments), is_func=True)['modifiers'] and len(a)!=1:
+                    if 'private' in ST.lookup(get_func_name(var, arguments), is_func=True)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(get_func_name(var, arguments), is_func=True)['scope'], temp):
                         print(get_func_name(var, arguments))
                         print(f"Tried to access a 'private' function '{var}' from outside")
                         break
@@ -701,14 +700,13 @@ class MethodInvocation(Expression):
                     ST.curr_scope = ST.lookup(get_func_name(var, arguments),is_func=True)['name']
                     ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
                 elif ST.lookup(var) != None and ST.lookup(var)['type'] in primitives:
-                    if 'private' in ST.lookup(var)['modifiers']:
-                        print(f"Tried to access a 'private' variable '{var}' from outside")
+                    if 'private' in ST.lookup(var)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(var)['scope'], temp):
+                        print(f"Tried to access a 'private' variable '{var}' from outside 2")
                         break
                     f_type = ST.lookup(var)['type']
                     
             self.type = f_type
 
-            # TODO: WHY?
             if hasattr(name, 'value'):
                 name.value = var
             else: name=Name(var)
@@ -849,7 +847,6 @@ class Return(Statement):
         self.result = result
         self.type = 'void'
         if result: self.type=result.type
-        # TODO symbol table
         res=ST.get_curr_func()
         if not res:
             print("Not in a function")
@@ -1040,16 +1037,16 @@ class Name(BaseClass):
             if f_type in primitives:
                 print("primitive type")
             if ST.lookup(var) != None and ST.lookup(var)['type'] not in primitives:
-                if 'private' in ST.lookup(var)['modifiers']:
-                    print(f"Tried to access a 'private' variable '{var}' from outside")
+                if 'private' in ST.lookup(var)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(var)['scope'], temp):
+                    print(f"Tried to access a 'private' variable '{var}' from outside 3")
                     break
                 k = ST.lookup(var)['type']
                 ST.curr_scope = k
                 ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
                 f_type = k
-            elif ST.lookup(var) != None and ST.lookup(var)['type'] in primitives:
-                if 'private' in ST.lookup(var)['modifiers']:
-                    print(f"Tried to access a 'private' variable '{var}' from outside")
+            elif ST.lookup(var) != None and ST.lookup(var)['type'] in primitives :
+                if 'private' in ST.lookup(var)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(var)['scope'], temp):
+                    print(f"Tried to access a 'private' variable '{var}' from outside 4")
                     break
                 f_type = ST.lookup(var)['type']
             elif ST.check_func_prefix(var)==True:

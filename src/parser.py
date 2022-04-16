@@ -292,7 +292,7 @@ def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
     # print(p[0])
-    ST.print_scope_table()
+    # ST.print_scope_table()
     generate_ast(p[0])
     prefix='.'
     graph.write(prefix+'/graph.dot')
@@ -367,15 +367,18 @@ def p_ArrayType(p):
 
 def p_Name(p):
     ''' Name : SimpleName
-    | QualifiedName'''
+    | QualifiedName
+    '''
     p[0] = p[1]
 
 def p_SimpleName(p):
-    ''' SimpleName : IDENTIFIER'''
+    ''' SimpleName : IDENTIFIER
+    '''
     p[0] = Name(p[1])
 
 def p_QualifiedName(p):
-    ''' QualifiedName : Name DOT IDENTIFIER'''
+    ''' QualifiedName : Name DOT IDENTIFIER
+    '''
     p[1].append_name(p[3])
     p[0] = p[1]
 
@@ -525,8 +528,8 @@ def p_ClassBodyDeclaration(p):
     '''
     ClassBodyDeclaration : ClassMemberDeclaration
     | ConstructorDeclaration
-    | StaticInitializer
     '''
+    # removed staticinitilaizer from here
     p[0] = p[1]
 
 def p_ClassMemberDeclaration(p):
@@ -817,11 +820,11 @@ def p_MethodBody(p):
     '''
     p[0] = p[1]
 
-def p_StaticInitializer(p):
-    '''
-    StaticInitializer : begin_scope STATIC Block end_scope
-    '''
-    p[0] = ClassInitializer(p[3], static = True)
+# def p_StaticInitializer(p):
+#     '''
+#     StaticInitializer : begin_scope STATIC Block end_scope
+#     '''
+#     p[0] = ClassInitializer(p[3], static = True)
 
 
 ### BG START
@@ -843,8 +846,8 @@ def p_ConstructorDeclaration(p):
 
 def p_ConstructorDeclarator(p):
     '''
-    ConstructorDeclarator : SimpleName LPAREN decl_mark FormalParameterList RPAREN
-    | SimpleName decl_mark LPAREN RPAREN
+    ConstructorDeclarator : SimpleName LPAREN FormalParameterList RPAREN
+    | SimpleName LPAREN RPAREN
     '''
     param_list=[]       # empty list of params
     if len(p)==6:
@@ -1502,7 +1505,6 @@ def p_Dims(p):
 def p_FieldAccess(p):
     '''
     FieldAccess : Primary DOT Name
-    | SUPER DOT Name
     '''
     p[0] = FieldAccess(p[3], p[1])
 
