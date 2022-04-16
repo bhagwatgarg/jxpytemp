@@ -17,7 +17,11 @@ class _Graph{
 }
 
 class _GraphWrapper{
-    _Graph gg;
+    private _Graph gg;
+    void assign_gg(){
+      this.gg=new _Graph();
+      this.gg.calc();
+    }
 }
 
 class Main{
@@ -27,7 +31,8 @@ class Main{
     g.vis=1;
     // g.calc();
     _GraphWrapper gw=new _GraphWrapper();
-    gw.gg=g;
+    // gw.gg=g;
+    gw.gg.calc();
     return 0;
 	}
 }

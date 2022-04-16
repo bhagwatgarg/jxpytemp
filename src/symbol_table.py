@@ -1,4 +1,3 @@
-from black import target_version_option_callback
 import pandas as pd
 # from model import Name
 
@@ -31,6 +30,7 @@ class ScopeTable:
         self.curr_sym_table = new_sym_table
         self.key_counter += 1
         self.scope_and_table_map[self.curr_scope] = new_sym_table
+    
     def end_scope(self):
         if self.scope_and_table_map[self.curr_scope].scope_type == "class": 
             widths[self.curr_scope] = self.scope_and_table_map[self.curr_scope].width

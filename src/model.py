@@ -678,13 +678,12 @@ class MethodInvocation(Expression):
             for var in a:
                 # print("here",var)
                 # print(get_func_name(var, arguments))
-                if f_type in primitives:
-                    print("primitive type")
+
                 if ST.lookup(var) == None and ST.lookup(get_func_name(var, arguments),is_func=True) == None:
                     print("Variable/Function",var, f"not declared in current scope {ST.curr_scope} (1)")
                     break
                 elif ST.lookup(var) != None and ST.lookup(var)['type'] not in primitives:
-                    if 'private' in ST.lookup(var)['modifiers']:
+                    if 'private' in ST.lookup(var)['modifiers'] and len(a)!=1:
                         print(f"Tried to access a 'private' variable '{var}' from outside")
                         break
                     k = ST.lookup(var)['type']
@@ -692,7 +691,8 @@ class MethodInvocation(Expression):
                     ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
                     f_type = k
                 elif ST.lookup(get_func_name(var, arguments), is_func=True) != None:
-                    if 'private' in ST.lookup(get_func_name(var, arguments), is_func=True)['modifiers']:
+                    if 'private' in ST.lookup(get_func_name(var, arguments), is_func=True)['modifiers'] and len(a)!=1:
+                        print(get_func_name(var, arguments))
                         print(f"Tried to access a 'private' function '{var}' from outside")
                         break
                     func_name=get_func_name(var, arguments)
