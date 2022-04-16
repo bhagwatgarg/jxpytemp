@@ -1,26 +1,30 @@
-class _Node{
-  int n, p ,q;
-  // _Node next;
-}
+// class _Node{
+//   int n, p ,q;
+//   // _Node next;
+// }
 
 
 class _Graph{
-  private _Node no;
+  // private _Node no;
   int vis;
-  private int _edge;
-  private int calc(){
-    _edge=2;
-    this._edge=2;
+   int _edge;
+  public int calc(){
+    // _edge=2;
+    this._edge>>=5 + 2*3 - 3;
     this.calc();
     return 1;
   }
 }
 
 class _GraphWrapper{
-    private _Graph gg;
+    public _Graph gg;
     void assign_gg(){
-      this.gg=new _Graph();
-      this.gg.calc();
+      // this.gg=new _Graph();
+      this.gg._edge=1;
+      _Graph lol = this.gg;
+      lol.calc();
+
+      // int a=this.gg.calc();
     }
 }
 
