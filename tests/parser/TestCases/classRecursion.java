@@ -71,6 +71,8 @@ class Main{
     do{
       a = b;
     }while(a == 1);
+    int[] arr=new int[10];
+    arr[10]=1;
     return 1;
 // TODO: do while extra goto
   }

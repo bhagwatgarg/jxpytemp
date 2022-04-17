@@ -31,6 +31,7 @@ class ScopeTable:
         self.curr_sym_table = new_sym_table
         self.key_counter += 1
         self.scope_and_table_map[self.curr_scope] = new_sym_table
+    
     def end_scope(self):
         if self.scope_and_table_map[self.curr_scope].scope_type == "class": 
             widths[self.curr_scope] = self.scope_and_table_map[self.curr_scope].width
@@ -122,6 +123,14 @@ class ScopeTable:
                     print(obj['params'][i]['name'])
                     obj['params'][i]['name']=obj['params'][i]['name'].split('$')[0]+suffix
         return
+    
+    def check_parent_child_relationship(self, parent, child):
+        print(parent, child)
+        table=self.scope_and_table_map[child]
+        while table:
+            if table.scope==parent: return True
+            table=table.parent_table
+        return False
 
 
 class SymbolTable:
