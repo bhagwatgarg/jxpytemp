@@ -465,13 +465,21 @@ class Assignment(BinaryExpression):
         if lhs.type in ['int', 'double', 'long', 'float', 'char'] and rhs.type in ['int', 'double', 'long', 'float', 'char'] and operator in ['=', '+=', '-=', '*=', '/=', '&=', '|=', '^=', '%=', '<<=', '>>=', '>>>=']:
             self.type = highest_prior(lhs.type, rhs.type)
             self.place = rhs.place
-            tac.emit(lhs.place, rhs.place, '', operator+self.type)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(lhs.place, rhs.place, '', operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(lhs.place, rhs.place, '', operator+'float')
         elif lhs.type != rhs.type:
             print("Type mismatch in assignment.")
             print(lhs, rhs)
-        else:
+        else:  # ask
             # ST.print_scope_table()
-            tac.emit(lhs.place, rhs.place, '', operator+self.type)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(lhs.place, rhs.place, '', operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(lhs.place, rhs.place, '', operator+'float')
+            else:
+                tac.emit(lhs.place, rhs.place, '', operator+self.type)
 
 
 # BG start
@@ -499,7 +507,13 @@ class ConditionalOr(BinaryExpression):
         self.type = 'bool'
         name = ST.get_temp_var()
         self.place = name
-        tac.emit(name, lhs.place, rhs.place, operator+self.type)
+        #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+        if self.type in ['int', 'char', 'long']:
+            tac.emit(name, lhs.place, rhs.place, operator+'int')
+        elif self.type in ['float', 'double']:
+            tac.emit(name, lhs.place, rhs.place, operator+'float')
+        else:
+            tac.emit(name, lhs.place, rhs.place, operator+self.type)
 
 
 class ConditionalAnd(BinaryExpression):
@@ -508,7 +522,13 @@ class ConditionalAnd(BinaryExpression):
         self.type = 'bool'
         name = ST.get_temp_var()
         self.place = name
-        tac.emit(name, lhs.place, rhs.place, operator+self.type)
+        #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+        if self.type in ['int', 'char', 'long']:
+            tac.emit(name, lhs.place, rhs.place, operator+'int')
+        elif self.type in ['float', 'double']:
+            tac.emit(name, lhs.place, rhs.place, operator+'float')
+        else:
+            tac.emit(name, lhs.place, rhs.place, operator+self.type)
 
 
 class Or(BinaryExpression):
@@ -518,7 +538,13 @@ class Or(BinaryExpression):
             self.type = highest_prior(lhs.type, rhs.type)
             name = ST.get_temp_var()
             self.place = name
-            tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(name, lhs.place, rhs.place, operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            else:
+                tac.emit(name, lhs.place, rhs.place, operator+self.type)
         else:
             print("Error in Or operator operand types.")
 
@@ -530,7 +556,13 @@ class Xor(BinaryExpression):
             self.type = highest_prior(lhs.type, rhs.type)
             name = ST.get_temp_var()
             self.place = name
-            tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(name, lhs.place, rhs.place, operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            else:
+                tac.emit(name, lhs.place, rhs.place, operator+self.type)
         else:
             print("Error in Xor operator operand types.")
 
@@ -542,7 +574,13 @@ class And(BinaryExpression):
             self.type = highest_prior(lhs.type, rhs.type)
             name = ST.get_temp_var()
             self.place = name
-            tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(name, lhs.place, rhs.place, operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            else:
+                tac.emit(name, lhs.place, rhs.place, operator+self.type)
         else:
             print("Error in And operator operand types.")
 
@@ -553,7 +591,13 @@ class Equality(BinaryExpression):
         if lhs.type in ['int', 'char', 'long', 'bool', 'float', 'double'] and rhs.type in ['int', 'char', 'long', 'bool', 'float', 'double']:
             name = ST.get_temp_var()
             self.place = name
-            tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(name, lhs.place, rhs.place, operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            else:
+                tac.emit(name, lhs.place, rhs.place, operator+self.type)
             self.type = 'bool'
             self.falselist = [len(tac.code)]
             tac.emit("ifgoto", self.place, 'eq0', '')
@@ -569,7 +613,13 @@ class Relational(BinaryExpression):
         if lhs.type in ['int', 'char', 'long', 'bool', 'float', 'double'] and rhs.type in ['int', 'char', 'long', 'bool', 'float', 'double']:
             name = ST.get_temp_var()
             self.place = name
-            tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(name, lhs.place, rhs.place, operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            else:
+                tac.emit(name, lhs.place, rhs.place, operator+self.type)
             self.type = 'bool'
             self.falselist = [len(tac.code)]
             tac.emit("ifgoto", self.place, 'eq0', '')
@@ -586,7 +636,13 @@ class Shift(BinaryExpression):
             self.type = highest_prior(lhs.type, rhs.type)
             name = ST.get_temp_var()
             self.place = name
-            tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(name, lhs.place, rhs.place, operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            else:
+                tac.emit(name, lhs.place, rhs.place, operator+self.type)
         else:
             print("Error in Shift operator operand types.")
 
@@ -598,7 +654,13 @@ class Additive(BinaryExpression):
             self.type = highest_prior(lhs.type, rhs.type)
             name = ST.get_temp_var()
             self.place = name
-            tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(name, lhs.place, rhs.place, operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            else:
+                tac.emit(name, lhs.place, rhs.place, operator+self.type)
         else:
             print("Error in additive operator operand types.")
 
@@ -610,7 +672,13 @@ class Multiplicative(BinaryExpression):
             self.type = highest_prior(lhs.type, rhs.type)
             name = ST.get_temp_var()
             self.place = name
-            tac.emit(name, lhs.place, rhs.place, operator)
+            #tac.emit(name, lhs.place, rhs.place, operator)
+            if self.type in ['int', 'char', 'long']:
+                tac.emit(name, lhs.place, rhs.place, operator+'int')
+            elif self.type in ['float', 'double']:
+                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            else:
+                tac.emit(name, lhs.place, rhs.place, operator+self.type)
         else:
             print("Error in multiplicative operator operand types.")
 
@@ -629,19 +697,51 @@ class Unary(Expression):
         if "++" in sign or "--" in sign:
             if "++" == sign[1:3] or "--" == sign[1:3]:
                 temp1 = ST.get_temp_var()
-                tac.emit(temp1, expression.place, ' ', '='+self.type)
+                #tac.emit(temp1, expression.place, ' ', '='+self.type)
+                if self.type in ['int', 'char', 'long']:
+                    tac.emit(temp1, expression.place, ' ', '='+'int')
+                elif self.type in ['float', 'double']:
+                    tac.emit(temp1, expression.place, ' ', '='+'float')
+                else:
+                    tac.emit(temp1, expression.place, ' ', '='+self.type)
+
                 self.place = temp1
             if "++" in sign:
-                tac.emit(temp, expression.place, '1', '+'+self.type)
-                tac.emit(expression.place, temp, ' ', '='+self.type)
+                #tac.emit(temp, expression.place, '1', '+'+self.type)
+                #tac.emit(expression.place, temp, ' ', '='+self.type)
+                if self.type in ['int', 'char', 'long']:
+                    tac.emit(temp, expression.place, '1', '+'+'int')
+                    tac.emit(expression.place, temp, ' ', '='+'int')
+                elif self.type in ['float', 'double']:
+                    tac.emit(temp, expression.place, '1', '+'+'float')
+                    tac.emit(expression.place, temp, ' ', '='+'float')
+                else:
+                    tac.emit(temp, expression.place, '1', '+'+self.type)
+                    tac.emit(expression.place, temp, ' ', '='+self.type)
+
             elif "--" in sign:
-                tac.emit(temp, expression.place, '1', '-'+self.type)
-                tac.emit(expression.place, temp, ' ', '='+self.type)
+                #tac.emit(temp, expression.place, '1', '-'+self.type)
+                #tac.emit(expression.place, temp, ' ', '='+self.type)
+                if self.type in ['int', 'char', 'long']:
+                    tac.emit(temp, expression.place, '1', '-'+'int')
+                    tac.emit(expression.place, temp, ' ', '='+'int')
+                elif self.type in ['float', 'double']:
+                    tac.emit(temp, expression.place, '1', '-'+'float')
+                    tac.emit(expression.place, temp, ' ', '='+'float')
+                else:
+                    tac.emit(temp, expression.place, '1', '-'+self.type)
+                    tac.emit(expression.place, temp, ' ', '='+self.type)
         elif "-" in sign:
             if isinstance(self.expression, Literal):
                 self.place = '-' + self.expression.place
             else:
-                tac.emit('neg', expression.place, ' ', self.type)  # ?
+                #tac.emit('neg', expression.place, ' ', self.type)
+                if self.type in ['int', 'char', 'long']:
+                    tac.emit('neg', expression.place, ' ', 'int')
+                elif self.type in ['float', 'double']:
+                    tac.emit('neg', expression.place, ' ', 'float')
+                else:
+                    tac.emit('neg', expression.place, ' ', self.type)
 
 # TODO shift operations
 
