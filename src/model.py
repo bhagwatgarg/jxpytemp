@@ -479,7 +479,7 @@ class Assignment(BinaryExpression):
             elif self.type in ['float', 'double']:
                 tac.emit(lhs.place, rhs.place, '', operator+'float')
             else:
-                tac.emit(lhs.place, rhs.place, '', operator+self.type)
+                tac.emit(lhs.place, rhs.place, '', operator+'INT?')
 
 
 # BG start
@@ -597,7 +597,7 @@ class Equality(BinaryExpression):
             elif self.type in ['float', 'double']:
                 tac.emit(name, lhs.place, rhs.place, operator+'float')
             else:
-                tac.emit(name, lhs.place, rhs.place, operator+self.type)
+                tac.emit(name, lhs.place, rhs.place, operator+"INT?")
             self.type = 'bool'
             self.falselist = [len(tac.code)]
             tac.emit("ifgoto", self.place, 'eq0', '')
@@ -619,7 +619,7 @@ class Relational(BinaryExpression):
             elif self.type in ['float', 'double']:
                 tac.emit(name, lhs.place, rhs.place, operator+'float')
             else:
-                tac.emit(name, lhs.place, rhs.place, operator+self.type)
+                tac.emit(name, lhs.place, rhs.place, operator+'INT?')
             self.type = 'bool'
             self.falselist = [len(tac.code)]
             tac.emit("ifgoto", self.place, 'eq0', '')
