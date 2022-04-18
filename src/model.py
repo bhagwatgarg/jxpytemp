@@ -18,6 +18,17 @@ priorities = {
 def highest_prior(lhs_type, rhs_type):
     return lhs_type if priorities[lhs_type] > priorities[rhs_type] else rhs_type
 
+# handles emit for all kinds of binary operators
+
+
+def int_or_real(type):  # given a type as input, returns its type
+    if type in ['int', 'long']:
+        return 'int'
+    elif type in ['float', 'double']:
+        return 'float'
+    elif type in ['char']:
+        return 'char'
+
 
 def get_func_name(id, params):
     idName = id + "$" + ST.curr_scope
@@ -465,21 +476,81 @@ class Assignment(BinaryExpression):
         if lhs.type in ['int', 'double', 'long', 'float', 'char'] and rhs.type in ['int', 'double', 'long', 'float', 'char'] and operator in ['=', '+=', '-=', '*=', '/=', '&=', '|=', '^=', '%=', '<<=', '>>=', '>>>=']:
             self.type = highest_prior(lhs.type, rhs.type)
             self.place = rhs.place
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(lhs.place, rhs.place, '', operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(lhs.place, rhs.place, '', operator+'float')
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(lhs.place, rhs.place, '', operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(lhs.place, rhs.place, '', operator+'float')
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
+            else:
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
         elif lhs.type != rhs.type:
             print("Type mismatch in assignment.")
             print(lhs, rhs)
         else:  # ask
             # ST.print_scope_table()
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(lhs.place, rhs.place, '', operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(lhs.place, rhs.place, '', operator+'float')
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(lhs.place, rhs.place, '', operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(lhs.place, rhs.place, '', operator+'float')
+            # else:
+            #     tac.emit(lhs.place, rhs.place, '', operator+self.type)
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
             else:
+<<<<<<< HEAD
                 tac.emit(lhs.place, rhs.place, '', operator+'INT?')
+=======
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
+>>>>>>> 27d74b7... typecasting completed yo mama
 
 
 # BG start
@@ -507,13 +578,42 @@ class ConditionalOr(BinaryExpression):
         self.type = 'bool'
         name = ST.get_temp_var()
         self.place = name
-        #tac.emit(name, lhs.place, rhs.place, operator+self.type)
-        if self.type in ['int', 'char', 'long']:
-            tac.emit(name, lhs.place, rhs.place, operator+'int')
-        elif self.type in ['float', 'double']:
-            tac.emit(name, lhs.place, rhs.place, operator+'float')
+        # #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+        # if self.type in ['int', 'char', 'long']:
+        #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+        # elif self.type in ['float', 'double']:
+        #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+        # else:
+        #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+
+        higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+        if (int_or_real(lhs.type) != higher_data_type):
+            tmp = ST.get_temp_var()
+            tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                     '_' + int_or_real(higher_data_type) + '_' + '=')
+            tac.emit(self.place, tmp, rhs.place,
+                     higher_data_type+'_'+operator)
+        elif (int_or_real(rhs.type) != higher_data_type):
+            tmp = ST.get_temp_var()
+            tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                     '_' + int_or_real(higher_data_type) + '_' + '=')
+            tac.emit(self.place, lhs.place, tmp,
+                     higher_data_type + '_' + operator)
         else:
-            tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            if lhs.type == 'char':
+                tmp1 = ST.get_temp_var()
+                tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                         '_' + int_or_real('int') + '_' + '=')
+                tmp2 = ST.get_temp_var()
+                tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                         '_' + int_or_real('int') + '_' + '=')
+                tmp3 = ST.get_temp_var()
+                tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                tac.emit(self.place, tmp3, '', int_or_real('int') +
+                         '_' + int_or_real('char') + '_' + '=')
+            else:
+                tac.emit(self.place, lhs.place, rhs.place,
+                         int_or_real(lhs.type) + '_' + operator)
 
 
 class ConditionalAnd(BinaryExpression):
@@ -523,12 +623,41 @@ class ConditionalAnd(BinaryExpression):
         name = ST.get_temp_var()
         self.place = name
         #tac.emit(name, lhs.place, rhs.place, operator+self.type)
-        if self.type in ['int', 'char', 'long']:
-            tac.emit(name, lhs.place, rhs.place, operator+'int')
-        elif self.type in ['float', 'double']:
-            tac.emit(name, lhs.place, rhs.place, operator+'float')
+        # if self.type in ['int', 'char', 'long']:
+        #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+        # elif self.type in ['float', 'double']:
+        #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+        # else:
+        #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+
+        higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+        if (int_or_real(lhs.type) != higher_data_type):
+            tmp = ST.get_temp_var()
+            tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                     '_' + int_or_real(higher_data_type) + '_' + '=')
+            tac.emit(self.place, tmp, rhs.place,
+                     higher_data_type+'_'+operator)
+        elif (int_or_real(rhs.type) != higher_data_type):
+            tmp = ST.get_temp_var()
+            tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                     '_' + int_or_real(higher_data_type) + '_' + '=')
+            tac.emit(self.place, lhs.place, tmp,
+                     higher_data_type + '_' + operator)
         else:
-            tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            if lhs.type == 'char':
+                tmp1 = ST.get_temp_var()
+                tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                         '_' + int_or_real('int') + '_' + '=')
+                tmp2 = ST.get_temp_var()
+                tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                         '_' + int_or_real('int') + '_' + '=')
+                tmp3 = ST.get_temp_var()
+                tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                tac.emit(self.place, tmp3, '', int_or_real('int') +
+                         '_' + int_or_real('char') + '_' + '=')
+            else:
+                tac.emit(self.place, lhs.place, rhs.place,
+                         int_or_real(lhs.type) + '_' + operator)
 
 
 class Or(BinaryExpression):
@@ -538,13 +667,42 @@ class Or(BinaryExpression):
             self.type = highest_prior(lhs.type, rhs.type)
             name = ST.get_temp_var()
             self.place = name
-            #tac.emit(name, lhs.place, rhs.place, operator+self.type)
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(name, lhs.place, rhs.place, operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # #tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # else:
+            #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
             else:
-                tac.emit(name, lhs.place, rhs.place, operator+self.type)
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
+
         else:
             print("Error in Or operator operand types.")
 
@@ -557,12 +715,42 @@ class Xor(BinaryExpression):
             name = ST.get_temp_var()
             self.place = name
             #tac.emit(name, lhs.place, rhs.place, operator+self.type)
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(name, lhs.place, rhs.place, operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # else:
+            #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
             else:
-                tac.emit(name, lhs.place, rhs.place, operator+self.type)
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
+
         else:
             print("Error in Xor operator operand types.")
 
@@ -575,12 +763,42 @@ class And(BinaryExpression):
             name = ST.get_temp_var()
             self.place = name
             #tac.emit(name, lhs.place, rhs.place, operator+self.type)
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(name, lhs.place, rhs.place, operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # else:
+            #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
             else:
-                tac.emit(name, lhs.place, rhs.place, operator+self.type)
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
+
         else:
             print("Error in And operator operand types.")
 
@@ -592,17 +810,56 @@ class Equality(BinaryExpression):
             name = ST.get_temp_var()
             self.place = name
             #tac.emit(name, lhs.place, rhs.place, operator+self.type)
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(name, lhs.place, rhs.place, operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # else:
+            #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
             else:
+<<<<<<< HEAD
                 tac.emit(name, lhs.place, rhs.place, operator+"INT?")
+=======
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
+
+>>>>>>> 27d74b7... typecasting completed yo mama
             self.type = 'bool'
             self.falselist = [len(tac.code)]
-            tac.emit("ifgoto", self.place, 'eq0', '')
+            if self.type in ['int', 'long']:
+                tac.emit("ifgoto", self.place, 'eq0', '')
+            elif self.type in ['float', 'double']:
+                tac.emit("ifgoto", self.place, 'eq0.0', '')
+            else:
+                tac.emit("ifgoto", self.place, 'eq0c', '')
             self.truelist = [len(tac.code)]
-            tac.emit("goto", '', '', '')
+           # tac.emit("goto", '', '', '')
         else:
             print("Error in == operator operand types.")
 
@@ -614,17 +871,57 @@ class Relational(BinaryExpression):
             name = ST.get_temp_var()
             self.place = name
             #tac.emit(name, lhs.place, rhs.place, operator+self.type)
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(name, lhs.place, rhs.place, operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # else:
+            #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
             else:
+<<<<<<< HEAD
                 tac.emit(name, lhs.place, rhs.place, operator+'INT?')
+=======
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
+
+>>>>>>> 27d74b7... typecasting completed yo mama
             self.type = 'bool'
             self.falselist = [len(tac.code)]
-            tac.emit("ifgoto", self.place, 'eq0', '')
+#            tac.emit("ifgoto", self.place, 'eq0', '')
+            if self.type in ['int', 'long']:
+                tac.emit("ifgoto", self.place, 'eq0', '')
+            elif self.type in ['float', 'double']:
+                tac.emit("ifgoto", self.place, 'eq0.0', '')
+            else:
+                tac.emit("ifgoto", self.place, 'eq0c', '')
             self.truelist = [len(tac.code)]
-            tac.emit("goto", '', '', '')
+          #  tac.emit("goto", '', '', '')
         else:
             print("Error in relational operator operand types.")
 
@@ -637,12 +934,41 @@ class Shift(BinaryExpression):
             name = ST.get_temp_var()
             self.place = name
             #tac.emit(name, lhs.place, rhs.place, operator+self.type)
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(name, lhs.place, rhs.place, operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # else:
+            #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
             else:
-                tac.emit(name, lhs.place, rhs.place, operator+self.type)
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
         else:
             print("Error in Shift operator operand types.")
 
@@ -655,12 +981,42 @@ class Additive(BinaryExpression):
             name = ST.get_temp_var()
             self.place = name
             #tac.emit(name, lhs.place, rhs.place, operator+self.type)
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(name, lhs.place, rhs.place, operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # else:
+            #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            ###########
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
             else:
-                tac.emit(name, lhs.place, rhs.place, operator+self.type)
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
+                #######################
         else:
             print("Error in additive operator operand types.")
 
@@ -672,13 +1028,43 @@ class Multiplicative(BinaryExpression):
             self.type = highest_prior(lhs.type, rhs.type)
             name = ST.get_temp_var()
             self.place = name
-            #tac.emit(name, lhs.place, rhs.place, operator)
-            if self.type in ['int', 'char', 'long']:
-                tac.emit(name, lhs.place, rhs.place, operator+'int')
-            elif self.type in ['float', 'double']:
-                tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # #tac.emit(name, lhs.place, rhs.place, operator)
+            # if self.type in ['int', 'char', 'long']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'int')
+            # elif self.type in ['float', 'double']:
+            #     tac.emit(name, lhs.place, rhs.place, operator+'float')
+            # else:
+            #     tac.emit(name, lhs.place, rhs.place, operator+self.type)
+            ###########
+            higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
+            if (int_or_real(lhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, tmp, rhs.place,
+                         higher_data_type+'_'+operator)
+            elif (int_or_real(rhs.type) != higher_data_type):
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
+                         '_' + int_or_real(higher_data_type) + '_' + '=')
+                tac.emit(self.place, lhs.place, tmp,
+                         higher_data_type + '_' + operator)
             else:
-                tac.emit(name, lhs.place, rhs.place, operator+self.type)
+                if lhs.type == 'char':
+                    tmp1 = ST.get_temp_var()
+                    tac.emit(tmp1, lhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp2 = ST.get_temp_var()
+                    tac.emit(tmp2, rhs.place, '', int_or_real('char') +
+                             '_' + int_or_real('int') + '_' + '=')
+                    tmp3 = ST.get_temp_var()
+                    tac.emit(tmp3, tmp1, tmp2, 'int_' + operator)
+                    tac.emit(self.place, tmp3, '', int_or_real('int') +
+                             '_' + int_or_real('char') + '_' + '=')
+                else:
+                    tac.emit(self.place, lhs.place, rhs.place,
+                             int_or_real(lhs.type) + '_' + operator)
+                #######################
         else:
             print("Error in multiplicative operator operand types.")
 
