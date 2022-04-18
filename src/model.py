@@ -807,7 +807,7 @@ class MethodInvocation(Expression):
         varx = ""
         if target != None:
             if target=='this':
-                new_var=ST.make_label()
+                new_var=ST.get_temp_var()
                 tac.emit(new_var, 'EXTRACT_THIS', '', '=')
                 t=ST.scope_and_table_map[ST.curr_scope]
 
@@ -904,9 +904,9 @@ class MethodInvocation(Expression):
             if isinstance(x, Literal): tac.emit('push',x.value,'','')
 
             elif isinstance(x, Name):
-                tac.emit('push1',x.value+'$'+ST.lookup(x.value)['scope'],'','')
+                tac.emit('push',x.value+'$'+ST.lookup(x.value)['scope'],'','')
             elif hasattr(x, 'place'):
-                tac.emit('push1',x.place,'','')
+                tac.emit('push',x.place,'','')
 
         ST.curr_scope = temp2
         ST.curr_sym_table = temp_table2
@@ -914,12 +914,12 @@ class MethodInvocation(Expression):
         ST.curr_scope=ST.get_parent_scope()
         ST.curr_sym_table=ST.curr_sym_table.parent_table
         old_var=ST.get_last_label()
-        new_var=ST.make_label()
+        new_var=ST.get_temp_var()
         tac.emit(new_var, old_var, '', '=')
         # tac.emit(new_var, 'OFFSET OF '+ get_func_name(name.value, arguments), '', '-=')
         tac.emit('push',new_var,'','')
         tac.emit('call',get_func_name(name.value, arguments),'','')
-        new_var=ST.make_label()
+        new_var=ST.get_temp_var()
         for i in range(len(arguments)+1):
             tac.emit('pop', new_var, '', '')
 
@@ -1242,7 +1242,7 @@ class Name(BaseClass):
         # for field access, first of all copy self.place to a new variable
         # increment the new variable with offset
         # dereference the variable and store it in new variable
-        new_var=ST.make_label()
+        new_var=ST.get_temp_var()
         # print(name, self.type)
         tac.emit(new_var, '', self.place, '=')
         offset=ST.get_offset(self.type, name)
