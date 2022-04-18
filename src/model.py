@@ -533,9 +533,6 @@ class Assignment(BinaryExpression):
                 tac.emit(self.place, lhs.place, tmp,
                          higher_data_type + '_' + operator)
             else:
-<<<<<<< HEAD
-                tac.emit(lhs.place, rhs.place, '', operator+'INT?')
-=======
                 if lhs.type == 'char':
                     tmp1 = ST.get_temp_var()
                     tac.emit(tmp1, lhs.place, '', int_or_real('char') +
@@ -550,7 +547,6 @@ class Assignment(BinaryExpression):
                 else:
                     tac.emit(self.place, lhs.place, rhs.place,
                              int_or_real(lhs.type) + '_' + operator)
->>>>>>> 27d74b7... typecasting completed yo mama
 
 
 # BG start
@@ -831,9 +827,6 @@ class Equality(BinaryExpression):
                 tac.emit(self.place, lhs.place, tmp,
                          higher_data_type + '_' + operator)
             else:
-<<<<<<< HEAD
-                tac.emit(name, lhs.place, rhs.place, operator+"INT?")
-=======
                 if lhs.type == 'char':
                     tmp1 = ST.get_temp_var()
                     tac.emit(tmp1, lhs.place, '', int_or_real('char') +
@@ -849,7 +842,6 @@ class Equality(BinaryExpression):
                     tac.emit(self.place, lhs.place, rhs.place,
                              int_or_real(lhs.type) + '_' + operator)
 
->>>>>>> 27d74b7... typecasting completed yo mama
             self.type = 'bool'
             self.falselist = [len(tac.code)]
             if self.type in ['int', 'long']:
@@ -892,9 +884,6 @@ class Relational(BinaryExpression):
                 tac.emit(self.place, lhs.place, tmp,
                          higher_data_type + '_' + operator)
             else:
-<<<<<<< HEAD
-                tac.emit(name, lhs.place, rhs.place, operator+'INT?')
-=======
                 if lhs.type == 'char':
                     tmp1 = ST.get_temp_var()
                     tac.emit(tmp1, lhs.place, '', int_or_real('char') +
@@ -910,7 +899,6 @@ class Relational(BinaryExpression):
                     tac.emit(self.place, lhs.place, rhs.place,
                              int_or_real(lhs.type) + '_' + operator)
 
->>>>>>> 27d74b7... typecasting completed yo mama
             self.type = 'bool'
             self.falselist = [len(tac.code)]
 #            tac.emit("ifgoto", self.place, 'eq0', '')
