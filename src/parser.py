@@ -12,7 +12,6 @@ node_num=0
 breaks = []
 continues = []
 
-# TODO int+
 
 def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
@@ -619,10 +618,8 @@ def p_MethodHeader(p):
         dims = 0
         is_array = False
         if isinstance(j.type, Type):
-            print(j.type)
             if isinstance(j.type.name, Name):
                 type = j.type.name.value
-                print(type)
             elif isinstance(j.type, Name): type=j.type.value
             else:
                 type = j.type.name
@@ -708,7 +705,7 @@ def p_MethodHeader2(p):
 
     for i in params:
         i_type=i['type']
-        if isinstance(i_type, Name) and i_type.type==None: print(i)
+        # if isinstance(i_type, Name) and i_type.type==None: print(i)
         idName += "$" + i_type
     
     var['name'] = idName
@@ -742,7 +739,6 @@ def p_MethodHeader2(p):
             if dims>0:
                 is_array=True
 
-        print(j.variable.name+'$'+var['name'])
         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
     # ST.update_param_names(var['name'])
     # tac.emit('func',var['name']+str(len(var['parameters'])),ST.get_curr_func()['params'],'')

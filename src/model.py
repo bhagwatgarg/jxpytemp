@@ -806,8 +806,10 @@ class MethodInvocation(Expression):
         f_type = None
         varx = ""
         if target != None:
-            if target == 'this':
-                t = ST.scope_and_table_map[ST.curr_scope]
+            if target=='this':
+                new_var=ST.make_label()
+                tac.emit(new_var, 'EXTRACT_THIS', '', '=')
+                t=ST.scope_and_table_map[ST.curr_scope]
 
                 while t.scope_type != 'class':
                     t = t.parent_table
@@ -838,9 +840,8 @@ class MethodInvocation(Expression):
                     f_type = k
                 elif ST.lookup(get_func_name(var, arguments), is_func=True) != None:
                     if 'private' in ST.lookup(get_func_name(var, arguments), is_func=True)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(get_func_name(var, arguments), is_func=True)['scope'], temp):
-                        print(get_func_name(var, arguments))
-                        print(
-                            f"Tried to access a 'private' function '{var}' from outside")
+                        # print(get_func_name(var, arguments))
+                        print(f"Tried to access a 'private' function '{var}' from outside")
                         break
                     func_name = get_func_name(var, arguments)
                     t = ST.curr_scope
@@ -894,31 +895,39 @@ class MethodInvocation(Expression):
                             print(arguments[i].type, params[i]['type'])
         except:
             pass
+        temp2=ST.curr_scope
+        temp_table2=ST.curr_sym_table
+        ST.curr_scope = temp
+        ST.curr_sym_table = temp_table
 
         for x in reversed(self.arguments):
-            # TODO: if x is name
-            if isinstance(x, Literal):
-                tac.emit('push', x.value, '', '')
+            if isinstance(x, Literal): tac.emit('push',x.value,'','')
 
-            else:
-                tac.emit('push1', x, '', '')
+            elif isinstance(x, Name):
+                tac.emit('push1',x.value+'$'+ST.lookup(x.value)['scope'],'','')
+            elif hasattr(x, 'place'):
+                tac.emit('push1',x.place,'','')
+
+        ST.curr_scope = temp2
+        ST.curr_sym_table = temp_table2
         # tac.emit('push',varx,'','')
-        # TODO
-        old_var = ST.get_last_label()
-        new_var = ST.make_label()
+        ST.curr_scope=ST.get_parent_scope()
+        ST.curr_sym_table=ST.curr_sym_table.parent_table
+        old_var=ST.get_last_label()
+        new_var=ST.make_label()
         tac.emit(new_var, old_var, '', '=')
-        tac.emit(new_var, 'OFFSET OF '+name.value +
-                 str(len(arguments)), '', '-=')
-        tac.emit('push', new_var, '', '')
-        ST.curr_scope = ST.get_parent_scope()
-        ST.curr_sym_table = ST.curr_sym_table.parent_table
-        tac.emit('call', get_func_name(name.value, arguments), '', '')
+        # tac.emit(new_var, 'OFFSET OF '+ get_func_name(name.value, arguments), '', '-=')
+        tac.emit('push',new_var,'','')
+        tac.emit('call',get_func_name(name.value, arguments),'','')
+        new_var=ST.make_label()
+        for i in range(len(arguments)+1):
+            tac.emit('pop', new_var, '', '')
 
         ST.curr_scope = temp
         ST.curr_sym_table = temp_table
         temp = ST.get_temp_var()
-        if func_name != None and ST.lookup(func_name, is_func=True) != None and ST.lookup(func_name, is_func=True)['return_type'] != 'void':
-            tac.emit('pop', temp, '', '')
+        # if func_name != None and ST.lookup(func_name ,is_func=True) != None and ST.lookup(func_name ,is_func=True)['return_type'] != 'void':
+        #     tac.emit('pop',temp,'','')
         self.place = temp
 
 
@@ -1068,7 +1077,6 @@ class FieldAccess(Expression):
             self.place = name.value+'$'+ST.get_parent_class()
 
 
-# TODO array index out of range check
 class ArrayAccess(Expression):
 
     def __init__(self, index, target):
@@ -1228,18 +1236,21 @@ class Name(BaseClass):
             else:
                 print(f"{var} not declared in current scope")
 
-        print(self.value, self.type, self.place, name)
+
+        # print(self.value, self.type, self.place, name)
         # Say, temp var stores the address of the variable
         # for field access, first of all copy self.place to a new variable
         # increment the new variable with offset
         # dereference the variable and store it in new variable
-        # TODO: compute offset
-        new_var = ST.make_label()
-        offset = ST.get_offset(self.type, name)
+        new_var=ST.make_label()
+        # print(name, self.type)
         tac.emit(new_var, '', self.place, '=')
-        tac.emit(new_var, '', 'TODO:OFFSET of '+name+str(offset), '+=')
-        if f_type not in primitives:
-            tac.emit(new_var, '', new_var, 'DEREFERENCE')
+        offset=ST.get_offset(self.type, name)
+
+        if offset:
+            tac.emit(new_var, '', str(offset), '+=')
+            if f_type not in primitives: tac.emit(new_var, '', new_var, 'DEREFERENCE')
+
         # emit self.place = self.type.offset
         # tac.emit()
         self.place = new_var
