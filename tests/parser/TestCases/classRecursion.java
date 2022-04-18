@@ -6,10 +6,6 @@
  // TODO: constructor
  // TODO: check array access, offsets, pass by reference
  // TODO: correct array access tac code
- // TODO: convert labels to vars
- // TODO: declare local vars should de temp
- // TODO: function parameters should be stored in temp vars at the beginning
- // TODO: basically convert all variable names to temp and only leave labels behind
  // TODO: clear temp variables
  // TODO: imports
  // TODO: check break and continue
