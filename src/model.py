@@ -1067,7 +1067,8 @@ class InstanceCreation(Expression):
         temp_table=ST.curr_sym_table
         ST.curr_scope=type
         ST.curr_sym_table=ST.scope_and_table_map[type]
-        print(get_func_name(type, arguments))
+        if get_func_name(type, arguments) not in ST.curr_sym_table.functions.keys(): print(f"Constructor for {type} not declared")
+        # print(get_func_name(type, arguments))
         for x in reversed(arguments):
             if isinstance(x, Literal): tac.emit('push',x.value,'','')
             elif isinstance(x, Name):
@@ -1216,7 +1217,7 @@ class Name(BaseClass):
             # TODO
             # var2=get_func_name(value)
         else:
-            print(value)
+            # print(value)
             # TODO
             # print("Not in Scope")
             return
