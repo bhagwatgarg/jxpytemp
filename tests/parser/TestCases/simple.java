@@ -26,7 +26,7 @@ public class Main {
     t.t2.yomama();
     // t.t2.v=1;
     // t.test_func(1, 2);
-    Test[][] arr=new Test[5][10];
+    int[][] arr=new int[5][10];
     arr[2][3]=1;
     // int[] arr2=new int[1];
     // arr2[0]=1;
