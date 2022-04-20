@@ -5,7 +5,7 @@ class _Node{
 
 
 class _Graph{
-  private _Node no;
+  // private _Node no;
   int vis;
   private int _edge;
   private int calc(){

@@ -5,15 +5,17 @@
 
  // TODO: constructor
 
-package TestCases;
+// package TestCases;
+
+class ListNode;
 
 class ListNode {
   int val2, val;
   ListNode next;
-  void ListNode(int b){
-    this.next=new ListNode();
-    this.val=b; // this.val in tac
-  }
+  // void ListNode(int b){
+  //   this.next=new ListNode();
+  //   this.val=b; // this.val in tac
+  // }
 
   void print_val(int c){
     int val1;  // should be present in tac
