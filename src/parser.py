@@ -591,6 +591,7 @@ def p_VariableInitializer(p):
 def p_MethodDeclaration(p):
     '''
     MethodDeclaration : MethodHeader MethodBody
+    | AbstractMethodHeader
     '''
     ST.end_scope()
     # stackbegin.pop()
@@ -600,14 +601,103 @@ def p_MethodDeclaration(p):
     # ST.update_param_names(func)
     # print('!!', ST.curr_sym_table.functions[func])
     # print(p[1])
-    p[0].body=p[2]
+    if len(p)==3:
+        p[0].body=p[2]
+    else: p[0].body=None
 
-# def p_MethodDeclMark(p):
-#     '''
-#     MethodDeclMark :
-#     '''
-#     p[0] = 
+def p_AbstractMethodHeader1(p):
+    '''
+    AbstractMethodHeader : DECLARE Modifiers Type abstract_method_marker MethodDeclarator SEMI
+    | DECLARE Type abstract_method_marker MethodDeclarator SEMI
+    '''
+    var={}
+    if len(p)==7:
+        # p[2]=p[2].split('$')[0]
+        var = {'modifiers': p[2], 'type': p[3], 'name': p[5]['name'], 'parameters': p[5]['parameters']}
+    else:
+        # p[1]=p[1].split('$')[0]
+        var = {'type': p[2], 'name': p[4]['name'], 'modifiers':[], 'parameters': p[4]['parameters']}
+    # p[0]=MethodDeclaration(p[-1]['name'], parameters = p[-1]['parameters'], return_type=p[-1]['type'], modifiers=p[-1]['modifiers'], body=None)
+    
+    params = []
 
+    for j in var['parameters']:
+        type = ""
+        dims = 0
+        is_array = False
+        if isinstance(j.type, Type):
+            if isinstance(j.type.name, Name):
+                type = j.type.name.value
+            elif isinstance(j.type, Name): type=j.type.value
+            else:
+                type = j.type.name
+            if j.type.dimensions > 0:
+                is_array = True
+                dims = j.type.dimensions
+        else:
+            type = j.type
+        params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
+                
+    idName = var['name'] + "$" + ST.curr_scope
+
+    for i in params:
+        idName += "$" + i['type']
+    
+    var['name'] = idName
+
+    ST.create_new_table(var['name'], scope_type="func")
+    
+    p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None, is_declaration=True)
+
+def p_AbstractMethodHeader2(p):
+    '''
+    AbstractMethodHeader : DECLARE Modifiers VOID abstract_method_marker MethodDeclarator SEMI
+    | DECLARE VOID abstract_method_marker MethodDeclarator SEMI
+    '''
+    var={}
+    if len(p)==7:
+        # p[2]=p[2].split('$')[0]
+        var = {'modifiers': p[2], 'type': p[3], 'name': p[5]['name'], 'parameters': p[5]['parameters']}
+    else:
+        # p[1]=p[1].split('$')[0]
+        var = {'type': p[2], 'name': p[4]['name'], 'modifiers':[], 'parameters': p[4]['parameters']}
+    # p[0]=MethodDeclaration(p[-1]['name'], parameters = p[-1]['parameters'], return_type=p[-1]['type'], modifiers=p[-1]['modifiers'], body=None)
+    
+    params = []
+
+    for j in var['parameters']:
+        type = ""
+        dims = 0
+        is_array = False
+        if isinstance(j.type, Type):
+            if isinstance(j.type.name, Name):
+                type = j.type.name.value
+            elif isinstance(j.type, Name): type=j.type.value
+            else:
+                type = j.type.name
+            if j.type.dimensions > 0:
+                is_array = True
+                dims = j.type.dimensions
+        else:
+            type = j.type
+        params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
+                
+    idName = var['name'] + "$" + ST.curr_scope
+
+    for i in params:
+        idName += "$" + i['type']
+    
+    var['name'] = idName
+
+    ST.create_new_table(var['name'], scope_type="func")
+    
+    p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None, is_declaration=True)
+def p_abstract_method_marker(p):
+    """
+    abstract_method_marker :
+    """
+    # p[-1]+='$abstract_method_marker'
+    p[0]='abstract_method_marker'
 
 def p_MethodHeader(p):
     '''
@@ -754,6 +844,7 @@ def p_MethodHeader2(p):
     # tac.emit('func',var['name']+str(len(var['parameters'])),ST.get_curr_func()['params'],'')
 
 
+
 def p_MethodDeclarator(p):
     '''
     MethodDeclarator : IDENTIFIER LPAREN RPAREN
@@ -763,7 +854,7 @@ def p_MethodDeclarator(p):
     if len(p)==4:
         p[0]['name']=p[1]
         p[0]['parameters'] = []
-        tac.emit('func',get_func_name(p[0]['name'], p[0]['parameters']),[],'')
+        if p[-1].split('$')[-1] != 'abstract_method_marker': tac.emit('func',get_func_name(p[0]['name'], p[0]['parameters']),[],'')
     else :
         p[0]['name']=p[1]
         p[0]['parameters']=p[3]
@@ -772,32 +863,9 @@ def p_MethodDeclarator(p):
         s=''
         for x in p[3]:
             q = q + [x.variable.name + '$'+get_func_name(p[0]['name'], p[0]['parameters'])]
-
-    # for i in p[0]['parameters']:
-    #     i_type=i['type']
-    #     if isinstance(i_type, Name) and i_type.type==None: print(i)
-    #     idName += "$" + i_type
-    
-    # var['name'] = idName
-    # get_func_name(p[0]['name'], p[0]['parameters'])
-        tac.emit('func', get_func_name(p[0]['name'], p[0]['parameters']),q,'')
-    # if len(p) == 6:
-    #     for j in p[4]:
-    #         type = ""
-    #         is_array = False
-    #         dims = 0
-    #         arr_size = []
-    #         if isinstance(j.type, Type):
-    #             if isinstance(j.type.name, Name):
-    #                 type = j.type.name.value
-    #             else:
-    #                 type = j.type.name
-    #             if j.type.dimensions > 0:
-    #                 is_array = True
-    #                 dims = j.type.dimensions
-    #         else:
-    #             type = j.type
-    #         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
+        if p[-1].split('$')[-1] != 'abstract_method_marker':
+            print(p[-1])
+            tac.emit('func1', get_func_name(p[0]['name'], p[0]['parameters']),q,'')
 
 def p_FormalParametersList(p):
     '''
