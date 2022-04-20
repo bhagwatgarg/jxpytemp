@@ -378,6 +378,16 @@ def p_SimpleName(p):
 def p_QualifiedName(p):
     ''' QualifiedName : Name DOT IDENTIFIER
     '''
+    if (p[-2])=='this':
+        new_var=ST.get_temp_var()
+        tac.emit(new_var, 'EXTRACT_THIS', '', '=')
+        p[1].place=new_var
+        temp_value=p[1].value
+        temp_type=ST.get_parent_class()
+        p[1].value=''
+        p[1].type=temp_type
+        p[1].append_name(temp_value)
+        p[1].value=p[1].value[1:]
     p[1].append_name(p[3])
     p[0] = p[1]
 
@@ -1462,7 +1472,7 @@ def p_ClassInstanceCreationExpression(p):
     ClassInstanceCreationExpression : NEW ClassType LPAREN RPAREN
     | NEW ClassType LPAREN ArgumentList RPAREN
     '''
-    if len(p) == 5: p[0] = InstanceCreation(type = p[2])
+    if len(p) == 5: p[0] = InstanceCreation(type = p[2], arguments=[])
     else: p[0] = InstanceCreation(type = p[2], arguments = p[4])
 
 def p_ArgumentList(p):
@@ -1514,6 +1524,13 @@ def p_FieldAccess(p):
     FieldAccess : Primary DOT Name
     '''
     p[0] = FieldAccess(p[3], p[1])
+
+def p_field_marker(p):
+    '''
+    field_marker : '''
+    new_var=ST.get_temp_var()
+    tac.emit(new_var, 'EXTRACT_THIS', '', '=')
+    # p[0]={'field_marker':new_var}
 
 def p_MethodInvocation(p):
     '''
