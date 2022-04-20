@@ -327,7 +327,7 @@ class FieldDeclaration(BaseClass):
 
 class MethodDeclaration(ScopeField):
 
-    def __init__(self, name, modifiers=None, parameters=None, return_type='void', body=None, type_parameters=None):
+    def __init__(self, name, modifiers=None, parameters=None, return_type='void', body=None, type_parameters=None, is_declaration=False):
         super(MethodDeclaration, self).__init__()
         self._fields = ['name', 'modifiers', 'parameters',
                         'return_type', 'body', 'type_parameters']
@@ -365,7 +365,7 @@ class MethodDeclaration(ScopeField):
 
         parent_scope = ST.get_parent_scope()
         ST.insert_in_sym_table(idName=name, idType='function', is_func=True, args=params,
-                               modifiers=modifiers, return_type=return_type, scope=parent_scope)
+                               modifiers=modifiers, return_type=return_type, scope=parent_scope, is_declaration=is_declaration)
 
 
 class ConstructorDeclaration(ScopeField):

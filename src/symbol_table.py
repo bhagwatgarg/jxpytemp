@@ -61,7 +61,7 @@ class ScopeTable:
         self.temp_var_counter += 1
         return 'temp' + str(self.temp_var_counter)
 
-    def insert_in_sym_table(self, idName, idType, is_func=False, args=None, is_array=False, dims=None, arr_size=None, scope=None, modifiers=[], return_type=None):
+    def insert_in_sym_table(self, idName, idType, is_func=False, args=None, is_array=False, dims=None, arr_size=None, scope=None, modifiers=[], return_type=None, is_declaration=False):
 
         if scope == None:
             scope = self.curr_scope
@@ -70,7 +70,7 @@ class ScopeTable:
             self.scope_and_table_map[scope].add_symbol(idName, idType, is_array, dims, arr_size, modifiers=modifiers)
             return None
         else:
-            self.scope_and_table_map[scope].add_function(idName, idType, args, modifiers=modifiers, return_type=return_type,scope=scope)
+            self.scope_and_table_map[scope].add_function(idName, idType, args, modifiers=modifiers, return_type=return_type,scope=scope, is_declaration=is_declaration)
     
     def check_func_prefix(self, id):
         # if self.curr_sym_table.functions=={}: return False
@@ -191,8 +191,8 @@ class SymbolTable:
         if idType == 'class' and idName not in widths.keys():
             self.offset += 8
 
-    def add_function(self, func_name, type=None, params=None, modifiers=[], return_type=None,scope=None):
-        if func_name in self.functions.keys():
+    def add_function(self, func_name, type=None, params=None, modifiers=[], return_type=None,scope=None, is_declaration=False):
+        if func_name in self.functions.keys() and self.functions[func_name]['is_declaration'] == False:
             raise Exception('Function %s redeclared, check your program' % (func_name))
 
         # self.offset = self.width
@@ -208,6 +208,7 @@ class SymbolTable:
             'offset' : 0,
             'scope' : scope,
             'name' : func_name,
+            'is_declaration': is_declaration
         }
 
 
