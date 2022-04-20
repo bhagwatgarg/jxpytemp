@@ -1,3 +1,4 @@
+#from black import target_version_option_callback
 import pandas as pd
 # from model import Name
 
@@ -84,20 +85,26 @@ class ScopeTable:
                 val.print_table()
     
     def get_offset(self, scope, label):
-        table=self.curr_sym_table
-        while(table):
-            if table.scope!=scope:
-                table=table.parent_table
-                continue
-            if label in table.symbols.keys():
-                return table.symbols[label]['offset']
-            if label in table.functions.keys():
-                return table.functions[label]['offset']
-            return None
+        table=self.scope_and_table_map[scope]
+        if label in table.symbols.keys():
+            return table.symbols[label]['offset']
+        if label in table.functions.keys():
+            return table.functions[label]['offset']
+        # while(table):
+        #     if table.scope!=scope:
+        #         table=table.parent_table
+        #         continue
+        #     # print(table.symbols.keys())
+        #     # print(table.functions.keys())
+        #     if label in table.symbols.keys():
+        #         return table.symbols[label]['offset']
+        #     if label in table.functions.keys():
+        #         return table.functions[label]['offset']
+        #     return None
         return None
     
     def get_last_label(self, sub=1):
-        return self.label_prefix+str(self.label_counter-sub+1)
+        return 'temp'+str(self.temp_var_counter-sub+1)
 
     def get_curr_func(self):
         table=self.curr_sym_table
@@ -122,6 +129,13 @@ class ScopeTable:
                     print(obj['params'][i]['name'])
                     obj['params'][i]['name']=obj['params'][i]['name'].split('$')[0]+suffix
         return
+    
+    def check_parent_child_relationship(self, parent, child):
+        table=self.scope_and_table_map[child]
+        while table:
+            if table.scope==parent: return True
+            table=table.parent_table
+        return False
 
 
 class SymbolTable:

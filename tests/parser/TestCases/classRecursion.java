@@ -1,13 +1,19 @@
 /**
  * static: constructor
- * 
+ *
  */
 
  // TODO: constructor
-
-// package TestCases;
-
-class ListNode;
+ // TODO: check array access, offsets, pass by reference
+ // TODO: correct array access tac code
+ // TODO: clear temp variables
+ // TODO: imports
+ // TODO: check break and continue
+ // TODO: remove function width
+ // TODO: declare * datatype size
+ // TODO: multidim dims exactly equal
+ // TODO: width in array access
+package TestCases;
 
 class ListNode {
   int val2, val;
@@ -36,7 +42,14 @@ class ListNode {
     int n2;
     n2=1;
     n1=c1;
+    c1=1;
     char d;
+    // TODO: ListNode l1=this.next; working but ListNode l1=this;
+    ListNode l1=this.next;
+    for(int _=0; _<1; _++){
+      int c1;
+      l1.next.next.print_val(_);
+    }
     // ListNode b=new ListNode();
     return new ListNode();
   }
@@ -57,11 +70,11 @@ class Main{
     root=l2;
     int a=1;
     a=b;
-    root.f1(root, 2);
-    root.f1(a, 2);
+    // root.f1(root.f1(root, 4), 2);
+    // root.f1(a, 2);
+    root.next.next.f1(new ListNode(), 2);
 
     for(int i=0; i<10; i++){
-      
       a=b;
     }
 
@@ -73,7 +86,9 @@ class Main{
     do{
       a = b;
     }while(a == 1);
+    int[] arr=new int[10];
+    arr[10]=1;
+    arr[a]=2;
     return 1;
-// TODO: do while extra goto
   }
 }

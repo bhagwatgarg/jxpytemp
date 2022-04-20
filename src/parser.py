@@ -12,7 +12,6 @@ node_num=0
 breaks = []
 continues = []
 
-# TODO int+
 
 def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
@@ -292,7 +291,7 @@ def p_Goal(p):
     '''Goal : CompilationUnit'''
     p[0] = p[1]
     # print(p[0])
-    ST.print_scope_table()
+    # ST.print_scope_table()
     generate_ast(p[0])
     prefix='.'
     graph.write(prefix+'/graph.dot')
@@ -367,15 +366,18 @@ def p_ArrayType(p):
 
 def p_Name(p):
     ''' Name : SimpleName
-    | QualifiedName'''
+    | QualifiedName
+    '''
     p[0] = p[1]
 
 def p_SimpleName(p):
-    ''' SimpleName : IDENTIFIER'''
+    ''' SimpleName : IDENTIFIER
+    '''
     p[0] = Name(p[1])
 
 def p_QualifiedName(p):
-    ''' QualifiedName : Name DOT IDENTIFIER'''
+    ''' QualifiedName : Name DOT IDENTIFIER
+    '''
     p[1].append_name(p[3])
     p[0] = p[1]
 
@@ -525,8 +527,8 @@ def p_ClassBodyDeclaration(p):
     '''
     ClassBodyDeclaration : ClassMemberDeclaration
     | ConstructorDeclaration
-    | StaticInitializer
     '''
+    # removed staticinitilaizer from here
     p[0] = p[1]
 
 def p_ClassMemberDeclaration(p):
@@ -616,10 +618,8 @@ def p_MethodHeader(p):
         dims = 0
         is_array = False
         if isinstance(j.type, Type):
-            print(j.type)
             if isinstance(j.type.name, Name):
                 type = j.type.name.value
-                print(type)
             elif isinstance(j.type, Name): type=j.type.value
             else:
                 type = j.type.name
@@ -705,7 +705,7 @@ def p_MethodHeader2(p):
 
     for i in params:
         i_type=i['type']
-        if isinstance(i_type, Name) and i_type.type==None: print(i)
+        # if isinstance(i_type, Name) and i_type.type==None: print(i)
         idName += "$" + i_type
     
     var['name'] = idName
@@ -739,7 +739,6 @@ def p_MethodHeader2(p):
             if dims>0:
                 is_array=True
 
-        print(j.variable.name+'$'+var['name'])
         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
     # ST.update_param_names(var['name'])
     # tac.emit('func',var['name']+str(len(var['parameters'])),ST.get_curr_func()['params'],'')
@@ -817,11 +816,11 @@ def p_MethodBody(p):
     '''
     p[0] = p[1]
 
-def p_StaticInitializer(p):
-    '''
-    StaticInitializer : begin_scope STATIC Block end_scope
-    '''
-    p[0] = ClassInitializer(p[3], static = True)
+# def p_StaticInitializer(p):
+#     '''
+#     StaticInitializer : begin_scope STATIC Block end_scope
+#     '''
+#     p[0] = ClassInitializer(p[3], static = True)
 
 
 ### BG START
@@ -843,8 +842,8 @@ def p_ConstructorDeclaration(p):
 
 def p_ConstructorDeclarator(p):
     '''
-    ConstructorDeclarator : SimpleName LPAREN decl_mark FormalParameterList RPAREN
-    | SimpleName decl_mark LPAREN RPAREN
+    ConstructorDeclarator : SimpleName LPAREN FormalParameterList RPAREN
+    | SimpleName LPAREN RPAREN
     '''
     param_list=[]       # empty list of params
     if len(p)==6:
@@ -1502,7 +1501,6 @@ def p_Dims(p):
 def p_FieldAccess(p):
     '''
     FieldAccess : Primary DOT Name
-    | SUPER DOT Name
     '''
     p[0] = FieldAccess(p[3], p[1])
 
