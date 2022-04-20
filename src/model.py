@@ -1,5 +1,5 @@
 from tac import *
-widths = {'int': 4, 'float': 8, 'short': 4, 'long': 8, 'double': 8, 'char': 1}
+# widths = {'int': 4, 'float': 8, 'short': 4, 'long': 8, 'double': 8, 'char': 1}
 primitives = ['int', 'float', 'bool', 'char', 'long', 'double']
 count = -1
 
@@ -334,6 +334,10 @@ class FieldDeclaration(BaseClass):
                     for k in j.initializer.dimensions:
                         arr_size.append(k.value)
                         width *= int(k.value)
+                    if j.initializer.type not in primitives:
+                        width *= 8
+                    else:
+                        width *= widths[j.initializer.type ]
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),
                              width, '', 'declare')
                 elif j.initializer:
@@ -1497,14 +1501,12 @@ class ArrayAccess(Expression):
 
         # TODO change the code
         if self.depth == 1:
-            # this line is for array name to get propogated to all array access
             self.array = target.place
             value = ST.lookup(target.value)
             dimensions = value['arr_size']
             self.pass_dimension = dimensions
 
             length = 1
-            #import pdb; pdb.set_trace()
             for x in dimensions[self.depth:]:
                 length *= int(x)
             temp = ST.get_temp_var()
@@ -1521,7 +1523,6 @@ class ArrayAccess(Expression):
             temp = ST.get_temp_var()
             tac.emit(temp, index.place, 4*length, '*')
             temp1 = ST.get_temp_var()
-            # here we can optimize by using temo again
             tac.emit(temp1, temp, target.len, '+')
             self.place = temp1
             self.array = target.array

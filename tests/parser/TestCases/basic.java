@@ -1,10 +1,25 @@
 class Main{
-    public int hello(int a){
-        return this.hello(1);
-    }
+
+    // public int lol(int arr[3][])
+    // {
+    //     return arr[1][2][3];
+    // }
+
     public static int main(){
-int[] arr= new int[3];
-arr[1]=3;
-arr[2]=arr[1];
-}
+
+        // while(1 == 1)
+        // {
+        //     char i = 'a';
+        //     while( i < 'c')
+        //     {
+        //         if (i > 'c')
+        //         {
+        //             continue;
+        //         }
+        //         int p = 3;
+        //     }
+        // }
+        Main[][][] p = new Main[2][3][4];
+        int a = 4;
+    }
 }

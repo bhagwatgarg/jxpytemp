@@ -6,12 +6,12 @@ from model import *
 import pydot
 import os
 
-graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
-node_num=0
 
 breaks = []
 continues = []
 
+graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
+node_num=0
 
 def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
@@ -908,13 +908,13 @@ def p_ExplicitConstructorInvocation(p):
 #     if len(p)==4: variable_initializers=p[2]
 #     p[0]=ArrayInitializer(variable_initializers)
 
-def p_VariableInitializers(p):
-    '''
-    VariableInitializers : VariableInitializer
-    | VariableInitializers COMMA VariableInitializer
-    '''
-    if len(p)==2: p[0]=[p[1]]
-    else: p[0]=p[1]+[p[3]]
+# def p_VariableInitializers(p):
+#     '''
+#     VariableInitializers : VariableInitializer
+#     | VariableInitializers COMMA VariableInitializer
+#     '''
+#     if len(p)==2: p[0]=[p[1]]
+#     else: p[0]=p[1]+[p[3]]
 
 def p_Block(p):
     '''
@@ -1024,10 +1024,16 @@ def p_StatementExpression(p):
     '''
     p[0]=p[1]
 
+def convert_expr_to_equality(inp):
+    if isinstance(inp, Name) or isinstance(inp, Literal):
+        return Equality('!=', inp, Literal('0'))
+    return inp
+
 def p_IfThenStatement(p):
     '''
     IfThenStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 Statement ifMark1 end_scope 
     '''
+    p[4] = convert_expr_to_equality(p[4])
     p[0]=IfThenElse(predicate=p[4], if_true=p[7])
     tac.backpatch(p[4].truelist,p[6])
     tac.backpatch(p[4].falselist,p[8])
@@ -1053,6 +1059,7 @@ def p_IfThenElseStatement(p):
     '''
     IfThenElseStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope Statement end_scope ifMark2
     '''
+    p[4] = convert_expr_to_equality(p[4])
     p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
     tac.backpatch(p[4].truelist,p[6])
     tac.backpatch(p[4].falselist,p[10][1])
@@ -1061,6 +1068,7 @@ def p_IfThenElseStatementNoShortIf(p):
     '''
     IfThenElseStatementNoShortIf : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope StatementNoShortIf end_scope ifMark2
     '''
+    p[4] = convert_expr_to_equality(p[4])
     p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
     tac.backpatch(p[4].truelist,p[6])
     tac.backpatch(p[4].falselist,p[10][1])
@@ -1122,6 +1130,7 @@ def p_WhileStatement(p):
     '''
     WhileStatement : WHILE prep_fw_stack LPAREN begin_scope while_l1 Expression RPAREN while_l1 Statement end_scope while_l2
     '''
+    p[6] = convert_expr_to_equality(p[6])
     p[0]=While(predicate=p[6], body=p[9])
 
     tac.backpatch(continues[-1], p[5])
@@ -1137,6 +1146,7 @@ def p_WhileStatementNoShortIf(p):
     '''
     WhileStatementNoShortIf : WHILE prep_fw_stack LPAREN begin_scope while_l1 Expression RPAREN while_l1 StatementNoShortIf end_scope while_l2
     '''
+    p[6] = convert_expr_to_equality(p[6])
     p[0]=While(predicate=p[6], body=p[9])
 
     tac.backpatch(continues[-1], p[5])
@@ -1176,6 +1186,7 @@ def p_DoStatement(p):
     '''
     DoStatement : DO prep_fw_stack begin_scope dwhile_l1 Statement WHILE LPAREN dwhile_l1 Expression RPAREN SEMI end_scope dwhile_l2
     '''
+    p[9] = convert_expr_to_equality(p[9])
     p[0]=DoWhile(predicate=p[9], body=p[5])
 
     tac.backpatch(continues[-1], p[8])
@@ -1259,6 +1270,7 @@ def p_ForStatement(p):
         tl_jumps = p[11]
         conts = p[8]
 
+    predicate = convert_expr_to_equality(predicate)
     p[0] = For(init = init, predicate = predicate, update = update, body = body)
 
     tac.backpatch(continues[-1], conts)
@@ -1325,6 +1337,7 @@ def p_ForStatementNoShortIf(p):
         tl_jumps = p[11]
         conts = p[8]
 
+    predicate = convert_expr_to_equality(predicate)
     p[0] = For(init = init, predicate = predicate, update = update, body = body)
 
     tac.backpatch(continues[-1], conts)
@@ -1390,29 +1403,27 @@ def p_StatementExpressionList(p):
 
 def p_BreakStatement(p):
     '''
-    BreakStatement : BREAK IDENTIFIER SEMI
-    | BREAK SEMI
+    BreakStatement : BREAK SEMI
     '''
-    if len(p) == 3: 
-        breaks[-1].append(len(tac.code))
-        tac.emit('goto', '', '', '')
-        p[0] = Break()
-    else: p[0] = Break(label = p[2])
+    if len(continues) == 0:
+        print("Break Statement detected outside loop")
+    breaks[-1].append(len(tac.code))
+    tac.emit('goto', '', '', '')
+    p[0] = Break()
+
 
 
 ### BG END
 
 def p_ContinueStatement(p):
     '''
-    ContinueStatement : CONTINUE IDENTIFIER SEMI
-    | CONTINUE SEMI
+    ContinueStatement : CONTINUE SEMI
     '''
-    if len(p) == 3:
-        continues[-1].append(len(tac.code))
-        tac.emit('goto', '', '', '')
-        p[0] = Continue()
-    else:
-        p[0] = Continue(p[2])
+    if len(continues) == 0:
+        print("Continue Statement detected outside loop")
+    continues[-1].append(len(tac.code))
+    tac.emit('goto', '', '', '')
+    p[0] = Continue()
 
 def p_ReturnStatement(p):
     '''
@@ -1713,6 +1724,8 @@ def p_ConditionalAndExpression(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
+        p[1] = convert_expr_to_equality(p[1])
+        p[4] = convert_expr_to_equality(p[4])
         p[0] = ConditionalAnd(p[2], p[1], p[4])
         tac.backpatch(p[1].truelist,p[3])
         p[0].truelist = p[4].truelist
@@ -1726,6 +1739,8 @@ def p_ConditionalOrExpression(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
+        p[1] = convert_expr_to_equality(p[1])
+        p[4] = convert_expr_to_equality(p[4])
         p[0] = ConditionalOr(p[2], p[1], p[4])
         tac.backpatch(p[1].falselist,p[3])
         p[0].truelist = p[1].truelist+p[4].truelist
@@ -1799,13 +1814,13 @@ def p_ConstantExpression(p):
 def p_error(p):
     print("Syntax Error in line", p.lineno)
 
-def p_decl_mark(p):
-    '''
-    decl_mark :
-    '''
-    var=p[-2]
-    if type(p[-2])!=str: var=p[-2].value
-    ST.create_new_table(var)
+# def p_decl_mark(p):
+#     '''
+#     decl_mark :
+#     '''
+#     var=p[-2]
+#     if type(p[-2])!=str: var=p[-2].value
+#     ST.create_new_table(var)
     #print(f"table vreated: {var}")
     # stackbegin.append(var)
     # stackend.append(var)
