@@ -195,8 +195,8 @@ class SymbolTable:
         if func_name in self.functions.keys():
             raise Exception('Function %s redeclared, check your program' % (func_name))
 
-        self.offset = self.width
-        self.width += 8
+        # self.offset = self.width
+        # self.width += 8
         
         self.functions[func_name] = {
             'n_params': len(params),
@@ -205,7 +205,7 @@ class SymbolTable:
             'modifiers': modifiers,
             'type' : 'func',
             'width' : 8,
-            'offset' : self.offset,
+            'offset' : 0,
             'scope' : scope,
             'name' : func_name,
         }
