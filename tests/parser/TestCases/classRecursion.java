@@ -22,6 +22,7 @@ package TestCases;
 class ListNode {
   int val2, val;
   ListNode next;
+  void ListNode(){}
   // void ListNode(int b){
   //   this.next=new ListNode();
   //   this.val=b; // this.val in tac
