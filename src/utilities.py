@@ -1,16 +1,12 @@
 from os import stat
 import sys
 import csv
-from LALR_parser import *
-import global_vars as g
 
-leader_instructions = [
+leader_ins = [
     "ifgoto",
     "return",
     "label",
     "call",
-    "print_int",
-    "scan_int",
     "goto",
     "func",
     "begin_func",
@@ -71,10 +67,9 @@ class Instruction:
         self.out = None
         self.array_index_o = None
         self.operation = None
-        self.inst_next_use = dict()
-        self.inst_live = dict()
-        self.build(statement)
-        #self.populate_per_inst_next_use()
+        self.inst_info = dict()
+        self.get_info(statement)
+        self.populate_per_inst_next_use()
         self.arg_set = []
 
 
@@ -96,7 +91,7 @@ class Instruction:
             args = args[1:-2]
             return args.split(',')
 
-    def build(self, statement):
+    def get_info(self, statement):
         '''
         Populate appropriate entries of Instruction class
         according to instruction type
@@ -133,10 +128,44 @@ class Instruction:
         elif statement[0] == "ret":
             self.operation = "return"
             self.inp1 = statement[1]
+        
+        elif statement[0] == 'pop':
+            self.operation = "return"
+            self.inp1 = statement[1]
+
+        elif statement[3] == "int_float_=":
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.inp1 = statement[1]
+
+        elif statement[3] == "float_int_=":
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.inp1 = statement[1]
+
+        elif statement[3] == "char_int_=":
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.inp1 = statement[1]
+        
+        elif statement[3] == "int_char_=":
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.inp1 = statement[1]
+
+        elif statement[3] == "char_float_=":
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.inp1 = statement[1]
+
+        elif statement[3] == "float_char_=":
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.inp1 = statement[1]
 
         
 
-        elif instr_type in ["~","!","++","--"]:
+        elif statement[0] in ["~","!","++","--"]:
             #10, ++, out, variable
             self.operation = instr_type
             self.instr_type = "unary"
@@ -189,7 +218,6 @@ class Instruction:
 
 
     def populate_per_inst_next_use(self):
-        return
         '''
         for each symbol in instruction, initialize the next use
         and liveness parameters
@@ -201,7 +229,7 @@ class Instruction:
             ]
         for symbol in symbols:
             if is_valid_sym(symbol):
-                self.per_inst_next_use[symbol] = SymbolTableEntry()
+                self.inst_info[symbol] = symbol_info()
 
 
 def read_three_address_code(filename):
