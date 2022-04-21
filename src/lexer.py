@@ -36,6 +36,7 @@ keywords = {
     'this':'THIS',
     'void':'VOID',
     'while':'WHILE',
+    'declare':'DECLARE'
 
 }
 
