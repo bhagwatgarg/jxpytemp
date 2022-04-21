@@ -1313,8 +1313,8 @@ class MethodInvocation(Expression):
         tac.emit(new_var, old_var, '', '=')
         # tac.emit(new_var, 'OFFSET OF '+ get_func_name(name.value, arguments), '', '-=')
         tac.emit('push', new_var, '', '')
-        ST.curr_scope = ST.get_parent_scope()
-        ST.curr_sym_table = ST.curr_sym_table.parent_table
+        # ST.curr_scope = ST.get_parent_scope()
+        # ST.curr_sym_table = ST.curr_sym_table.parent_table
         tac.emit('call', get_func_name(name.value, arguments),str(len(arguments)), '')
         new_var = ST.get_temp_var()
         for i in range(len(arguments)+1):
