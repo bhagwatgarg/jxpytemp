@@ -553,8 +553,8 @@ class Equality(BinaryExpression):
         if lhs.type in ['int', 'char', 'long', 'bool', 'float', 'double'] and rhs.type in ['int', 'char', 'long', 'bool', 'float', 'double']:
             name = ST.get_temp_var()
             self.place = name
+            self.type = highest_prior(lhs.type, rhs.type)
             tac.emit(name, lhs.place, rhs.place, operator+self.type)
-            self.type = 'bool'
             self.falselist = [len(tac.code)]
             tac.emit("ifgoto", self.place, 'eq0', '')
             self.truelist = [len(tac.code)]
@@ -569,8 +569,8 @@ class Relational(BinaryExpression):
         if lhs.type in ['int', 'char', 'long', 'bool', 'float', 'double'] and rhs.type in ['int', 'char', 'long', 'bool', 'float', 'double']:
             name = ST.get_temp_var()
             self.place = name
+            self.type = highest_prior(lhs.type, rhs.type)
             tac.emit(name, lhs.place, rhs.place, operator+self.type)
-            self.type = 'bool'
             self.falselist = [len(tac.code)]
             tac.emit("ifgoto", self.place, 'eq0', '')
             self.truelist = [len(tac.code)]
@@ -812,7 +812,7 @@ class MethodInvocation(Expression):
         tac.emit('push', new_var, '', '')
         ST.curr_scope = ST.get_parent_scope()
         ST.curr_sym_table = ST.curr_sym_table.parent_table
-        tac.emit('call', get_func_name(name.value, arguments), '', '')
+        tac.emit('call', get_func_name(name.value, arguments),str(len(arguments)), '')
 
         ST.curr_scope = temp
         ST.curr_sym_table = temp_table
