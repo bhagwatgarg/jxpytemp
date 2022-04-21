@@ -1046,8 +1046,8 @@ def p_ifMark3(p):
     l1 = ST.make_label()
     l2 = ST.make_label()
     p[0] = ['if3_'+l1, 'if3_'+l2]
-    tac.emit('goto','','','if3_'+l1)
-    tac.emit('label :','', '','if3_'+l2)
+    tac.emit('goto','','',p[-1]+l1)
+    tac.emit('label :','', '', p[-1]+l2)
 
 def p_IfThenElseStatement(p):
     '''
