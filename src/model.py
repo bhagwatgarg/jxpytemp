@@ -1,5 +1,5 @@
 from tac import *
-widths = {'int': 4, 'float': 8, 'short': 4, 'long': 8, 'double': 8, 'char': 1}
+# widths = {'int': 4, 'float': 8, 'short': 4, 'long': 8, 'double': 8, 'char': 1}
 primitives = ['int', 'float', 'bool', 'char', 'long', 'double']
 count = -1
 
@@ -334,6 +334,10 @@ class FieldDeclaration(BaseClass):
                     for k in j.initializer.dimensions:
                         arr_size.append(k.value)
                         width *= int(k.value)
+                    if j.initializer.type not in primitives:
+                        width *= 8
+                    else:
+                        width *= widths[j.initializer.type ]
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),
                              width, '', 'declare')
                 elif j.initializer:
@@ -348,7 +352,7 @@ class FieldDeclaration(BaseClass):
 
 class MethodDeclaration(ScopeField):
 
-    def __init__(self, name, modifiers=None, parameters=None, return_type='void', body=None, type_parameters=None):
+    def __init__(self, name, modifiers=None, parameters=None, return_type='void', body=None, type_parameters=None, is_declaration=False):
         super(MethodDeclaration, self).__init__()
         self._fields = ['name', 'modifiers', 'parameters',
                         'return_type', 'body', 'type_parameters']
@@ -386,7 +390,7 @@ class MethodDeclaration(ScopeField):
 
         parent_scope = ST.get_parent_scope()
         ST.insert_in_sym_table(idName=name, idType='function', is_func=True, args=params,
-                               modifiers=modifiers, return_type=return_type, scope=parent_scope)
+                               modifiers=modifiers, return_type=return_type, scope=parent_scope, is_declaration=is_declaration)
 
 
 class ConstructorDeclaration(ScopeField):
@@ -1451,6 +1455,27 @@ class InstanceCreation(Expression):
         self.body = body
         self.place = ST.get_temp_var()
         tac.emit(self.place, type, "", 'declare')
+        if type in primitives: return
+        temp_scope=ST.curr_scope
+        temp_table=ST.curr_sym_table
+        ST.curr_scope=type
+        ST.curr_sym_table=ST.scope_and_table_map[type]
+        if get_func_name(type, arguments) not in ST.curr_sym_table.functions.keys(): print(f"Constructor for {type} not declared")
+        # print(get_func_name(type, arguments))
+        for x in reversed(arguments):
+            if isinstance(x, Literal): tac.emit('push',x.value,'','')
+            elif isinstance(x, Name):
+                tac.emit('push',x.value+'$'+ST.lookup(x.value)['scope'],'','')
+            elif hasattr(x, 'place'):
+                tac.emit('push',x.place,'','')
+        tac.emit('push', self.place, '', '')
+        tac.emit('call', get_func_name(type, arguments), '', '')
+        new_var=ST.get_temp_var()
+        for i in range(len(arguments)+1):
+            tac.emit('pop', new_var, '', '')
+        ST.curr_scope=temp_scope
+        ST.curr_sym_table=temp_table
+
 
 
 class FieldAccess(Expression):
@@ -1463,11 +1488,14 @@ class FieldAccess(Expression):
         if target == None:
             target = ''
         self.type = None
-        self.place = target+'.'+name.value+'$'+ST.curr_scope
+        self.place = name.place
 
         if target == 'this':
+            # new_var=ST.get_temp_var()
+            # tac.emit(new_var, 'EXTRACT_THIS', '', '=')
+
             self.type = name.type
-            self.place = name.value+'$'+ST.get_parent_class()
+            # self.place = name.value+'$'+ST.get_parent_class()
 
 
 class ArrayAccess(Expression):
@@ -1479,6 +1507,8 @@ class ArrayAccess(Expression):
         self.index = index
         self.target = target
         self.type = target.type
+        width=8
+        if self.type in primitives: width=widths[self.type]
         if index.type not in ['int', 'long']:
             print('Array index not of type int')
 
@@ -1493,22 +1523,21 @@ class ArrayAccess(Expression):
             value = ST.lookup(target.value)
             self.dimension = value['dims']
         if self.depth > self.dimension:
-            print("More than allowed dimension accessed")
+            print("More than allowed dimension(s) accessed")
+        # if self.depth < self.dimension:
+        #     print("Less than allowed dimension(s) accessed")
 
-        # TODO change the code
         if self.depth == 1:
-            # this line is for array name to get propogated to all array access
             self.array = target.place
             value = ST.lookup(target.value)
             dimensions = value['arr_size']
             self.pass_dimension = dimensions
 
             length = 1
-            #import pdb; pdb.set_trace()
             for x in dimensions[self.depth:]:
                 length *= int(x)
             temp = ST.get_temp_var()
-            tac.emit(temp, index.place, 4*length, '*')
+            tac.emit(temp, index.place, width*length, '*')
 
             self.len = temp
             self.place = self.array + '['+temp+']'
@@ -1519,9 +1548,8 @@ class ArrayAccess(Expression):
             for x in dimensions[self.depth:]:
                 length *= int(x)
             temp = ST.get_temp_var()
-            tac.emit(temp, index.place, 4*length, '*')
+            tac.emit(temp, index.place, width*length, '*')
             temp1 = ST.get_temp_var()
-            # here we can optimize by using temo again
             tac.emit(temp1, temp, target.len, '+')
             self.place = temp1
             self.array = target.array
@@ -1568,7 +1596,7 @@ class Name(BaseClass):
 
     def __init__(self, value, type=None):
         super(Name, self).__init__()
-        self._fields = ['value', 'type']
+        self._fields = ['value', 'type', 'place']
         self.value = value
         self.type = type
         var = None
@@ -1582,6 +1610,7 @@ class Name(BaseClass):
             # TODO
             # var2=get_func_name(value)
         else:
+            # print(value)
             # TODO
             # print("Not in Scope")
             return
@@ -1607,6 +1636,7 @@ class Name(BaseClass):
         temp_table = ST.scope_and_table_map[ST.curr_scope]
         f_type = None
         for var in a:
+            if var=='':continue
             if f_type in primitives:
                 print("primitive type")
             if ST.lookup(var) != None and ST.lookup(var)['type'] not in primitives:
@@ -1639,10 +1669,11 @@ class Name(BaseClass):
         tac.emit(new_var, '', self.place, '=')
         offset = ST.get_offset(self.type, name)
 
-        if offset:
+        if offset != None:
             tac.emit(new_var, '', str(offset), '+=')
-            if f_type not in primitives:
-                tac.emit(new_var, '', new_var, 'DEREFERENCE')
+            if f_type not in primitives: tac.emit(new_var, '', new_var, 'DEREFERENCE')
+        else:
+            pass
 
         # emit self.place = self.type.offset
         # tac.emit()
@@ -1650,6 +1681,7 @@ class Name(BaseClass):
         ST.curr_scope = temp
         ST.curr_sym_table = temp_table
         self.type = f_type
+        # print(name)
 
 
 class ExpressionStatement(Statement):

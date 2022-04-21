@@ -6,12 +6,12 @@ from model import *
 import pydot
 import os
 
-graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
-node_num=0
 
 breaks = []
 continues = []
 
+graph = pydot.Dot("my_graph", graph_type="digraph", bgcolor="white")
+node_num=0
 
 def generate_ast(p, parent=None, arr_name=None):
     global graph, node_num
@@ -378,6 +378,16 @@ def p_SimpleName(p):
 def p_QualifiedName(p):
     ''' QualifiedName : Name DOT IDENTIFIER
     '''
+    if (p[-2])=='this':
+        new_var=ST.get_temp_var()
+        tac.emit(new_var, 'EXTRACT_THIS', '', '=')
+        p[1].place=new_var
+        temp_value=p[1].value
+        temp_type=ST.get_parent_class()
+        p[1].value=''
+        p[1].type=temp_type
+        p[1].append_name(temp_value)
+        p[1].value=p[1].value[1:]
     p[1].append_name(p[3])
     p[0] = p[1]
 
@@ -581,6 +591,7 @@ def p_VariableInitializer(p):
 def p_MethodDeclaration(p):
     '''
     MethodDeclaration : MethodHeader MethodBody
+    | AbstractMethodHeader
     '''
     ST.end_scope()
     # stackbegin.pop()
@@ -590,14 +601,103 @@ def p_MethodDeclaration(p):
     # ST.update_param_names(func)
     # print('!!', ST.curr_sym_table.functions[func])
     # print(p[1])
-    p[0].body=p[2]
+    if len(p)==3:
+        p[0].body=p[2]
+    else: p[0].body=None
 
-# def p_MethodDeclMark(p):
-#     '''
-#     MethodDeclMark :
-#     '''
-#     p[0] = 
+def p_AbstractMethodHeader1(p):
+    '''
+    AbstractMethodHeader : DECLARE Modifiers Type abstract_method_marker MethodDeclarator SEMI
+    | DECLARE Type abstract_method_marker MethodDeclarator SEMI
+    '''
+    var={}
+    if len(p)==7:
+        # p[2]=p[2].split('$')[0]
+        var = {'modifiers': p[2], 'type': p[3], 'name': p[5]['name'], 'parameters': p[5]['parameters']}
+    else:
+        # p[1]=p[1].split('$')[0]
+        var = {'type': p[2], 'name': p[4]['name'], 'modifiers':[], 'parameters': p[4]['parameters']}
+    # p[0]=MethodDeclaration(p[-1]['name'], parameters = p[-1]['parameters'], return_type=p[-1]['type'], modifiers=p[-1]['modifiers'], body=None)
+    
+    params = []
 
+    for j in var['parameters']:
+        type = ""
+        dims = 0
+        is_array = False
+        if isinstance(j.type, Type):
+            if isinstance(j.type.name, Name):
+                type = j.type.name.value
+            elif isinstance(j.type, Name): type=j.type.value
+            else:
+                type = j.type.name
+            if j.type.dimensions > 0:
+                is_array = True
+                dims = j.type.dimensions
+        else:
+            type = j.type
+        params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
+                
+    idName = var['name'] + "$" + ST.curr_scope
+
+    for i in params:
+        idName += "$" + i['type']
+    
+    var['name'] = idName
+
+    ST.create_new_table(var['name'], scope_type="func")
+    
+    p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None, is_declaration=True)
+
+def p_AbstractMethodHeader2(p):
+    '''
+    AbstractMethodHeader : DECLARE Modifiers VOID abstract_method_marker MethodDeclarator SEMI
+    | DECLARE VOID abstract_method_marker MethodDeclarator SEMI
+    '''
+    var={}
+    if len(p)==7:
+        # p[2]=p[2].split('$')[0]
+        var = {'modifiers': p[2], 'type': p[3], 'name': p[5]['name'], 'parameters': p[5]['parameters']}
+    else:
+        # p[1]=p[1].split('$')[0]
+        var = {'type': p[2], 'name': p[4]['name'], 'modifiers':[], 'parameters': p[4]['parameters']}
+    # p[0]=MethodDeclaration(p[-1]['name'], parameters = p[-1]['parameters'], return_type=p[-1]['type'], modifiers=p[-1]['modifiers'], body=None)
+    
+    params = []
+
+    for j in var['parameters']:
+        type = ""
+        dims = 0
+        is_array = False
+        if isinstance(j.type, Type):
+            if isinstance(j.type.name, Name):
+                type = j.type.name.value
+            elif isinstance(j.type, Name): type=j.type.value
+            else:
+                type = j.type.name
+            if j.type.dimensions > 0:
+                is_array = True
+                dims = j.type.dimensions
+        else:
+            type = j.type
+        params.append({'name' : j.variable.name, 'type': type, 'is_array': is_array, 'dims' : dims})
+                
+    idName = var['name'] + "$" + ST.curr_scope
+
+    for i in params:
+        idName += "$" + i['type']
+    
+    var['name'] = idName
+
+    ST.create_new_table(var['name'], scope_type="func")
+    
+    p[0] = MethodDeclaration(var['name'], parameters = var['parameters'], return_type= var['type'], modifiers= var['modifiers'], body=None, is_declaration=True)
+def p_abstract_method_marker(p):
+    """
+    abstract_method_marker :
+    """
+    # p[-1]+='$abstract_method_marker'
+    p[0]='abstract_method_marker'
 
 def p_MethodHeader(p):
     '''
@@ -744,6 +844,7 @@ def p_MethodHeader2(p):
     # tac.emit('func',var['name']+str(len(var['parameters'])),ST.get_curr_func()['params'],'')
 
 
+
 def p_MethodDeclarator(p):
     '''
     MethodDeclarator : IDENTIFIER LPAREN RPAREN
@@ -753,7 +854,7 @@ def p_MethodDeclarator(p):
     if len(p)==4:
         p[0]['name']=p[1]
         p[0]['parameters'] = []
-        tac.emit('func',get_func_name(p[0]['name'], p[0]['parameters']),[],'')
+        if p[-1].split('$')[-1] != 'abstract_method_marker': tac.emit('func',get_func_name(p[0]['name'], p[0]['parameters']),[],'')
     else :
         p[0]['name']=p[1]
         p[0]['parameters']=p[3]
@@ -762,32 +863,9 @@ def p_MethodDeclarator(p):
         s=''
         for x in p[3]:
             q = q + [x.variable.name + '$'+get_func_name(p[0]['name'], p[0]['parameters'])]
-
-    # for i in p[0]['parameters']:
-    #     i_type=i['type']
-    #     if isinstance(i_type, Name) and i_type.type==None: print(i)
-    #     idName += "$" + i_type
-    
-    # var['name'] = idName
-    # get_func_name(p[0]['name'], p[0]['parameters'])
-        tac.emit('func', get_func_name(p[0]['name'], p[0]['parameters']),q,'')
-    # if len(p) == 6:
-    #     for j in p[4]:
-    #         type = ""
-    #         is_array = False
-    #         dims = 0
-    #         arr_size = []
-    #         if isinstance(j.type, Type):
-    #             if isinstance(j.type.name, Name):
-    #                 type = j.type.name.value
-    #             else:
-    #                 type = j.type.name
-    #             if j.type.dimensions > 0:
-    #                 is_array = True
-    #                 dims = j.type.dimensions
-    #         else:
-    #             type = j.type
-    #         ST.insert_in_sym_table(idName=j.variable.name, idType=type, is_func=False, is_array=is_array, dims=dims, arr_size=arr_size)
+        if p[-1].split('$')[-1] != 'abstract_method_marker':
+            print(p[-1])
+            tac.emit('func1', get_func_name(p[0]['name'], p[0]['parameters']),q,'')
 
 def p_FormalParametersList(p):
     '''
@@ -908,13 +986,13 @@ def p_ExplicitConstructorInvocation(p):
 #     if len(p)==4: variable_initializers=p[2]
 #     p[0]=ArrayInitializer(variable_initializers)
 
-def p_VariableInitializers(p):
-    '''
-    VariableInitializers : VariableInitializer
-    | VariableInitializers COMMA VariableInitializer
-    '''
-    if len(p)==2: p[0]=[p[1]]
-    else: p[0]=p[1]+[p[3]]
+# def p_VariableInitializers(p):
+#     '''
+#     VariableInitializers : VariableInitializer
+#     | VariableInitializers COMMA VariableInitializer
+#     '''
+#     if len(p)==2: p[0]=[p[1]]
+#     else: p[0]=p[1]+[p[3]]
 
 def p_Block(p):
     '''
@@ -1024,10 +1102,16 @@ def p_StatementExpression(p):
     '''
     p[0]=p[1]
 
+def convert_expr_to_equality(inp):
+    if isinstance(inp, Name) or isinstance(inp, Literal):
+        return Equality('!=', inp, Literal('0'))
+    return inp
+
 def p_IfThenStatement(p):
     '''
     IfThenStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 Statement ifMark1 end_scope 
     '''
+    p[4] = convert_expr_to_equality(p[4])
     p[0]=IfThenElse(predicate=p[4], if_true=p[7])
     tac.backpatch(p[4].truelist,p[6])
     tac.backpatch(p[4].falselist,p[8])
@@ -1053,6 +1137,7 @@ def p_IfThenElseStatement(p):
     '''
     IfThenElseStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope Statement end_scope ifMark2
     '''
+    p[4] = convert_expr_to_equality(p[4])
     p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
     tac.backpatch(p[4].truelist,p[6])
     tac.backpatch(p[4].falselist,p[10][1])
@@ -1061,6 +1146,7 @@ def p_IfThenElseStatementNoShortIf(p):
     '''
     IfThenElseStatementNoShortIf : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope StatementNoShortIf end_scope ifMark2
     '''
+    p[4] = convert_expr_to_equality(p[4])
     p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
     tac.backpatch(p[4].truelist,p[6])
     tac.backpatch(p[4].falselist,p[10][1])
@@ -1122,6 +1208,7 @@ def p_WhileStatement(p):
     '''
     WhileStatement : WHILE prep_fw_stack LPAREN begin_scope while_l1 Expression RPAREN while_l1 Statement end_scope while_l2
     '''
+    p[6] = convert_expr_to_equality(p[6])
     p[0]=While(predicate=p[6], body=p[9])
 
     tac.backpatch(continues[-1], p[5])
@@ -1137,6 +1224,7 @@ def p_WhileStatementNoShortIf(p):
     '''
     WhileStatementNoShortIf : WHILE prep_fw_stack LPAREN begin_scope while_l1 Expression RPAREN while_l1 StatementNoShortIf end_scope while_l2
     '''
+    p[6] = convert_expr_to_equality(p[6])
     p[0]=While(predicate=p[6], body=p[9])
 
     tac.backpatch(continues[-1], p[5])
@@ -1176,6 +1264,7 @@ def p_DoStatement(p):
     '''
     DoStatement : DO prep_fw_stack begin_scope dwhile_l1 Statement WHILE LPAREN dwhile_l1 Expression RPAREN SEMI end_scope dwhile_l2
     '''
+    p[9] = convert_expr_to_equality(p[9])
     p[0]=DoWhile(predicate=p[9], body=p[5])
 
     tac.backpatch(continues[-1], p[8])
@@ -1259,6 +1348,7 @@ def p_ForStatement(p):
         tl_jumps = p[11]
         conts = p[8]
 
+    predicate = convert_expr_to_equality(predicate)
     p[0] = For(init = init, predicate = predicate, update = update, body = body)
 
     tac.backpatch(continues[-1], conts)
@@ -1325,6 +1415,7 @@ def p_ForStatementNoShortIf(p):
         tl_jumps = p[11]
         conts = p[8]
 
+    predicate = convert_expr_to_equality(predicate)
     p[0] = For(init = init, predicate = predicate, update = update, body = body)
 
     tac.backpatch(continues[-1], conts)
@@ -1390,29 +1481,27 @@ def p_StatementExpressionList(p):
 
 def p_BreakStatement(p):
     '''
-    BreakStatement : BREAK IDENTIFIER SEMI
-    | BREAK SEMI
+    BreakStatement : BREAK SEMI
     '''
-    if len(p) == 3: 
-        breaks[-1].append(len(tac.code))
-        tac.emit('goto', '', '', '')
-        p[0] = Break()
-    else: p[0] = Break(label = p[2])
+    if len(continues) == 0:
+        print("Break Statement detected outside loop")
+    breaks[-1].append(len(tac.code))
+    tac.emit('goto', '', '', '')
+    p[0] = Break()
+
 
 
 ### BG END
 
 def p_ContinueStatement(p):
     '''
-    ContinueStatement : CONTINUE IDENTIFIER SEMI
-    | CONTINUE SEMI
+    ContinueStatement : CONTINUE SEMI
     '''
-    if len(p) == 3:
-        continues[-1].append(len(tac.code))
-        tac.emit('goto', '', '', '')
-        p[0] = Continue()
-    else:
-        p[0] = Continue(p[2])
+    if len(continues) == 0:
+        print("Continue Statement detected outside loop")
+    continues[-1].append(len(tac.code))
+    tac.emit('goto', '', '', '')
+    p[0] = Continue()
 
 def p_ReturnStatement(p):
     '''
@@ -1451,7 +1540,7 @@ def p_ClassInstanceCreationExpression(p):
     ClassInstanceCreationExpression : NEW ClassType LPAREN RPAREN
     | NEW ClassType LPAREN ArgumentList RPAREN
     '''
-    if len(p) == 5: p[0] = InstanceCreation(type = p[2])
+    if len(p) == 5: p[0] = InstanceCreation(type = p[2], arguments=[])
     else: p[0] = InstanceCreation(type = p[2], arguments = p[4])
 
 def p_ArgumentList(p):
@@ -1503,6 +1592,13 @@ def p_FieldAccess(p):
     FieldAccess : Primary DOT Name
     '''
     p[0] = FieldAccess(p[3], p[1])
+
+def p_field_marker(p):
+    '''
+    field_marker : '''
+    new_var=ST.get_temp_var()
+    tac.emit(new_var, 'EXTRACT_THIS', '', '=')
+    # p[0]={'field_marker':new_var}
 
 def p_MethodInvocation(p):
     '''
@@ -1713,6 +1809,8 @@ def p_ConditionalAndExpression(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
+        p[1] = convert_expr_to_equality(p[1])
+        p[4] = convert_expr_to_equality(p[4])
         p[0] = ConditionalAnd(p[2], p[1], p[4])
         tac.backpatch(p[1].truelist,p[3])
         p[0].truelist = p[4].truelist
@@ -1726,6 +1824,8 @@ def p_ConditionalOrExpression(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
+        p[1] = convert_expr_to_equality(p[1])
+        p[4] = convert_expr_to_equality(p[4])
         p[0] = ConditionalOr(p[2], p[1], p[4])
         tac.backpatch(p[1].falselist,p[3])
         p[0].truelist = p[1].truelist+p[4].truelist
@@ -1799,13 +1899,13 @@ def p_ConstantExpression(p):
 def p_error(p):
     print("Syntax Error in line", p.lineno)
 
-def p_decl_mark(p):
-    '''
-    decl_mark :
-    '''
-    var=p[-2]
-    if type(p[-2])!=str: var=p[-2].value
-    ST.create_new_table(var)
+# def p_decl_mark(p):
+#     '''
+#     decl_mark :
+#     '''
+#     var=p[-2]
+#     if type(p[-2])!=str: var=p[-2].value
+#     ST.create_new_table(var)
     #print(f"table vreated: {var}")
     # stackbegin.append(var)
     # stackend.append(var)

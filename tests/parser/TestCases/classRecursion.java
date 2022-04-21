@@ -3,21 +3,26 @@
  *
  */
 
- // TODO: constructor
- // TODO: check array access, offsets, pass by reference
- // TODO: correct array access tac code
- // TODO: clear temp variables
- // TODO: imports
- // TODO: check break and continue
- // TODO: remove function width
- // TODO: declare * datatype size
- // TODO: multidim dims exactly equal
- // TODO: width in array access
+// TODO: clear temp variables
+
+
+// DONE: check array access, offsets, pass by reference
+// DONE: remove function width
+// DONE: declare * datatype size
+// DONE: multidim dims exactly equal
+// DONE: constructor
+// DONE: correct array access tac code
+// DONE: imports
+// DONE: check break and continue
+// DONE: push_obj when pushing object
+// DONE: fix simple.java
+// DONE: width in array access
 package TestCases;
 
 class ListNode {
   int val2, val;
   ListNode next;
+  void ListNode(){}
   // void ListNode(int b){
   //   this.next=new ListNode();
   //   this.val=b; // this.val in tac
