@@ -34,9 +34,9 @@ class CodeGenerator:
         for var in symbol_table.keys():
             if is_temp_var(var):
                 print(var + "\tdd\t0")
-        # for symbol in g.symbol_table.keys():
-            # if g.symbol_table[symbol].array_size != None:
-                # print(str(symbol) + "\ttimes\t" + str(g.symbol_table[symbol].array_size) + "\tdd\t0")
+        # for symbol in symbol_table.keys():
+            # if symbol_table[symbol].array_size != None:
+                # print(str(symbol) + "\ttimes\t" + str(symbol_table[symbol].array_size) + "\tdd\t0")
             # else:
                 # print(str(symbol) + "\tdd\t0")
 
@@ -128,7 +128,7 @@ class CodeGenerator:
 
         R1, flag = get_reg(instr,isFloat=True)
         if flag:
-            print("\tmov"+ ' '+ R1 + ", " + get_location(instr.inp1))
+            print("\tmovsd"+ ' '+ R1 + ", " + get_location(instr.inp1))
         R2 = get_location(instr.inp2)
         print("\t"+op+ ' ' + R1 + ", " + R2)
         update_reg_desc(R1,instr.out)
@@ -324,25 +324,25 @@ class CodeGenerator:
             if R1 in reg_descriptor.keys():
                 update_reg_desc(R1, instr.out)
 
-        # elif instr.array_index_i1 == None and instr.array_index_o == None:
-        #     if len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0:
-        #         R1, flag = get_reg(instr)
-        #         print("\tmov " + R1 +", " + get_location(instr.inp1))
-        #         update_reg_desc(R1,instr.inp1)
+        elif instr.array_index_i1 == None and instr.array_index_o == None:
+            if len(symbol_table[instr.inp1].address_descriptor_reg) == 0:
+                R1, flag = get_reg(instr)
+                print("\tmov " + R1 +", " + get_location(instr.inp1))
+                update_reg_desc(R1,instr.inp1)
 
-        #     if len(g.symbol_table[instr.inp1].address_descriptor_reg):
-        #         for regs in g.symbol_table[instr.out].address_descriptor_reg:
-        #             reg_descriptor[regs].remove(instr.out)
-        #         g.symbol_table[instr.out].address_descriptor_reg.clear()
-        #         g.symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(g.symbol_table[instr.inp1].address_descriptor_reg)
+            if len(symbol_table[instr.inp1].address_descriptor_reg):
+                for regs in symbol_table[instr.out].address_descriptor_reg:
+                    reg_descriptor[regs].remove(instr.out)
+                symbol_table[instr.out].address_descriptor_reg.clear()
+                symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(symbol_table[instr.inp1].address_descriptor_reg)
 
-        #         for reg in g.symbol_table[instr.out].address_descriptor_reg:
-        #             reg_descriptor[reg].add(instr.out)
+                for reg in symbol_table[instr.out].address_descriptor_reg:
+                    reg_descriptor[reg].add(instr.out)
 
-        #         free_regs(instr)
+                free_regs(instr)
 
         # elif instr.array_index_i1 != None:
-        #     # assert len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0
+        #     # assert len(symbol_table[instr.inp1].address_descriptor_reg) == 0
         #     R1, flag = get_reg(instr)
         #     print("\tmov " + R1 + ", " + get_location(instr.array_index_i1))
         #     print("\tshl " + R1 + ", 2")
@@ -359,7 +359,7 @@ class CodeGenerator:
         #     if loc_arr1 in reg_descriptor.keys():
         #         R1 = None
         #         if is_valid_sym(index1):
-        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #             if len(symbol_table[index].address_descriptor_reg) == 0:
         #                 R1, _ = get_reg(instr, exclude=[loc_arr1])
         #                 print("\tmov " + R1 + ", " + get_location(index1))
         #                 update_reg_desc(R1, index1)
@@ -381,7 +381,7 @@ class CodeGenerator:
         #     if loc_arr in reg_descriptor.keys():
         #         R1 = None
         #         if is_valid_sym(index):
-        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #             if len(symbol_table[index].address_descriptor_reg) == 0:
         #                 R1, _ = get_reg(instr, exclude=[loc_arr])
         #                 print("\tmov " + R1 + ", " + get_location(index))
         #                 update_reg_desc(R1, index)
@@ -427,7 +427,7 @@ class CodeGenerator:
         #     if loc_arr in reg_descriptor.keys():
         #         R1 = None
         #         if is_valid_sym(index):
-        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #             if len(symbol_table[index].address_descriptor_reg) == 0:
         #                 R1, _ = get_reg(instr, exclude=[loc_arr])
         #                 print("\tmov " + R1 + ", " + get_location(index))
         #                 update_reg_desc(R1, index)
@@ -469,25 +469,25 @@ class CodeGenerator:
             if R1 in reg_descriptor.keys():
                 update_reg_desc(R1, instr.out)
 
-        # elif instr.array_index_i1 == None and instr.array_index_o == None:
-        #     if len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0:
-        #         R1, flag = get_reg(instr)
-        #         print("\tmov " + R1 +", " + get_location(instr.inp1))
-        #         update_reg_desc(R1,instr.inp1)
+        elif instr.array_index_i1 == None and instr.array_index_o == None:
+            if len(symbol_table[instr.inp1].address_descriptor_reg) == 0:
+                R1, flag = get_reg(instr)
+                print("\tmov " + R1 +", " + get_location(instr.inp1))
+                update_reg_desc(R1,instr.inp1)
 
-        #     if len(g.symbol_table[instr.inp1].address_descriptor_reg):
-        #         for regs in g.symbol_table[instr.out].address_descriptor_reg:
-        #             reg_descriptor[regs].remove(instr.out)
-        #         g.symbol_table[instr.out].address_descriptor_reg.clear()
-        #         g.symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(g.symbol_table[instr.inp1].address_descriptor_reg)
+            if len(symbol_table[instr.inp1].address_descriptor_reg):
+                for regs in symbol_table[instr.out].address_descriptor_reg:
+                    reg_descriptor[regs].remove(instr.out)
+                symbol_table[instr.out].address_descriptor_reg.clear()
+                symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(symbol_table[instr.inp1].address_descriptor_reg)
 
-        #         for reg in g.symbol_table[instr.out].address_descriptor_reg:
-        #             reg_descriptor[reg].add(instr.out)
+                for reg in symbol_table[instr.out].address_descriptor_reg:
+                    reg_descriptor[reg].add(instr.out)
 
-        #         free_regs(instr)
+                free_regs(instr)
 
         # elif instr.array_index_i1 != None:
-        #     # assert len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0
+        #     # assert len(symbol_table[instr.inp1].address_descriptor_reg) == 0
         #     R1, flag = get_reg(instr)
         #     print("\tmov " + R1 + ", " + get_location(instr.array_index_i1))
         #     print("\tshl " + R1 + ", 2")
@@ -504,7 +504,7 @@ class CodeGenerator:
         #     if loc_arr1 in reg_descriptor.keys():
         #         R1 = None
         #         if is_valid_sym(index1):
-        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #             if len(symbol_table[index].address_descriptor_reg) == 0:
         #                 R1, _ = get_reg(instr, exclude=[loc_arr1])
         #                 print("\tmov " + R1 + ", " + get_location(index1))
         #                 update_reg_desc(R1, index1)
@@ -526,7 +526,7 @@ class CodeGenerator:
         #     if loc_arr in reg_descriptor.keys():
         #         R1 = None
         #         if is_valid_sym(index):
-        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #             if len(symbol_table[index].address_descriptor_reg) == 0:
         #                 R1, _ = get_reg(instr, exclude=[loc_arr])
         #                 print("\tmov " + R1 + ", " + get_location(index))
         #                 update_reg_desc(R1, index)
@@ -572,7 +572,7 @@ class CodeGenerator:
         #     if loc_arr in reg_descriptor.keys():
         #         R1 = None
         #         if is_valid_sym(index):
-        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #             if len(symbol_table[index].address_descriptor_reg) == 0:
         #                 R1, _ = get_reg(instr, exclude=[loc_arr])
         #                 print("\tmov " + R1 + ", " + get_location(index))
         #                 update_reg_desc(R1, index)
@@ -740,10 +740,10 @@ class CodeGenerator:
     def op_stack_alloc(self, instr):
         if instr.out.split('$')[0] == 'main' :
             print("main:")
-        print("func__l" + instr.out + ":")
+        print("func__l " + instr.out + ":")
         counter = 0
         for i in symbol_table.keys():
-            if not is_temp_var(i) and i not in instr.arg_set:
+            if not is_temp_var(i) and i not in instr.arg_set and not is_valid_float(i):
                 counter += 1
                 symbol_table[i].address_descriptor_mem.add(-8 * counter)
         for i, arg in enumerate(reversed(instr.arg_set)):
@@ -752,7 +752,7 @@ class CodeGenerator:
 
         print("\tpush ebp")
         print("\tmov ebp, esp")
-        print("\tsub esp, " + str(g.counter))
+        print("\tsub esp, " + str(8*counter))
 
     def op_array_decl(self, instr):
         loc = get_location(instr.array_index_i1)
@@ -823,6 +823,9 @@ class CodeGenerator:
 
         elif instr.operation == "call":
             self.op_call_function(instr)
+        
+        elif instr.operation == "func":
+            self.op_stack_alloc(instr)
 
         elif instr.operation.endswith('float_='):
             self.op_fassign(instr)
@@ -855,7 +858,7 @@ class CodeGenerator:
 
         # elif instr_type == "begin_func":
         #     self.op_stack_alloc(instr)
-            # for sym, symentry in g.symbol_table.items():
+            # for sym, symentry in symbol_table.items():
                 # print(sym, symentry.address_descriptor_mem)
 
         # elif instr_type == "array_declaration":
@@ -875,7 +878,7 @@ def read_three_address_code(filename):
     for i,statement in enumerate(instruction_set):
         if len(statement) == 0:
             continue
-        print(statement)
+        #print(statement)
         IR = Instruction(statement)
         IR_code.append(IR)
         ex = 0
@@ -900,7 +903,7 @@ def next_use(leader, IR_code):
             # print(x.inp1, x.out)
         # for instr in basic_block:
         #     if instr.instr_type == "begin_func" and instr.table != None:
-        #         g.symbol_table = instr.table
+        #         symbol_table = instr.table
 
         j = leader[b_start + 1] - 1
         for instr in reversed(basic_block):
@@ -941,8 +944,9 @@ def next_use(leader, IR_code):
 if __name__ == "__main__":
     # parser_main()
     leader, IR_code = read_three_address_code(sys.argv[1])
-    print(leader)
-    print(len(IR_code))
+    # print(leader)
+    # print(len(IR_code))
     generator.gen_data_section()
     generator.gen_start_template()
     next_use(leader, IR_code)
+    print(symbol_table)

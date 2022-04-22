@@ -34,7 +34,7 @@ def is_valid_sym(symbol):
     #     return False
     # elif symbol != None and symbol[0] == "`" and symbol[-1] == "`" and len(symbol) > 3:
     #     return False
-    elif symbol != None and not is_valid_number(symbol):
+    elif symbol != None and not is_valid_number(symbol) and not is_valid_float(symbol):
         return True
     return False
 
@@ -218,11 +218,12 @@ def get_loc_mem(symbol,flag=1):
         return symbol
 
     if len(symbol_table[symbol].address_descriptor_mem)==0:
+        #print('aaaaaaaaa')
         return symbol
 
     for loc in symbol_table[symbol].address_descriptor_mem:
         break
-    if type(loc) == 'int':
+    if type(loc) == type(1):
         if loc > 0 :
             if flag:
                 return "[ebp+" + str(loc) + "]"
@@ -283,13 +284,13 @@ def get_location(symbol,exclude_reg=[]):
         for reg in symbol_table[symbol].address_descriptor_reg:
             if reg not in exclude_reg:
                 return reg
-        return 'qword' + get_loc_mem(symbol)
+        return 'qword ' + get_loc_mem(symbol)
 
 def save_caller_context():
     saved = set()
     for reg, symbols in reg_descriptor.items():
         for symbol in symbols:
-            if symbol not in saved:
+            if symbol not in saved and not is_temp_var(symbol):
                 if reg.startswith('xmm'):
                     print("\tmovsd " + get_loc_mem(symbol) + ", " + str(reg))
                 else :

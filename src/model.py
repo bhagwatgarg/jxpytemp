@@ -500,17 +500,17 @@ class Assignment(BinaryExpression):
             # elif self.type in ['float', 'double']:
             #     tac.emit(lhs.place, rhs.place, '', operator+'float')
             higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
-            if (int_or_real(lhs.type) != higher_data_type):
-                tmp = ST.get_temp_var()
-                tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
-                         '_' + int_or_real(higher_data_type) + '_' + '=')
-                tac.emit(self.place, tmp, rhs.place,
-                         higher_data_type+'_'+operator)
-            elif (int_or_real(rhs.type) != higher_data_type):
+            # if (int_or_real(lhs.type) != higher_data_type):
+            #     tmp = ST.get_temp_var()
+            #     tac.emit(tmp, lhs.place, '', int_or_real(lhs.type) +
+            #              '_' + int_or_real(higher_data_type) + '_' + '=')
+            #     tac.emit(,rhs.place,
+            #              higher_data_type+'_'+operator)
+            if (int_or_real(rhs.type) != higher_data_type):
                 tmp = ST.get_temp_var()
                 tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
                          '_' + int_or_real(higher_data_type) + '_' + '=')
-                tac.emit(self.place, lhs.place, tmp,
+                tac.emit(lhs.place, tmp,'',
                          higher_data_type + '_' + operator)
             else:
                 if lhs.type == 'char':
@@ -525,7 +525,7 @@ class Assignment(BinaryExpression):
                     tac.emit(self.place, tmp3, '', int_or_real('int') +
                              '_' + int_or_real('char') + '_' + '=')
                 else:
-                    tac.emit(self.place, lhs.place, rhs.place,
+                    tac.emit(lhs.place, rhs.place,'',
                              int_or_real(lhs.type) + '_' + operator)
         elif lhs.type != rhs.type:
             print("Type mismatch in assignment.")
@@ -533,11 +533,11 @@ class Assignment(BinaryExpression):
         else:  # ask
             # ST.print_scope_table()
             if self.type in ['int', 'char', 'long']:
-                tac.emit(lhs.place, rhs.place, '', operator+'int')
+                tac.emit(lhs.place, rhs.place, '', operator+'_int')
             elif self.type in ['float', 'double']:
-                tac.emit(lhs.place, rhs.place, '', operator+'float')
+                tac.emit(lhs.place, rhs.place, '', operator+'_float')
             else:
-                tac.emit(lhs.place, rhs.place, '', operator+'class')
+                tac.emit(lhs.place, rhs.place, '', operator+'_class')
             # higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
             # if (int_or_real(lhs.type) != higher_data_type):
             #     tmp = ST.get_temp_var()
