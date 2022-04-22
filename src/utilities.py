@@ -1,23 +1,15 @@
-from os import stat
-import sys
-import csv
-
-leader_ins = [
-    "ifgoto",
-    "return",
-    "label",
-    "call",
-    "goto",
-    "func",
-    "begin_func",
-    "end_func"
-]
-
-
 symbol_table = {}
 
 def is_val_reg(reg):
     return reg in reg_descriptor.keys()
+
+def is_valid_float(potential_float):
+    try:
+        float(potential_float)
+
+        return True
+    except ValueError:
+        return False
 
 def is_temp_var(symbol):
     if symbol[0] == "_":
@@ -53,7 +45,7 @@ class symbol_data:
         self.next_use = None
         self.array_size = array_size
         self.isArr = isArr
-        self.size = (size+3//4)*4
+#       self.size = (size+3//4)*4
         self.address_descriptor_mem = set()
         self.address_descriptor_reg = set()
 
@@ -67,11 +59,19 @@ class Instruction:
         self.out = None
         self.array_index_o = None
         self.operation = None
-        self.inst_info = dict()
+        self.inst_info = {}
+        self.inst_info['next_use'] = {}
+        self.inst_info['live'] ={}
         self.get_info(statement)
-        self.populate_per_inst_next_use()
         self.arg_set = []
-
+        symbols = [
+                self.inp1, self.array_index_i1,
+                self.inp2, self.array_index_i2,
+                self.out, self.array_index_o
+            ]
+        for symbol in symbols:
+            if is_valid_sym(symbol):
+                symbol_table[symbol] = symbol_data()
 
     def extract(self, symbol):
 
@@ -134,133 +134,256 @@ class Instruction:
             self.inp1 = statement[1]
 
         elif statement[3] == "int_float_=":
-            self.operation = statement[3]
+            self.operation = 'i2f'
             self.out = statement[0]
             self.inp1 = statement[1]
 
         elif statement[3] == "float_int_=":
-            self.operation = statement[3]
+            self.operation = 'f2i'
             self.out = statement[0]
             self.inp1 = statement[1]
 
         elif statement[3] == "char_int_=":
-            self.operation = statement[3]
+            self.operation = 'c2i'
             self.out = statement[0]
             self.inp1 = statement[1]
         
         elif statement[3] == "int_char_=":
-            self.operation = statement[3]
+            self.operation = 'i2c'
             self.out = statement[0]
             self.inp1 = statement[1]
 
         elif statement[3] == "char_float_=":
-            self.operation = statement[3]
+            self.operation = 'c2f'
             self.out = statement[0]
             self.inp1 = statement[1]
 
         elif statement[3] == "float_char_=":
-            self.operation = statement[3]
+            self.operation = 'f2c'
             self.out = statement[0]
             self.inp1 = statement[1]
 
+        elif statement[3] == "float_=" or statement[3] == "float_float_=" or statement[3] == "int_=" or statement[3] == "int_int_=" or statement[3] == "char_char_=" or statement[3] == "char_=":
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.inp1 = statement[1]
         
+        elif statement[3] == 'DEREFERENCE':
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.inp1 = statement[2]
+        
+        # elif statement[3] == "float_neg":
+        #     self.operation = statement[3]
+        #     self.out = statement[0]
+        #     self.inp1 = statement[1]
+        
+        # elif statement[3] == "int_neg":
+        #     self.operation = statement[3]
+        #     self.out = statement[0]
+        #     self.inp1 = statement[1]
 
-        elif statement[0] in ["~","!","++","--"]:
-            #10, ++, out, variable
-            self.operation = instr_type
-            self.instr_type = "unary"
-            self.inp1, self.array_index_i1 = self.handle_array_notation(statement[-1].strip())
-            self.out, self.array_index_o = self.handle_array_notation(statement[2].strip())
-            self.add_to_symbol_table([
-                self.inp1, self.array_index_i1,
-                self.out, self.array_index_o
-            ])
+        elif statement[3] in ["|", "||", "&", "&&", "^", "~", "!"]:
+            self.inp1, self.array_index_i1 = self.extract(statement[1])
+            self.inp2, self.array_index_i2 = self.extract(statement[2])
+            self.out, self.array_index_o = self.extract(statement[0])
+            self.operation = statement[3]
+
+        elif statement[3].startswith("int_") or statement[3].startswith("float_") or statement[3].startswith("char_"):
+            self.operation = statement[3]
+            self.inp1, self.array_index_i1 = self.extract(statement[1])
+            self.inp2, self.array_index_i2 = self.extract(statement[2])
+            self.out, self.array_index_o = self.extract(statement[0])
 
 
-        elif instr_type == "=":
-            # 10, =, a, 2
-            self.instr_type = "assignment"
-            self.operation = "="
-            self.inp1, self.array_index_i1 = self.handle_array_notation(statement[-1].strip())
-            self.out, self.array_index_o = self.handle_array_notation(statement[2].strip())
-            self.add_to_symbol_table([
-                self.inp1, self.array_index_i1,
-                self.out, self.array_index_o
-            ])
+reg_descriptor = {}
+reg_descriptor["rax"] = set()
+reg_descriptor["rbx"] = set()
+reg_descriptor["rcx"] = set()
+reg_descriptor["rdx"] = set()
+reg_descriptor["rsi"] = set()
+reg_descriptor["rdi"] = set()
+reg_descriptor["xmm0"] = set()
+reg_descriptor["xmm1"] = set()
+reg_descriptor["xmm2"] = set()
+reg_descriptor["xmm3"] = set()
+reg_descriptor["xmm4"] = set()
+reg_descriptor["xmm5"] = set()
+reg_descriptor["xmm6"] = set()
+reg_descriptor["xmm7"] = set()
 
+def get_loc_mem(symbol,flag=1):
 
+    if not is_valid_sym(symbol):
+        return symbol
 
-        elif instr_type in ["|", "||", "&", "&&", "^", "~", "!"]:
-            # 10, &&, a, a, b
-            self.instr_type = "logical"
-            self.inp1, self.array_index_i1 = self.handle_array_notation(statement[3].strip())
-            self.inp2, self.array_index_i2 = self.handle_array_notation(statement[4].strip())
-            self.out, self.array_index_o = self.handle_array_notation(statement[2].strip())
-            self.add_to_symbol_table([
-                self.inp1, self.array_index_i1,
-                self.inp2, self.array_index_i2,
-                self.out, self.array_index_o
-            ])
-            self.operation = statement[1].strip()
+    if len(symbol_table[symbol].address_descriptor_mem)==0:
+        return symbol
 
+    for loc in symbol_table[symbol].address_descriptor_mem:
+        break
+    if type(loc) == 'int':
+        if loc > 0 :
+            if flag:
+                return "[ebp+" + str(loc) + "]"
+            else:
+                return 'ebp+'+ str(loc)
         else:
-            # 10, +, a, a, b
-            self.instr_type = "arithmetic"
-            self.inp1, self.array_index_i1 = self.handle_array_notation(statement[3].strip())
-            self.inp2, self.array_index_i2 = self.handle_array_notation(statement[4].strip())
-            self.out, self.array_index_o = self.handle_array_notation(statement[2].strip())
-            self.add_to_symbol_table([
-                self.inp1, self.array_index_i1,
-                self.inp2, self.array_index_i2,
-                self.out, self.array_index_o
-            ])
-            self.operation = statement[1].strip()
+            if flag:
+                return "[ebp" + str(loc) + "]"
+            else:
+                return 'ebp'+ str(loc)           
+    else:
+        if flag:
+            return "[" + loc + "]"
+        else:
+            return loc
 
 
-    def populate_per_inst_next_use(self):
-        '''
-        for each symbol in instruction, initialize the next use
-        and liveness parameters
-        '''
-        symbols = [
-                self.inp1, self.array_index_i1,
-                self.inp2, self.array_index_i2,
-                self.out, self.array_index_o
-            ]
+def update_reg_desc(register,symbol):
+    reg_descriptor[register].clear()
+    if is_valid_sym(symbol) == False:
+        return
+    reg_descriptor[register].add(symbol)
+    for reg in symbol_table[symbol].address_descriptor_reg:
+        if register != reg:
+            reg_descriptor[reg].remove(symbol)
+    symbol_table[symbol].address_descriptor_reg.clear()
+    symbol_table[symbol].address_descriptor_reg.add(register)
+
+def free_regs(instr):
+    if is_valid_sym(instr.inp1):
+        if instr.inst_info['next_use'][instr.inp1] == None and instr.inst_info['live'][instr.inp1] == False:
+            for reg in symbol_table[instr.inp1].address_descriptor_reg:
+                reg_descriptor[reg].remove(instr.inp1)
+            symbol_table[instr.inp1].address_descriptor_reg.clear()
+            if is_val_reg(reg):
+                if reg.startswith('xmm'):
+                    print("\tmovsd qword " + get_loc_mem(instr.inp1) + ", " + reg)
+                else:
+                    print("\tmov qword " + get_loc_mem(instr.inp1) + ", " + reg)
+
+    if is_valid_sym(instr.inp2):
+            if instr.inst_info['next_use'][instr.inp1] == None and instr.inst_info['live'][instr.inp1] == False:
+                for reg in symbol_table[instr.inp2].address_descriptor_reg:
+                    reg_descriptor[reg].remove(instr.inp2)
+                symbol_table[instr.inp2].address_descriptor_reg.clear()
+                if is_val_reg(reg):
+                    if reg.startswith('xmm'):
+                        print("\tmovsd qword " + get_loc_mem(instr.inp2) + ", " + reg)
+                    else:
+                        print("\tmov qword " + get_loc_mem(instr.inp2) + ", " + reg)
+
+def get_location(symbol,exclude_reg=[]):
+
+    if not is_valid_sym(symbol):
+        return symbol
+
+    if is_valid_sym(symbol):
+        for reg in symbol_table[symbol].address_descriptor_reg:
+            if reg not in exclude_reg:
+                return reg
+        return 'qword' + get_loc_mem(symbol)
+
+def save_caller_context():
+    saved = set()
+    for reg, symbols in reg_descriptor.items():
         for symbol in symbols:
-            if is_valid_sym(symbol):
-                self.inst_info[symbol] = symbol_info()
+            if symbol not in saved:
+                if reg.startswith('xmm'):
+                    print("\tmovsd " + get_loc_mem(symbol) + ", " + str(reg))
+                else :
+                    print("\tmov " + get_loc_mem(symbol) + ", " + str(reg))
+                symbol_table[symbol].address_descriptor_reg.clear()
+                saved.add(symbol)
+        reg_descriptor[reg].clear()
 
 
-def read_three_address_code(filename):
-    '''
-    Given a csv file `filename`, read the file
-    and find the basic blocks. Also store each instruction
-    as an instance of Instruction class in a list `IR_code`
-    '''
-    leader = set()
-    leader = [0]
-    IR_code = []
-    j=1
+def save_reg(reg):
+    for symbol in reg_descriptor[reg]:
+        for loc in symbol_table[symbol].address_descriptor_mem:
+            if reg.startswith('xmm'):
+                print("\tmovsd "+ get_loc_mem(symbol) + ", " + reg)
+            else:
+                print("\tmov " + get_loc_mem(symbol) + ", " + reg)
+        symbol_table[symbol].address_descriptor_reg.remove(reg)
+    reg_descriptor[reg].clear()
 
-    with open(filename, 'r') as csvfile:
-        instruction_set = list(csv.reader(csvfile, delimiter=','))
-        index_label_to_be_added = set()
-        for i,statement in enumerate(instruction_set):
-            if len(statement) == 0:
-                continue
-            IR = Instruction(statement)
-            IR_code.append(IR)
-            instr_type = IR.instr_type
 
-            instr_type = IR_code[i].instr_type
-            line_no = 0
-            if instr_type in leader_instructions:
-                if instr_type != "label" and instr_type != "print_int" and instr_type != "scan_int" and instr_type != "func":
-                    line_no += 1
+def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
 
-                leader.append(j-1+line_no)
-            j+=1
-    leader.add(len(IR_code))
+    if not isFloat:
+        if is_valid_sym(instr.out):
+            if is_valid_sym(instr.inp1):
+                for reg in symbol_table[instr.inp1].address_descriptor_reg:
+                    if reg not in exclude:
+                        if len(reg_descriptor[reg]) == 1 and instr.inst_info['next_use'][instr.inp1]== None and not instr.inst_info['live'][instr.inp1] and not reg.startswith('xmm'):
+                            symbol_table[instr.inp1].address_descriptor_reg.remove(reg)
+                            return reg, False
 
-    return (sorted(leader), IR_code)
+            for reg in reg_descriptor.keys():
+                if reg not in exclude and not reg.startswith('xmm'):
+                    if len(reg_descriptor[reg]) == 0:
+                        return reg, True
+
+            if compulsory or instr.inst_info['next_use'][instr.inp1]:
+                R = None
+                next_use = -1000000
+                for reg in reg_descriptor.keys():
+                    if reg not in exclude and not reg.startswith('xmm'):
+                        to_break = False
+                        for sym in reg_descriptor[reg]:
+                            n_use = instr.inst_info['next_use'][instr.inp1]
+                            if n_use and n_use > next_use:
+                                if n_use:
+                                    next_use = n_use
+                                R = reg
+                            if not n_use:
+                                R = reg
+                                to_break = True
+                                break
+                        if to_break:
+                            break
+                save_reg(R)
+                return R, True
+
+            else:
+                return get_loc_mem(instr.out), False
+    else :
+
+        if is_valid_sym(instr.out):
+            if is_valid_sym(instr.inp1):
+                for reg in symbol_table[instr.inp1].address_descriptor_reg:
+                    if reg not in exclude:
+                        if len(reg_descriptor[reg]) == 1 and instr.inst_info['next_use'][instr.inp1] == None and not instr.inst_info['live'][instr.inp1] and reg.startswith('xmm'):
+                            symbol_table[instr.inp1].address_descriptor_reg.remove(reg)
+                            return reg, False
+
+            for reg in reg_descriptor.keys():
+                if reg not in exclude and reg.startswith('xmm'):
+                    if len(reg_descriptor[reg]) == 0:
+                        return reg, True
+
+            if compulsory or instr.inst_next_use[instr.out].next_use:
+                R = None
+                next_use = -1000000
+                for reg in reg_descriptor.keys():
+                    if reg not in exclude and reg.startswith('xmm'):
+                        to_break = False
+                        for sym in reg_descriptor[reg]:
+                            n_use = instr.inst_next_use[sym].next_use
+                            if n_use and n_use > next_use:
+                                if n_use:
+                                    next_use = n_use
+                                R = reg
+                            if not n_use:
+                                R = reg
+                                to_break = True
+                                break
+                        if to_break:
+                            break
+                save_reg(R)
+                return R, True
+
+            else:
+                return get_loc_mem(instr.out), False

@@ -1,44 +1,60 @@
 import sys
 import copy
+import csv
 from math import log
-from get_reg import *
 from utilities import *
-import global_vars as g
+from tac import ST
+import codecs
 param_count = 0
-param_size = 0
+
+leader_instructions = [
+    "ifgoto",
+    "return",
+    "label",
+    "call",
+    "print_int",
+    "scan_int",
+    "goto",
+    "func",
+    "begin_func",
+    "end_func"
+]
+relational_op_list = ['<','>','==','>=','<=']
+
 class CodeGenerator:
 
-    # def gen_data_section(self):
-    #     print("extern printf\n")
-    #     print("extern scanf\n")
-    #     print("extern malloc\n")
-    #     print("section\t.data\n")
-    #     print("print_int:\tdb\t\"%d\",10,0")
-    #     print("print_char:\tdb\t\"%c\",0")
-    #     print("scan_int:\tdb\t\"%d\",0")
-    #     for temp_var in g.temp_var_set:
-    #         print(temp_var + "\tdd\t0")
-    #     # for symbol in g.symbol_table.keys():
-    #         # if g.symbol_table[symbol].array_size != None:
-    #             # print(str(symbol) + "\ttimes\t" + str(g.symbol_table[symbol].array_size) + "\tdd\t0")
-    #         # else:
-    #             # print(str(symbol) + "\tdd\t0")
+    def gen_data_section(self):
+        #print("extern printf\n")
+        #print("extern scanf\n")
+        print("extern malloc\n")
+        print("section\t.data\n")
+        #print("print_int:\tdb\t\"%d\",10,0")
+        #print("print_char:\tdb\t\"%c\",0")
+        #print("scan_int:\tdb\t\"%d\",0")
+        for var in symbol_table.keys():
+            if is_temp_var(var):
+                print(var + "\tdd\t0")
+        # for symbol in g.symbol_table.keys():
+            # if g.symbol_table[symbol].array_size != None:
+                # print(str(symbol) + "\ttimes\t" + str(g.symbol_table[symbol].array_size) + "\tdd\t0")
+            # else:
+                # print(str(symbol) + "\tdd\t0")
 
-    # def gen_start_template(self):
-    #     print()
-    #     print("section .text")
-    #     print("\tglobal main")
+    def gen_start_template(self):
+        print()
+        print("section .text")
+        print("\tglobal main")
 
     # def op_print_int(self, instr):
     #     loc = get_location(instr.inp1)
-    #     save_context()
+    #     save_caller_context()
     #     if loc not in reg_descriptor.keys():
-    #         print("\tmov eax, " + loc)
-    #         loc = "eax"
+    #         print("\tmov rax, " + loc)
+    #         loc = "rax"
     #     print("\tpush ebp")
     #     print("\tmov ebp,esp")
-    #     print("\tpush dword " + str(loc))
-    #     print("\tpush dword print_int")
+    #     print("\tpush qword " + str(loc))
+    #     print("\tpush qword print_int")
     #     print("\tcall printf")
     #     print("\tadd esp, 8")
     #     print("\tmov esp, ebp")
@@ -46,26 +62,26 @@ class CodeGenerator:
 
     # def op_print_char(self, instr):
     #     loc = get_location(instr.inp1)
-    #     save_context()
+    #     save_caller_context()
     #     if loc not in reg_descriptor.keys():
-    #         print("\tmov eax, " + loc)
-    #         loc = "eax"
+    #         print("\tmov rax, " + loc)
+    #         loc = "rax"
     #     print("\tpush ebp")
     #     print("\tmov ebp,esp")
-    #     print("\tpush dword " + str(loc))
-    #     print("\tpush dword print_char")
+    #     print("\tpush qword " + str(loc))
+    #     print("\tpush qword print_char")
     #     print("\tcall printf")
     #     print("\tadd esp, 8")
     #     print("\tmov esp, ebp")
     #     print("\tpop ebp")
 
     # def op_scan_int(self, instr):
-    #     save_context()
+    #     save_caller_context()
     #     loc = get_location(instr.out)
-    #     print("\tlea eax, " + loc)
+    #     print("\tlea rax, " + loc)
     #     print("\tpush ebp")
     #     print("\tmov ebp,esp")
-    #     print("\tpush eax")
+    #     print("\tpush rax")
     #     print("\tpush scan_int")
     #     print("\tcall scanf")
     #     print("\tadd esp, 8")
@@ -105,17 +121,17 @@ class CodeGenerator:
             print("\tmov"+ ' '+ R1 + ", " + get_location(instr.inp1))
         R2 = get_location(instr.inp2)
         print("\t"+op+ ' ' + R1 + ", " + R2)
-        update_reg_descriptors(R1,instr.out)
+        update_reg_desc(R1,instr.out)
         free_regs(instr)
     
     def op_fbinary(self,instr,op):
 
-        R1, flag = get_reg(instr,is_float=True)
+        R1, flag = get_reg(instr,isFloat=True)
         if flag:
             print("\tmov"+ ' '+ R1 + ", " + get_location(instr.inp1))
         R2 = get_location(instr.inp2)
         print("\t"+op+ ' ' + R1 + ", " + R2)
-        update_reg_descriptors(R1,instr.out)
+        update_reg_desc(R1,instr.out)
         free_regs(instr)
 
 
@@ -146,48 +162,48 @@ class CodeGenerator:
         if not bitshift:
             R2 = get_location(instr.inp2)
             print("\timul " + R1 + ", " + R2)
-        update_reg_descriptors(R1, instr.out)
+        update_reg_desc(R1, instr.out)
         free_regs(instr)
 
 
     def op_div(self, instr):
 
-        save_reg_contents("eax")
-        print("\tmov eax, " + get_location(instr.inp1))
-        save_reg_contents("edx")
+        save_reg("rax")
+        print("\tmov rax, " + get_location(instr.inp1))
+        save_reg("rdx")
         if is_valid_number(instr.inp2):
-            R1, flag = get_reg(instr,exclude=["eax","edx"])
+            R1, flag = get_reg(instr,exclude=["rax","rdx"])
             print("\tmov " + R1 + ", " + get_location(instr.inp2))
             print("\tcdq")
             print("\tidiv " + R1)
         else:
             print("\tcdq")
-            print("\tidiv dword " + get_location(instr.inp2))
-        update_reg_descriptors("eax", instr.out)
+            print("\tidiv qword " + get_location(instr.inp2))
+        update_reg_desc("rax", instr.out)
         free_regs(instr)
     
     def op_fadd(self,instr):
-        self.op_fbinary(instr,'addss')
+        self.op_fbinary(instr,'addsd')
 
     def op_fsub(self,instr):
-        self.op_fbinary(instr,'subss')
+        self.op_fbinary(instr,'subsd')
 
     def op_fmul(self,instr):
-        self.op_fbinary(instr, 'mulss')
+        self.op_fbinary(instr, 'mulsd')
 
     def op_fdiv(self,instr):
-        self.op_fbinary(instr, 'divss')
+        self.op_fbinary(instr, 'divsd')
     
 
     def op_frelational(self,instr,op):
 
-        R1, flag = get_reg(instr,is_float=True)
+        R1, flag = get_reg(instr,isFloat=True)
         if flag:
-            save_reg_contents(R1)
+            save_reg(R1)
             print("\tmov"+ ' '+ R1 + ", " + get_location(instr.inp1))
         R2 = get_location(instr.inp2)
-        R3, flag1 = get_reg(instr,is_float=True)
-        print("\t"+'ucomiss'+ ' ' + R1 + ", " + R2)
+        R3, flag1 = get_reg(instr,isFloat=True)
+        print("\t"+'ucomisd'+ ' ' + R1 + ", " + R2)
 
         lbl = ST.make_label()
         if(op == "<"):
@@ -209,14 +225,14 @@ class CodeGenerator:
         print("\tmov " + R3 + ", 1")
         print(lbl2 + ":")
 
-        update_reg_descriptors(R3,instr.out)
+        update_reg_desc(R3,instr.out)
         free_regs(instr)
 
     def op_relational(self,instr,op):
 
         R1, flag = get_reg(instr)
         if flag:
-            save_reg_contents(R1)
+            save_reg(R1)
             print("\tmov"+ ' '+ R1 + ", " + get_location(instr.inp1))
         R2 = get_location(instr.inp2)
         print("\t"+'cmp'+ ' ' + R1 + ", " + R2)
@@ -241,24 +257,24 @@ class CodeGenerator:
         print("\tmov " + R1 + ", 1")
         print(lbl2 + ":")
 
-        update_reg_descriptors(R1,instr.out)
+        update_reg_desc(R1,instr.out)
         free_regs(instr)
 
     def op_modulo(self, instr):
 
-        save_reg_contents("eax")
-        print("\tmov eax, " + get_location(instr.inp1))
-        save_reg_contents("edx")
+        save_reg("rax")
+        print("\tmov rax, " + get_location(instr.inp1))
+        save_reg("rdx")
         if is_valid_number(instr.inp2):
-            R1, flag = get_reg(instr,exclude=["eax","edx"])
+            R1, flag = get_reg(instr,exclude=["rax","rdx"])
             print("\tmov " + R1 + ", " + get_location(instr.inp2))
             print("\tcdq")
             print("\tidiv " + R1)
         else:
             print("\tcdq")
-            print("\tidiv dword" + get_location(instr.inp2))
+            print("\tidiv qword" + get_location(instr.inp2))
 
-        update_reg_descriptors("edx", instr.out)
+        update_reg_desc("rdx", instr.out)
         free_regs(instr)
 
 
@@ -273,7 +289,7 @@ class CodeGenerator:
         else:
             R2 = get_location(instr.inp2)
         print("\tshl " + R1 + ", " + R2)
-        update_reg_descriptors(R1, instr.out)
+        update_reg_desc(R1, instr.out)
         free_regs(instr)
 
 
@@ -288,7 +304,7 @@ class CodeGenerator:
         else:
             R2 = get_location(instr.inp2)
         print("\tshr " + R1 + ", " + R2)
-        update_reg_descriptors(R1, instr.out)
+        update_reg_desc(R1, instr.out)
         free_regs(instr)
 
     def op_and(self,instr):
@@ -301,301 +317,301 @@ class CodeGenerator:
 
 
 
-    def op__intassign(self, instr):
+    def op_intassign(self, instr):
         if instr.array_index_i1 == None and instr.array_index_o == None and is_valid_number(instr.inp1):
             R1, flag = get_reg(instr, compulsory=False)
             print("\tmov " + R1 + ", " + get_location(instr.inp1))
             if R1 in reg_descriptor.keys():
-                update_reg_descriptors(R1, instr.out)
+                update_reg_desc(R1, instr.out)
 
-        elif instr.array_index_i1 == None and instr.array_index_o == None:
-            if len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0:
-                R1, flag = get_reg(instr)
-                print("\tmov " + R1 +", " + get_location(instr.inp1))
-                update_reg_descriptors(R1,instr.inp1)
+        # elif instr.array_index_i1 == None and instr.array_index_o == None:
+        #     if len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0:
+        #         R1, flag = get_reg(instr)
+        #         print("\tmov " + R1 +", " + get_location(instr.inp1))
+        #         update_reg_desc(R1,instr.inp1)
 
-            if len(g.symbol_table[instr.inp1].address_descriptor_reg):
-                for regs in g.symbol_table[instr.out].address_descriptor_reg:
-                    reg_descriptor[regs].remove(instr.out)
-                g.symbol_table[instr.out].address_descriptor_reg.clear()
-                g.symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(g.symbol_table[instr.inp1].address_descriptor_reg)
+        #     if len(g.symbol_table[instr.inp1].address_descriptor_reg):
+        #         for regs in g.symbol_table[instr.out].address_descriptor_reg:
+        #             reg_descriptor[regs].remove(instr.out)
+        #         g.symbol_table[instr.out].address_descriptor_reg.clear()
+        #         g.symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(g.symbol_table[instr.inp1].address_descriptor_reg)
 
-                for reg in g.symbol_table[instr.out].address_descriptor_reg:
-                    reg_descriptor[reg].add(instr.out)
+        #         for reg in g.symbol_table[instr.out].address_descriptor_reg:
+        #             reg_descriptor[reg].add(instr.out)
 
-                free_regs(instr)
+        #         free_regs(instr)
 
-        elif instr.array_index_i1 != None:
-            # assert len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0
-            R1, flag = get_reg(instr)
-            print("\tmov " + R1 + ", " + get_location(instr.array_index_i1))
-            print("\tshl " + R1 + ", 2")
-            print("\tadd " + R1 + ", " + get_location(instr.inp1))
-            print("\tmov " + R1 + ", [" + R1 + "]")
-            update_reg_descriptors(R1, instr.out)
+        # elif instr.array_index_i1 != None:
+        #     # assert len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0
+        #     R1, flag = get_reg(instr)
+        #     print("\tmov " + R1 + ", " + get_location(instr.array_index_i1))
+        #     print("\tshl " + R1 + ", 2")
+        #     print("\tadd " + R1 + ", " + get_location(instr.inp1))
+        #     print("\tmov " + R1 + ", [" + R1 + "]")
+        #     update_reg_desc(R1, instr.out)
         
-        elif instr.array_index_i1 != None and instr.array_index_o != None:
+        # elif instr.array_index_i1 != None and instr.array_index_o != None:
             
-            index1 = instr.array_index_i1
-            loc_arr1 = get_location(instr.inp1)
-            R3 = None
-            R4 = None
-            if loc_arr1 in reg_descriptor.keys():
-                R1 = None
-                if is_valid_sym(index1):
-                    if len(g.symbol_table[index].address_descriptor_reg) == 0:
-                        R1, _ = get_reg(instr, exclude=[loc_arr1])
-                        print("\tmov " + R1 + ", " + get_location(index1))
-                        update_reg_descriptors(R1, index1)
-                    else:
-                        R1 = get_location(index1)
-                    R3 = R1
-                else:
-                    index1 = 4 * int(index1)
-            else:
-                R1, _ = get_reg(instr)
-                print("\tmov " + R1 + ", " + get_location(index1))
-                print("\tshl " + R1 + ", 2")
-                print("\tadd " + R1 + ", " + loc_arr1)
-                R4 = R1
+        #     index1 = instr.array_index_i1
+        #     loc_arr1 = get_location(instr.inp1)
+        #     R3 = None
+        #     R4 = None
+        #     if loc_arr1 in reg_descriptor.keys():
+        #         R1 = None
+        #         if is_valid_sym(index1):
+        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #                 R1, _ = get_reg(instr, exclude=[loc_arr1])
+        #                 print("\tmov " + R1 + ", " + get_location(index1))
+        #                 update_reg_desc(R1, index1)
+        #             else:
+        #                 R1 = get_location(index1)
+        #             R3 = R1
+        #         else:
+        #             index1 = 4 * int(index1)
+        #     else:
+        #         R1, _ = get_reg(instr)
+        #         print("\tmov " + R1 + ", " + get_location(index1))
+        #         print("\tshl " + R1 + ", 2")
+        #         print("\tadd " + R1 + ", " + loc_arr1)
+        #         R4 = R1
             
 
-            index = instr.array_index_o
-            loc_arr = get_location(instr.out)
-            if loc_arr in reg_descriptor.keys():
-                R1 = None
-                if is_valid_sym(index):
-                    if len(g.symbol_table[index].address_descriptor_reg) == 0:
-                        R1, _ = get_reg(instr, exclude=[loc_arr])
-                        print("\tmov " + R1 + ", " + get_location(index))
-                        update_reg_descriptors(R1, index)
-                    else:
-                        R1 = get_location(index)
+        #     index = instr.array_index_o
+        #     loc_arr = get_location(instr.out)
+        #     if loc_arr in reg_descriptor.keys():
+        #         R1 = None
+        #         if is_valid_sym(index):
+        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #                 R1, _ = get_reg(instr, exclude=[loc_arr])
+        #                 print("\tmov " + R1 + ", " + get_location(index))
+        #                 update_reg_desc(R1, index)
+        #             else:
+        #                 R1 = get_location(index)
 
-                    if R3:
-                        print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-                    elif R4:
-                        print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + R4 + "]" )
-                    else:
-                        print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr + "+" + str(index1) + "]" )
-                else:
-                    index = 4 * int(index)
-                    inp_reg, flag = get_reg(instr)
-                    if flag:
-                        print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-                        update_reg_descriptors(inp_reg,instr.inp1)
-                    if R3:
-                        print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-                    elif R4:
-                        print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + R4 + "]" )
-                    else:
-                        print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
+        #             if R3:
+        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr1 + "," + R3 + "*4]" )
+        #             elif R4:
+        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + R4 + "]" )
+        #             else:
+        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr + "+" + str(index1) + "]" )
+        #         else:
+        #             index = 4 * int(index)
+        #             inp_reg, flag = get_reg(instr)
+        #             if flag:
+        #                 print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
+        #                 update_reg_desc(inp_reg,instr.inp1)
+        #             if R3:
+        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
+        #             elif R4:
+        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + R4 + "]" )
+        #             else:
+        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
 
-            else:
-                R1, _ = get_reg(instr, exclude=[loc_inp1])
-                print("\tmov " + R1 + ", " + get_location(index))
-                print("\tshl " + R1 + ", 2")
-                print("\tadd " + R1 + ", " + loc_arr)
-                # print("\tmov [" + R1 + "], " + loc_inp1)
-                if R3:
-                    print("\tmov [" + R1 + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-                elif R4:
-                    print("\tmov [" + R1 + "], " + "[" + R4 + "]" )
-                else:
-                    print("\tmov [" + R1 + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
+        #     else:
+        #         R1, _ = get_reg(instr, exclude=[loc_inp1])
+        #         print("\tmov " + R1 + ", " + get_location(index))
+        #         print("\tshl " + R1 + ", 2")
+        #         print("\tadd " + R1 + ", " + loc_arr)
+        #         # print("\tmov [" + R1 + "], " + loc_inp1)
+        #         if R3:
+        #             print("\tmov [" + R1 + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
+        #         elif R4:
+        #             print("\tmov [" + R1 + "], " + "[" + R4 + "]" )
+        #         else:
+        #             print("\tmov [" + R1 + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
 
 
-        else:
-            index = instr.array_index_o
-            loc_arr = get_location(instr.out)
-            if loc_arr in reg_descriptor.keys():
-                R1 = None
-                if is_valid_sym(index):
-                    if len(g.symbol_table[index].address_descriptor_reg) == 0:
-                        R1, _ = get_reg(instr, exclude=[loc_arr])
-                        print("\tmov " + R1 + ", " + get_location(index))
-                        update_reg_descriptors(R1, index)
-                    else:
-                        R1 = get_location(index)
+        # else:
+        #     index = instr.array_index_o
+        #     loc_arr = get_location(instr.out)
+        #     if loc_arr in reg_descriptor.keys():
+        #         R1 = None
+        #         if is_valid_sym(index):
+        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #                 R1, _ = get_reg(instr, exclude=[loc_arr])
+        #                 print("\tmov " + R1 + ", " + get_location(index))
+        #                 update_reg_desc(R1, index)
+        #             else:
+        #                 R1 = get_location(index)
 
-                    inp_reg = R1
-                    if index != instr.inp1:
-                        inp_reg, flag = get_reg(instr, exclude=[R1, loc_arr])
-                        if flag:
-                            print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-                            update_reg_descriptors(inp_reg,instr.inp1)
-                    print("\tmov [" + loc_arr + "," + R1 + "*4], " + inp_reg)
-                else:
-                    index = 4 * int(index)
-                    inp_reg, flag = get_reg(instr)
-                    if flag:
-                        print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-                        update_reg_descriptors(inp_reg,instr.inp1)
-                    print("\tmov [" + loc_arr + "+" + str(index) + "], " + inp_reg)
-            else:
-                loc_inp1 = get_location(instr.inp1)
-                R1, _ = get_reg(instr, exclude=[loc_inp1])
-                print("\tmov " + R1 + ", " + get_location(index))
-                print("\tshl " + R1 + ", 2")
-                print("\tadd " + R1 + ", " + loc_arr)
-                if loc_inp1 in reg_descriptor.keys():
-                    print("\tmov [" + R1 + "], " + loc_inp1)
-                else:
-                    inp_reg, _ = get_reg(instr, exclude=[R1])
-                    print("\tmov " + inp_reg + ", " + loc_inp1)
-                    update_reg_descriptors(inp_reg, instr.inp1)
-                    print("\tmov [" + R1 + "], " + inp_reg)
+        #             inp_reg = R1
+        #             if index != instr.inp1:
+        #                 inp_reg, flag = get_reg(instr, exclude=[R1, loc_arr])
+        #                 if flag:
+        #                     print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
+        #                     update_reg_desc(inp_reg,instr.inp1)
+        #             print("\tmov [" + loc_arr + "," + R1 + "*4], " + inp_reg)
+        #         else:
+        #             index = 4 * int(index)
+        #             inp_reg, flag = get_reg(instr)
+        #             if flag:
+        #                 print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
+        #                 update_reg_desc(inp_reg,instr.inp1)
+        #             print("\tmov [" + loc_arr + "+" + str(index) + "], " + inp_reg)
+        #     else:
+        #         loc_inp1 = get_location(instr.inp1)
+        #         R1, _ = get_reg(instr, exclude=[loc_inp1])
+        #         print("\tmov " + R1 + ", " + get_location(index))
+        #         print("\tshl " + R1 + ", 2")
+        #         print("\tadd " + R1 + ", " + loc_arr)
+        #         if loc_inp1 in reg_descriptor.keys():
+        #             print("\tmov [" + R1 + "], " + loc_inp1)
+        #         else:
+        #             inp_reg, _ = get_reg(instr, exclude=[R1])
+        #             print("\tmov " + inp_reg + ", " + loc_inp1)
+        #             update_reg_desc(inp_reg, instr.inp1)
+        #             print("\tmov [" + R1 + "], " + inp_reg)
     
-    def op__floatassign(self, instr):
-        if instr.array_index_i1 == None and instr.array_index_o == None and is_valid_number(instr.inp1):
-            R1, flag = get_reg(instr, compulsory=False,is_float=True)
-            print("\tmov " + R1 + ", " + get_location(instr.inp1))
+    def op_fassign(self, instr):
+        if instr.array_index_i1 == None and instr.array_index_o == None and is_valid_float(instr.inp1):
+            R1, flag = get_reg(instr, compulsory=False,isFloat=True)
+            print("\tmovsd " + R1 + ", " + get_location(instr.inp1))
             if R1 in reg_descriptor.keys():
-                update_reg_descriptors(R1, instr.out)
+                update_reg_desc(R1, instr.out)
 
-        elif instr.array_index_i1 == None and instr.array_index_o == None:
-            if len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0:
-                R1, flag = get_reg(instr)
-                print("\tmov " + R1 +", " + get_location(instr.inp1))
-                update_reg_descriptors(R1,instr.inp1)
+        # elif instr.array_index_i1 == None and instr.array_index_o == None:
+        #     if len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0:
+        #         R1, flag = get_reg(instr)
+        #         print("\tmov " + R1 +", " + get_location(instr.inp1))
+        #         update_reg_desc(R1,instr.inp1)
 
-            if len(g.symbol_table[instr.inp1].address_descriptor_reg):
-                for regs in g.symbol_table[instr.out].address_descriptor_reg:
-                    reg_descriptor[regs].remove(instr.out)
-                g.symbol_table[instr.out].address_descriptor_reg.clear()
-                g.symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(g.symbol_table[instr.inp1].address_descriptor_reg)
+        #     if len(g.symbol_table[instr.inp1].address_descriptor_reg):
+        #         for regs in g.symbol_table[instr.out].address_descriptor_reg:
+        #             reg_descriptor[regs].remove(instr.out)
+        #         g.symbol_table[instr.out].address_descriptor_reg.clear()
+        #         g.symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(g.symbol_table[instr.inp1].address_descriptor_reg)
 
-                for reg in g.symbol_table[instr.out].address_descriptor_reg:
-                    reg_descriptor[reg].add(instr.out)
+        #         for reg in g.symbol_table[instr.out].address_descriptor_reg:
+        #             reg_descriptor[reg].add(instr.out)
 
-                free_regs(instr)
+        #         free_regs(instr)
 
-        elif instr.array_index_i1 != None:
-            # assert len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0
-            R1, flag = get_reg(instr)
-            print("\tmov " + R1 + ", " + get_location(instr.array_index_i1))
-            print("\tshl " + R1 + ", 2")
-            print("\tadd " + R1 + ", " + get_location(instr.inp1))
-            print("\tmov " + R1 + ", [" + R1 + "]")
-            update_reg_descriptors(R1, instr.out)
+        # elif instr.array_index_i1 != None:
+        #     # assert len(g.symbol_table[instr.inp1].address_descriptor_reg) == 0
+        #     R1, flag = get_reg(instr)
+        #     print("\tmov " + R1 + ", " + get_location(instr.array_index_i1))
+        #     print("\tshl " + R1 + ", 2")
+        #     print("\tadd " + R1 + ", " + get_location(instr.inp1))
+        #     print("\tmov " + R1 + ", [" + R1 + "]")
+        #     update_reg_desc(R1, instr.out)
         
-        elif instr.array_index_i1 != None and instr.array_index_o != None:
+        # elif instr.array_index_i1 != None and instr.array_index_o != None:
             
-            index1 = instr.array_index_i1
-            loc_arr1 = get_location(instr.inp1)
-            R3 = None
-            R4 = None
-            if loc_arr1 in reg_descriptor.keys():
-                R1 = None
-                if is_valid_sym(index1):
-                    if len(g.symbol_table[index].address_descriptor_reg) == 0:
-                        R1, _ = get_reg(instr, exclude=[loc_arr1])
-                        print("\tmov " + R1 + ", " + get_location(index1))
-                        update_reg_descriptors(R1, index1)
-                    else:
-                        R1 = get_location(index1)
-                    R3 = R1
-                else:
-                    index1 = 4 * int(index1)
-            else:
-                R1, _ = get_reg(instr)
-                print("\tmov " + R1 + ", " + get_location(index1))
-                print("\tshl " + R1 + ", 2")
-                print("\tadd " + R1 + ", " + loc_arr1)
-                R4 = R1
+        #     index1 = instr.array_index_i1
+        #     loc_arr1 = get_location(instr.inp1)
+        #     R3 = None
+        #     R4 = None
+        #     if loc_arr1 in reg_descriptor.keys():
+        #         R1 = None
+        #         if is_valid_sym(index1):
+        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #                 R1, _ = get_reg(instr, exclude=[loc_arr1])
+        #                 print("\tmov " + R1 + ", " + get_location(index1))
+        #                 update_reg_desc(R1, index1)
+        #             else:
+        #                 R1 = get_location(index1)
+        #             R3 = R1
+        #         else:
+        #             index1 = 4 * int(index1)
+        #     else:
+        #         R1, _ = get_reg(instr)
+        #         print("\tmov " + R1 + ", " + get_location(index1))
+        #         print("\tshl " + R1 + ", 2")
+        #         print("\tadd " + R1 + ", " + loc_arr1)
+        #         R4 = R1
             
 
-            index = instr.array_index_o
-            loc_arr = get_location(instr.out)
-            if loc_arr in reg_descriptor.keys():
-                R1 = None
-                if is_valid_sym(index):
-                    if len(g.symbol_table[index].address_descriptor_reg) == 0:
-                        R1, _ = get_reg(instr, exclude=[loc_arr])
-                        print("\tmov " + R1 + ", " + get_location(index))
-                        update_reg_descriptors(R1, index)
-                    else:
-                        R1 = get_location(index)
+        #     index = instr.array_index_o
+        #     loc_arr = get_location(instr.out)
+        #     if loc_arr in reg_descriptor.keys():
+        #         R1 = None
+        #         if is_valid_sym(index):
+        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #                 R1, _ = get_reg(instr, exclude=[loc_arr])
+        #                 print("\tmov " + R1 + ", " + get_location(index))
+        #                 update_reg_desc(R1, index)
+        #             else:
+        #                 R1 = get_location(index)
 
-                    if R3:
-                        print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-                    elif R4:
-                        print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + R4 + "]" )
-                    else:
-                        print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr + "+" + str(index1) + "]" )
-                else:
-                    index = 4 * int(index)
-                    inp_reg, flag = get_reg(instr)
-                    if flag:
-                        print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-                        update_reg_descriptors(inp_reg,instr.inp1)
-                    if R3:
-                        print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-                    elif R4:
-                        print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + R4 + "]" )
-                    else:
-                        print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
+        #             if R3:
+        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr1 + "," + R3 + "*4]" )
+        #             elif R4:
+        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + R4 + "]" )
+        #             else:
+        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr + "+" + str(index1) + "]" )
+        #         else:
+        #             index = 4 * int(index)
+        #             inp_reg, flag = get_reg(instr)
+        #             if flag:
+        #                 print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
+        #                 update_reg_desc(inp_reg,instr.inp1)
+        #             if R3:
+        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
+        #             elif R4:
+        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + R4 + "]" )
+        #             else:
+        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
 
-            else:
-                R1, _ = get_reg(instr, exclude=[loc_inp1])
-                print("\tmov " + R1 + ", " + get_location(index))
-                print("\tshl " + R1 + ", 2")
-                print("\tadd " + R1 + ", " + loc_arr)
-                # print("\tmov [" + R1 + "], " + loc_inp1)
-                if R3:
-                    print("\tmov [" + R1 + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-                elif R4:
-                    print("\tmov [" + R1 + "], " + "[" + R4 + "]" )
-                else:
-                    print("\tmov [" + R1 + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
+        #     else:
+        #         R1, _ = get_reg(instr, exclude=[loc_inp1])
+        #         print("\tmov " + R1 + ", " + get_location(index))
+        #         print("\tshl " + R1 + ", 2")
+        #         print("\tadd " + R1 + ", " + loc_arr)
+        #         # print("\tmov [" + R1 + "], " + loc_inp1)
+        #         if R3:
+        #             print("\tmov [" + R1 + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
+        #         elif R4:
+        #             print("\tmov [" + R1 + "], " + "[" + R4 + "]" )
+        #         else:
+        #             print("\tmov [" + R1 + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
 
 
-        else:
-            index = instr.array_index_o
-            loc_arr = get_location(instr.out)
-            if loc_arr in reg_descriptor.keys():
-                R1 = None
-                if is_valid_sym(index):
-                    if len(g.symbol_table[index].address_descriptor_reg) == 0:
-                        R1, _ = get_reg(instr, exclude=[loc_arr])
-                        print("\tmov " + R1 + ", " + get_location(index))
-                        update_reg_descriptors(R1, index)
-                    else:
-                        R1 = get_location(index)
+        # else:
+        #     index = instr.array_index_o
+        #     loc_arr = get_location(instr.out)
+        #     if loc_arr in reg_descriptor.keys():
+        #         R1 = None
+        #         if is_valid_sym(index):
+        #             if len(g.symbol_table[index].address_descriptor_reg) == 0:
+        #                 R1, _ = get_reg(instr, exclude=[loc_arr])
+        #                 print("\tmov " + R1 + ", " + get_location(index))
+        #                 update_reg_desc(R1, index)
+        #             else:
+        #                 R1 = get_location(index)
 
-                    inp_reg = R1
-                    if index != instr.inp1:
-                        inp_reg, flag = get_reg(instr, exclude=[R1, loc_arr])
-                        if flag:
-                            print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-                            update_reg_descriptors(inp_reg,instr.inp1)
-                    print("\tmov [" + loc_arr + "," + R1 + "*4], " + inp_reg)
-                else:
-                    index = 4 * int(index)
-                    inp_reg, flag = get_reg(instr)
-                    if flag:
-                        print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-                        update_reg_descriptors(inp_reg,instr.inp1)
-                    print("\tmov [" + loc_arr + "+" + str(index) + "], " + inp_reg)
-            else:
-                loc_inp1 = get_location(instr.inp1)
-                R1, _ = get_reg(instr, exclude=[loc_inp1])
-                print("\tmov " + R1 + ", " + get_location(index))
-                print("\tshl " + R1 + ", 2")
-                print("\tadd " + R1 + ", " + loc_arr)
-                if loc_inp1 in reg_descriptor.keys():
-                    print("\tmov [" + R1 + "], " + loc_inp1)
-                else:
-                    inp_reg, _ = get_reg(instr, exclude=[R1])
-                    print("\tmov " + inp_reg + ", " + loc_inp1)
-                    update_reg_descriptors(inp_reg, instr.inp1)
-                    print("\tmov [" + R1 + "], " + inp_reg)
+        #             inp_reg = R1
+        #             if index != instr.inp1:
+        #                 inp_reg, flag = get_reg(instr, exclude=[R1, loc_arr])
+        #                 if flag:
+        #                     print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
+        #                     update_reg_desc(inp_reg,instr.inp1)
+        #             print("\tmov [" + loc_arr + "," + R1 + "*4], " + inp_reg)
+        #         else:
+        #             index = 4 * int(index)
+        #             inp_reg, flag = get_reg(instr)
+        #             if flag:
+        #                 print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
+        #                 update_reg_desc(inp_reg,instr.inp1)
+        #             print("\tmov [" + loc_arr + "+" + str(index) + "], " + inp_reg)
+        #     else:
+        #         loc_inp1 = get_location(instr.inp1)
+        #         R1, _ = get_reg(instr, exclude=[loc_inp1])
+        #         print("\tmov " + R1 + ", " + get_location(index))
+        #         print("\tshl " + R1 + ", 2")
+        #         print("\tadd " + R1 + ", " + loc_arr)
+        #         if loc_inp1 in reg_descriptor.keys():
+        #             print("\tmov [" + R1 + "], " + loc_inp1)
+        #         else:
+        #             inp_reg, _ = get_reg(instr, exclude=[R1])
+        #             print("\tmov " + inp_reg + ", " + loc_inp1)
+        #             update_reg_desc(inp_reg, instr.inp1)
+        #             print("\tmov [" + R1 + "], " + inp_reg)
     
 
     def op_unary(self, instr):
         R1, flag = get_reg(instr,compulsory=False)
         if R1 not in reg_descriptor.keys():
-            R1 = "dword " + R1
+            R1 = "qword " + R1
         if flag:
             print("\tmov "+ R1 + ", " + get_location(instr.inp1))
         if instr.operation == "!" or instr.operation == "~":
@@ -607,153 +623,132 @@ class CodeGenerator:
         elif instr.operation == "-":
             print("\tneg "+ R1)
         if R1 in reg_descriptor.keys():
-            update_reg_descriptors(R1,instr.out)
+            update_reg_desc(R1,instr.out)
         free_regs(instr)
 
     def int2float(self, instr):
-        R1,flag = get_reg(instr, is_float=True)
-        upd_reg_descriptors(R1,instr.out)
+        R1,flag = get_reg(instr, isFloat=True)
+        update_reg_desc(R1,instr.out)
         print("\tcvtsi2ss " + R1 + ", " +  get_location(instr.inp1))
 
 
     def float2int(self, instr):
         R1,flag = get_reg(instr)
-        upd_reg_descriptors(R1,instr.out)
+        update_reg_desc(R1,instr.out)
         print("\tcvttss2si " + R1 + ", " +  get_location(instr.inp1))
 
 
     def char2int(self, instr):
         R1,flag = get_reg(instr,exclude=['esi','edi'])
         print("\txor " + R1  + ", " + R1)
-        print("\tmov " + byte_trans[R1] + ", " + get_location(instr.inp1,byte=True))
-        upd_reg_descriptors(R1,instr.out)
+        print("\tmov " + R1 + ", " + get_location(instr.inp1))
+        update_reg_desc(R1,instr.out)
 
 
     def char2float(self, instr):
         R1,flag = get_reg(instr,exclude=['esi','edi'])
         print("\txor " + R1 + ", " + R1)
-        print("\tmov " + byte_trans[R1] +", " + get_location(instr.inp1,byte=True))
-        R2,flag2 = get_reg(instr, is_float=True)
-        upd_reg_desc(R2, instr.out)
+        print("\tmov " + R1 +", " + get_location(instr.inp1))
+        R2,flag2 = get_reg(instr, isFloat=True)
+        update_reg_desc(R2, instr.out)
         print("\tcvtsi2ss " + R2 + ", " + R1)
 
 
     def int2char(self, instr):
-        R1,flag = get_reg(instr,  exclude = ["esi", "edi"])
-        R2,flag2 = get_reg(instr, exclude = [R1, "esi", "edi"])
+        R1,flag = get_reg(instr,  exclude = ["rsi", "rdi"])
+        R2,flag2 = get_reg(instr, exclude = [R1, "rsi", "rdi"])
         print("\tmov " + R1 +", " + get_location(instr.inp1))
-        upd_reg_desc(R2, instr.out)
+        update_reg_desc(R2, instr.out)
         print("\txor " + R2 + ", " + R2)
-        print("\tmov " + byte_trans[R2] + ", " + byte_trans[R1])
+        print("\tmov " + R2 + ", " + R1)
 
 
     def float2char(self, instr):
-        R1 = get_reg(quad, is_float=True)
-        print("\tmovss " + R1 + ", " + get_location(instr.inp1))
+        R1 = get_reg(instr, isFloat=True)
+        print("\tmovsd " + R1 + ", " + get_location(instr.inp1))
         R2 = get_reg(instr)
         print("\tcvttss2si " + R2  + ", " + R1)
-        R3 = get_reg(instr, exclude = [R2, "esi", "edi"])
+        R3 = get_reg(instr, exclude = [R2, "rsi", "rdi"])
         print("\txor " + R3 + ", " + R3)
-        print("\tmov " + byte_trans[R3] + ", " + byte_trans[R2])
-        upd_reg_desc(R3, instr.out)
+        print("\tmov " + R3 + ", " + R2)
+        update_reg_desc(R3, instr.out)
 
 
     def op_ifgoto(self, instr):
         
         if(instr.inp2=='eq0'):
             R1,flag = get_reg(instr,compulsory=True)
-            save_reg_contents(R1)
+            save_reg(R1)
             if flag:
                 print("\tmov " + R1 + ", " + get_location(instr.inp1))
-            save_context()
+            save_caller_context()
             print("\tcmp " + R1 + ", 0")
             print("\tje " + instr.out)
         
         elif instr.inp2=='eq0.0':
-            R1,flag = get_reg(instr,compulsory=True,is_float=True)
+            R1,flag = get_reg(instr,compulsory=True,isFloat=True)
             if flag:
-                print("\tmovss " + R1 + ", " + get_location(instr.inp1))
-            save_context()
-            print("\tucomiss " + R1 + ", "+ get_location_in_memory(float_reverse_map['0.0']))
+                print("\tmovsd " + R1 + ", " + get_location(instr.inp1))
+            save_caller_context()
+            print("\tucomisd " + R1 + ", "+ get_loc_mem('0.0'))
             print("\tje " + instr.out)
 
         elif instr.inp2=='eq0c':
-            R1,flag = byte_trans[get_reg(instr,compulsory=True)]
+            R1,flag = get_reg(instr,compulsory=True)
             if flag:
-                print("\tmov " + R1 + ", " + get_location(instr.inp1,byte=True))
-            save_context()
+                print("\tmov " + R1 + ", " + get_location(instr.inp1))
+            save_caller_context()
             print("\tcmp " + R1 + ", 0")
             print("\tje " + instr.out)
             
 
     def op_goto(self, instr):
-        save_context()
+        save_caller_context()
         print("\tjmp " + instr.out)
 
     def op_label(self, instr):
-        save_context()
+        save_caller_context()
         print(instr.out + ":")
 
     def op_param(self, instr):
         if param_count==0:
-            save_context()
+            save_caller_context()
         param_count+=1
-        param_size+=4
-
-        if(is_valid_sym(instr.inp1) and g.symbol_table.[instr.inp1].size > 4):
-            param_size += g.symbol_table.[instr.inp1].size - 4
-            loc = get_mem_location(instr.inp1,flag=0)
-            for i in range(g.symbol_table.[instr.inp1].size - 4, -1, -4):
-                print("\tpush dword [" + loc + "+" + str(i) + "]")
-            return
-
-        print("\tpush " + get_best_location(instr.inp1))
+        print("\tpush " + get_location(instr.inp1))
 
 
     def op_call_function(self, instr):
-        save_context()
+        save_caller_context()
         print("\tcall " + instr.inp1)
-        print("\tadd esp, " + str(4 * param_size)
+        print("\tadd rsp, " + str(8 * param_count))
         if instr.out != None:
-            update_reg_descriptors("eax",instr.out)
+            update_reg_desc("rax",instr.out)
         param_count = 0
-        param_size = 0
 
     def op_return(self, instr):
-        save_context()
+        save_caller_context()
         if instr.inp1 != None:
-            if is_val_symbol(instr.inp1) and g.symbol_table[instr.inp1].size>4: 
-            loc = get_mem_location(instr.inp1,flag=0)
-            print("\tmov eax, dword [ebp + 8]")
-            loc2 = 'ebp + eax'
-            R1 = get_reg(instr,exclude=['eax'])
-            for i in range(0, g.symbol_table[instr.inp1].size, 4):
-                print("\tmov " + R1 + ", dword [" + loc + " + " + str(i) + "]" )
-                print("\tmov dword [" + loc2 + " + " + str(i) + "], " + R1 )
-            
-            else:
-                loc = get_location(instr.inp1))
-                save_reg_contents("eax")
-                if(loc != "eax"):
-                    print("\tmov eax, " + str(loc))
+            loc = get_location(instr.inp1)
+            save_reg("rax")
+            if(loc != "rax"):
+                print("\tmov rax, " + str(loc))
 
-        print("\tmov esp, ebp")
-        print("\tpop ebp")
+        print("\tmov rsp, rbp")
+        print("\tpop rbp")
         print("\tret")
 
     def op_stack_alloc(self, instr):
-        if instr.label_name == "main":
+        if instr.out.split('$')[0] == 'main' :
             print("main:")
         print("func__l" + instr.out + ":")
-        g.counter = 0
-        sz=0
-        for i in g.symbol_table.keys():
+        counter = 0
+        for i in symbol_table.keys():
             if not is_temp_var(i) and i not in instr.arg_set:
-                g.counter += max(g.symbol_table[var].size, 4)
-                g.symbol_table[i].address_descriptor_mem.add(-1 * g.counter)
+                counter += 1
+                symbol_table[i].address_descriptor_mem.add(-8 * counter)
         for i, arg in enumerate(reversed(instr.arg_set)):
-            sz+=max(g.symbol_table[arg].size, 4)
-            g.symbol_table[arg].address_descriptor_mem.add(sz + 8)
+            sz+=8
+            symbol_table[arg].address_descriptor_mem.add(sz + 8)
 
         print("\tpush ebp")
         print("\tmov ebp, esp")
@@ -761,10 +756,10 @@ class CodeGenerator:
 
     def op_array_decl(self, instr):
         loc = get_location(instr.array_index_i1)
-        save_context()
+        save_caller_context()
         if loc not in reg_descriptor.keys():
-            print("\tmov eax," + loc)
-            loc = "eax"
+            print("\tmov rax," + loc)
+            loc = "rax"
         print("\tpush ebp")
         print("\tmov ebp, esp")
         print("\tshl " + loc + ", 2")
@@ -773,14 +768,9 @@ class CodeGenerator:
         print("\tadd esp, 4")
         print("\tmov esp, ebp")
         print("\tpop ebp")
-        update_reg_descriptors("eax", instr.inp1)
+        update_reg_desc("rax", instr.inp1)
 
     def gen_code(self, instr):
-        '''
-        Main function which calls other utility functions
-        according to instruction type
-        '''
-
         if instr.operation == "int_+":
             self.op_add(instr)
         elif instr.operation == "float_+":
@@ -831,8 +821,27 @@ class CodeGenerator:
         elif instr.operation == "param":
             self.op_param(instr)
 
-        elif instr.operation == "f_call":
+        elif instr.operation == "call":
             self.op_call_function(instr)
+
+        elif instr.operation.endswith('float_='):
+            self.op_fassign(instr)
+        
+        elif instr.operation.endswith('_='):
+            self.op_intassign(instr)
+        
+        elif instr.operation =='f2i':
+            self.float2int(instr)
+
+        elif instr.operation =='i2f':
+            self.int2float(instr)
+        
+        elif instr.operation =='c2i':
+            self.char2int(instr)
+        
+        elif instr.operation =='i2c':
+            self.int2char(instr)
+        
 
         # elif instr_type == "print_int":
         #     self.op_print_int(instr)
@@ -849,28 +858,44 @@ class CodeGenerator:
             # for sym, symentry in g.symbol_table.items():
                 # print(sym, symentry.address_descriptor_mem)
 
-        elif instr_type == "array_declaration":
-            self.op_array_decl(instr)
+        # elif instr_type == "array_declaration":
+        #     self.op_array_decl(instr)
 
 
 ###################################global generator############################
 generator = CodeGenerator()
 ###################################global generator############################
+def read_three_address_code(filename):
+    leader = set()
+    leader.add(0)
+    IR_code = []
+    #with open(filename, 'r') as csvfile:
+    instruction_set = list(csv.reader(codecs.open(filename, 'rU', 'utf-16')))
+    j=1
+    for i,statement in enumerate(instruction_set):
+        if len(statement) == 0:
+            continue
+        print(statement)
+        IR = Instruction(statement)
+        IR_code.append(IR)
+        ex = 0
+        if IR.operation in leader_instructions:
+            if IR.operation != "label"  and IR.operation != "func":
+                ex += 1
+
+            leader.add(j-1+ex)
+        j+=1
+
+    leader.add(len(IR_code))
+
+    return (sorted(leader), IR_code)
 
 def next_use(leader, IR_code):
-    '''
-    This function determines liveness and next
-    use information for each statement in basic block by
-    performing a backward pass
-    Then, it generates assembly code for each basic block
-    by making a forward pass
-    Finally, it saves all register contents into memory and
-    resets the liveness and next use info in symbol table.
-    '''
+
     generator = CodeGenerator()
     for b_start in range(len(leader) -  1):
         # iterate through all basic blocks
-        basic_block = IR_code[leader[b_start] :leader[b_start + 1] - 1]
+        basic_block = IR_code[leader[b_start] :leader[b_start + 1] ]
         # for x in basic_block:
             # print(x.inp1, x.out)
         # for instr in basic_block:
@@ -879,38 +904,45 @@ def next_use(leader, IR_code):
 
         j = leader[b_start + 1] - 1
         for instr in reversed(basic_block):
-            instr.per_inst_next_use = copy.deepcopy(g.symbol_table)
-
+            for sym in [instr.out,instr.inp1,instr.inp2]:
+                if is_valid_sym(sym):
+                    instr.inst_info['next_use'][sym] = copy.deepcopy(symbol_table[sym].next_use)
+            for sym in [instr.out,instr.inp1,instr.inp2]:
+                if is_valid_sym(sym):
+                    instr.inst_info['live'][sym] = copy.deepcopy(symbol_table[sym].live)
             if is_valid_sym(instr.out) and instr.array_index_o == None:
-                g.symbol_table[instr.out].live = False
-                g.symbol_table[instr.out].next_use = None
+                symbol_table[instr.out].live = False
+                symbol_table[instr.out].next_use = None
 
             if is_valid_sym(instr.inp1):
-                g.symbol_table[instr.inp1].live = True
-                g.symbol_table[instr.inp1].next_use = j
+                symbol_table[instr.inp1].live = True
+                symbol_table[instr.inp1].next_use = j
 
             if is_valid_sym(instr.inp2):
-                g.symbol_table[instr.inp2].live = True
-                g.symbol_table[instr.inp2].next_use = j
+                symbol_table[instr.inp2].live = True
+                symbol_table[instr.inp2].next_use = j
 
             if instr.array_index_o and is_valid_sym(instr.array_index_o):
-                g.symbol_table[instr.array_index_o].live = True
-                g.symbol_table[instr.array_index_o].next_use = j
+                symbol_table[instr.array_index_o].live = True
+                symbol_table[instr.array_index_o].next_use = j
 
             if instr.array_index_i1 and is_valid_sym(instr.array_index_i1):
-                g.symbol_table[instr.array_index_i1].live = True
-                g.symbol_table[instr.array_index_i1].next_use = j
+                symbol_table[instr.array_index_i1].live = True
+                symbol_table[instr.array_index_i1].next_use = j
             j-=1
 
         for instr in basic_block:
+            # print(instr)
             generator.gen_code(instr)
-        # save_context()
+        # save_caller_context()
         reset_live_and_next_use()
 
 
 if __name__ == "__main__":
     # parser_main()
     leader, IR_code = read_three_address_code(sys.argv[1])
+    print(leader)
+    print(len(IR_code))
     generator.gen_data_section()
     generator.gen_start_template()
     next_use(leader, IR_code)

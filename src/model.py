@@ -311,7 +311,7 @@ class FieldDeclaration(BaseClass):
         dims = 0
         arr_size = []
         width = 1
-
+        t = int_or_real(type)
         if isinstance(self.type, Type):
             if isinstance(self.type.name, Name):
                 type_ = self.type.name.value
@@ -342,7 +342,7 @@ class FieldDeclaration(BaseClass):
                              width, '', 'declare')
                 elif j.initializer:
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),
-                             j.initializer.place, '', '=')
+                             j.initializer.place, '', t+'_=')
 
                 ST.insert_in_sym_table(idName=name, idType=type_, is_array=is_array,
                                        dims=dims, arr_size=arr_size, modifiers=modifiers)
@@ -491,6 +491,7 @@ class BinaryExpression(Expression):
 class Assignment(BinaryExpression):
     def __init__(self, operator, lhs, rhs):
         super().__init__(operator, lhs, rhs)
+
         if lhs.type in ['int', 'double', 'long', 'float', 'char'] and rhs.type in ['int', 'double', 'long', 'float', 'char'] and operator in ['=', '+=', '-=', '*=', '/=', '&=', '|=', '^=', '%=', '<<=', '>>=', '>>>=']:
             self.type = highest_prior(lhs.type, rhs.type)
             self.place = rhs.place

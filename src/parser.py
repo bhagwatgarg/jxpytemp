@@ -1944,7 +1944,8 @@ def main():
     code = open(inputfile, 'r').read()
     code += "\n"
     parser.parse(code, debug=0)
-    tac.print()
+    for line in tac.code:
+        print(line[0]+','+line[1]+','+line[2]+','+line[3])
 
 
 if __name__ == "__main__":
