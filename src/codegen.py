@@ -27,8 +27,9 @@ class CodeGenerator:
         #print("extern printf\n")
         #print("extern scanf\n")
         print("extern malloc\n")
+        print("extern printf\n")
         print("section\t.data\n")
-        #print("print_int:\tdb\t\"%d\",10,0")
+        print('pint: db	"%ld"')
         #print("print_char:\tdb\t\"%c\",0")
         #print("scan_int:\tdb\t\"%d\",0")
         for var in symbol_table.keys():
@@ -45,20 +46,22 @@ class CodeGenerator:
         print("section .text")
         print("\tglobal main")
 
+        print("print_int$Imports$int:	\n\tpush rbp\n\tmov rbp, rsp\n\tpush rsi\n\tpush rdi\n\tmov rsi, qword [rbp+24]\n\tmov rdi, pint\n\tcall printf\n\tpop rsi\n\tpop rdi\n\tmov rsp, rbp\n\tpop rbp\n\tret")
+
     # def op_print_int(self, instr):
     #     loc = get_location(instr.inp1)
     #     save_caller_context()
     #     if loc not in reg_descriptor.keys():
     #         print("\tmov rax, " + loc)
     #         loc = "rax"
-    #     print("\tpush ebp")
-    #     print("\tmov ebp,esp")
+    #     print("\tpush rbp")
+    #     print("\tmov rbp,esp")
     #     print("\tpush qword " + str(loc))
     #     print("\tpush qword print_int")
     #     print("\tcall printf")
     #     print("\tadd esp, 8")
-    #     print("\tmov esp, ebp")
-    #     print("\tpop ebp")
+    #     print("\tmov esp, rbp")
+    #     print("\tpop rbp")
 
     # def op_print_char(self, instr):
     #     loc = get_location(instr.inp1)
@@ -66,27 +69,27 @@ class CodeGenerator:
     #     if loc not in reg_descriptor.keys():
     #         print("\tmov rax, " + loc)
     #         loc = "rax"
-    #     print("\tpush ebp")
-    #     print("\tmov ebp,esp")
+    #     print("\tpush rbp")
+    #     print("\tmov rbp,esp")
     #     print("\tpush qword " + str(loc))
     #     print("\tpush qword print_char")
     #     print("\tcall printf")
     #     print("\tadd esp, 8")
-    #     print("\tmov esp, ebp")
-    #     print("\tpop ebp")
+    #     print("\tmov esp, rbp")
+    #     print("\tpop rbp")
 
     # def op_scan_int(self, instr):
     #     save_caller_context()
     #     loc = get_location(instr.out)
     #     print("\tlea rax, " + loc)
-    #     print("\tpush ebp")
-    #     print("\tmov ebp,esp")
+    #     print("\tpush rbp")
+    #     print("\tmov rbp,esp")
     #     print("\tpush rax")
     #     print("\tpush scan_int")
     #     print("\tcall scanf")
     #     print("\tadd esp, 8")
-    #     print("\tmov esp, ebp")
-    #     print("\tpop ebp")
+    #     print("\tmov esp, rbp")
+    #     print("\tpop rbp")
 
     # def optimize_if_possible(self, out, inp1, inp2, op):
     #     '''

@@ -3,8 +3,22 @@ extern malloc
 extern printf
 
 section	.data
+ pint: db	`%d`,0
 
-pint: db	"%ld"
+print_int$Imports$int:	
+push rbp
+	mov rbp, rsp
+push rax
+mov rax, qword [rbp+16]
+push rax
+push pint
+call printf
+add rsp, 16
+pop rax
+mov rsp, rbp
+pop rbp
+ret
+
 _temp1	dd	0
 _temp2	dd	0
 _temp3	dd	0
@@ -14,19 +28,6 @@ _temp5	dd	0
 
 section .text
 	global main
-print_int$Imports$int:	
-	push rbp
-	mov rbp, rsp
-	push rsi
-	push rdi
-	mov rsi, qword [rbp+24]
-	mov rdi, pint
-	call printf
-	pop rsi
-	pop rdi
-	mov rsp, rbp
-	pop rbp
-	ret
 Imports$Imports:
 	push rbp
 	mov rbp, rsp

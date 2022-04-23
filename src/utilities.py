@@ -235,14 +235,14 @@ def get_loc_mem(symbol,flag=1):
     if type(loc) == type(1):
         if loc > 0 :
             if flag:
-                return "[ebp+" + str(loc) + "]"
+                return "[rbp+" + str(loc) + "]"
             else:
-                return 'ebp+'+ str(loc)
+                return 'rbp+'+ str(loc)
         else:
             if flag:
-                return "[ebp" + str(loc) + "]"
+                return "[rbp" + str(loc) + "]"
             else:
-                return 'ebp'+ str(loc)           
+                return 'rbp'+ str(loc)           
     else:
         if flag:
             return "[" + loc + "]"
