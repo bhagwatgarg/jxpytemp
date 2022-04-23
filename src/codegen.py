@@ -753,12 +753,14 @@ class CodeGenerator:
         '\n\tcall malloc',
         '\n\tadd rsp, 8',
         '\n\tmov rsp, rbp',
-        '\n\tpop rbp',
         '\n\tpush rax',
         '\n\tcall Main$Main',
         '\n\tadd rsp, 8',
         '\n\tpush rax',
         '\n\tcall main$Main',
+        '\n\tadd rsp, 8',
+        '\n\tpop rbp',
+
         '\n\tret',)
         print(instr.out + ":")
         counter = 0
@@ -903,7 +905,7 @@ def read_three_address_code(filename):
     leader.add(0)
     IR_code = []
     #with open(filename, 'r') as csvfile:
-    instruction_set = list(csv.reader(codecs.open(filename, 'rU', 'utf-16')))
+    instruction_set = list(csv.reader(codecs.open(filename, 'rU', 'utf-8')))
     j=1
     for i,statement in enumerate(instruction_set):
         if len(statement) == 0:

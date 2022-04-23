@@ -20,17 +20,16 @@
 
 
 class Main{
-    void Main(){}
+    void Main(){return;}
     int main2(int c, int b){
         b=22;
         return b;
     }
     int main(){
-        (new Main()).main();
         // m.main();
-        // int a=2;
-        // a=a*a+a-a;
-        // int b=this.main2(a, a);
+        int a=2;
+        a=a*a+a-a;
+        int b=this.main2(a, a);
         return 1;
     }
 }
