@@ -62,14 +62,17 @@ class Instruction:
         self.inst_info = {}
         self.inst_info['next_use'] = {}
         self.inst_info['live'] ={}
-        self.get_info(statement)
         self.arg_set = []
+        self.get_info(statement)
         symbols = [
                 self.inp1, self.array_index_i1,
                 self.inp2, self.array_index_i2,
                 self.out, self.array_index_o
             ]
         for symbol in symbols:
+            if is_valid_sym(symbol):
+                symbol_table[symbol] = symbol_data()
+        for symbol in self.arg_set:
             if is_valid_sym(symbol):
                 symbol_table[symbol] = symbol_data()
 
@@ -82,14 +85,10 @@ class Instruction:
             return symbol, None
     
     def extract_args(self,args):
-
-        if(len(args)==2):
-            return []
-        if(len(args)==3):
-            return [args[1]]
-        else:
-            args = args[1:-2]
-            return args.split(',')
+        # args
+        args= args.strip('][').split(', ')
+        args=[arg[1:-1] for arg in args]
+        return args
 
     def get_info(self, statement):
         '''
@@ -111,6 +110,12 @@ class Instruction:
             self.operation = statement[0]
             self.out = statement[1]
 
+        elif statement[3] == "declare":
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.inp1 = statement[1]
+            self.inp2 = statement[2]
+
         elif statement[0] == "call":
             self.operation = "call"
             self.out = statement[3]   #TODO add temp for retval in emit
@@ -130,7 +135,7 @@ class Instruction:
             self.inp1 = statement[1]
         
         elif statement[0] == 'pop':
-            self.operation = "return"
+            self.operation = "pop"
             self.inp1 = statement[1]
 
         elif statement[3] == "int_float_=":
@@ -142,6 +147,10 @@ class Instruction:
             self.operation = 'f2i'
             self.out = statement[0]
             self.inp1 = statement[1]
+        
+        elif statement[1] == 'EXTRACT_THIS':
+            self.operation = statement[1]
+            self.out = statement[0]
 
         elif statement[3] == "char_int_=":
             self.operation = 'c2i'

@@ -342,7 +342,7 @@ class FieldDeclaration(BaseClass):
                              width, '', 'declare')
                 elif j.initializer and t is not None:
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),
-                             j.initializer.place, '', '_=')
+                             j.initializer.place, '', t+'_=')
                 elif j.initializer:
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),
                              j.initializer.place, '', type+'_=')
@@ -528,6 +528,7 @@ class Assignment(BinaryExpression):
                     tac.emit(self.place, tmp3, '', int_or_real('int') +
                              '_' + int_or_real('char') + '_' + '=')
                 else:
+                    # print(lhs, rhs)
                     tac.emit(lhs.place, rhs.place,'',
                              int_or_real(lhs.type) + '_' + operator)
         elif lhs.type != rhs.type:
@@ -536,11 +537,11 @@ class Assignment(BinaryExpression):
         else:  # ask
             # ST.print_scope_table()
             if self.type in ['int', 'char', 'long']:
-                tac.emit(lhs.place, rhs.place, '', operator+'_int')
+                tac.emit(lhs.place, rhs.place, '', 'int_'+operator)
             elif self.type in ['float', 'double']:
-                tac.emit(lhs.place, rhs.place, '', operator+'_float')
+                tac.emit(lhs.place, rhs.place, '','float_'+operator)
             else:
-                tac.emit(lhs.place, rhs.place, '', operator+'_class')
+                tac.emit(lhs.place, rhs.place, '', 'int_'+operator)
             # higher_data_type = int_or_real(highest_prior(lhs.type, rhs.type))
             # if (int_or_real(lhs.type) != higher_data_type):
             #     tmp = ST.get_temp_var()
@@ -1195,6 +1196,7 @@ class MethodInvocation(Expression):
                         'type_arguments', 'target', 'type', 'place']
         func_name = None
         a = name
+        self.place=ST.get_temp_var()
         if type(name) != str:
             a = name.value
         temp = ST.curr_scope
@@ -1296,40 +1298,46 @@ class MethodInvocation(Expression):
         temp_table2 = ST.curr_sym_table
         ST.curr_scope = temp
         ST.curr_sym_table = temp_table
-
+        list_of_args=[]
         for x in reversed(self.arguments):
             if isinstance(x, Literal):
-                tac.emit('push', x.value, '', '')
+                list_of_args.append(['push', x.value, '', ''])
+                # tac.emit('push', x.value, '', '')
 
             elif isinstance(x, Name):
-                tac.emit('push', x.value+'$' +
-                         ST.lookup(x.value)['scope'], '', '')
+                # tac.emit('push', x.value+'$' +
+                #          ST.lookup(x.value)['scope'], '', '')
+                list_of_args.append(['push', x.value+'$' +
+                         ST.lookup(x.value)['scope'], '', ''])
             elif hasattr(x, 'place'):
-                tac.emit('push', x.place, '', '')
+                # tac.emit('push', x.place, '', '')
+                list_of_args.append(['push', x.place, '', ''])
 
         ST.curr_scope = temp2
         ST.curr_sym_table = temp_table2
         # tac.emit('push',varx,'','')
         ST.curr_scope = ST.get_parent_scope()
         ST.curr_sym_table = ST.curr_sym_table.parent_table
-        old_var = ST.get_last_label()
+        old_var = ST.get_last_label(2)
         new_var = ST.get_temp_var()
-        tac.emit(new_var, old_var, '', '=')
+        tac.emit(new_var, old_var, '', 'int_=')
         # tac.emit(new_var, 'OFFSET OF '+ get_func_name(name.value, arguments), '', '-=')
+        for arg in list_of_args:
+            tac.emit(*arg)
         tac.emit('push', new_var, '', '')
         # ST.curr_scope = ST.get_parent_scope()
         # ST.curr_sym_table = ST.curr_sym_table.parent_table
-        tac.emit('call', get_func_name(name.value, arguments),str(len(arguments)), '')
-        new_var = ST.get_temp_var()
-        for i in range(len(arguments)+1):
-            tac.emit('pop', new_var, '', '')
+        tac.emit('call', get_func_name(name.value, arguments),str(len(arguments)), self.place)
+        # new_var = ST.get_temp_var()
+        # for i in range(len(arguments)+1):
+        #     tac.emit('pop', new_var, '', '')
 
         ST.curr_scope = temp
         ST.curr_sym_table = temp_table
-        temp = ST.get_temp_var()
+        # temp = ST.get_temp_var()
         # if func_name != None and ST.lookup(func_name ,is_func=True) != None and ST.lookup(func_name ,is_func=True)['return_type'] != 'void':
         #     tac.emit('pop',temp,'','')
-        self.place = temp
+        # self.place = temp
 
 
 class IfThenElse(Statement, ScopeField):
@@ -1457,8 +1465,10 @@ class InstanceCreation(Expression):
         self.type = type
         self.arguments = arguments
         self.body = body
-        self.place = ST.get_temp_var()
-        tac.emit(self.place, type, "", 'declare')
+        # self.place = ST.get_temp_var()
+        self.place=ST.get_temp_var()
+        # self.place=self.body.name+'$'+ST.get_curr_func()['name']
+        tac.emit(self.place,'', ST.scope_and_table_map[type].width, 'declare')
         if type in primitives: return
         temp_scope=ST.curr_scope
         temp_table=ST.curr_sym_table
@@ -1473,10 +1483,10 @@ class InstanceCreation(Expression):
             elif hasattr(x, 'place'):
                 tac.emit('push',x.place,'','')
         tac.emit('push', self.place, '', '')
-        tac.emit('call', get_func_name(type, arguments), '', '')
-        new_var=ST.get_temp_var()
-        for i in range(len(arguments)+1):
-            tac.emit('pop', new_var, '', '')
+        tac.emit('call', get_func_name(type, arguments), str(len(arguments)), self.place)
+        # new_var=ST.get_temp_var()
+        # for i in range(len(arguments)+1):
+        #     tac.emit('pop', new_var, '', '')
         ST.curr_scope=temp_scope
         ST.curr_sym_table=temp_table
 
@@ -1670,7 +1680,7 @@ class Name(BaseClass):
         # dereference the variable and store it in new variable
         new_var = ST.get_temp_var()
         # print(name, self.type)
-        tac.emit(new_var, '', self.place, '=')
+        tac.emit(new_var, '', self.place, 'int_=')
         offset = ST.get_offset(self.type, name)
 
         if offset != None:

@@ -717,6 +717,10 @@ class CodeGenerator:
         param_count+=1
         print("\tpush " + str(get_location(instr.out)))
 
+    def op_pop(self, instr):
+        
+        param_count+=1
+        print("\tpush " + str(get_location(instr.out)))
 
     def op_call_function(self, instr):
         global param_count
@@ -742,35 +746,54 @@ class CodeGenerator:
     def op_stack_alloc(self, instr):
         if instr.out.split('$')[0] == 'main' :
             print("main:")
-        print("func__l " + instr.out + ":")
+            print('\tmov rax,0',
+        '\n\tpush rbp',
+        '\n\tmov rbp, rsp',
+        '\n\tpush rax',
+        '\n\tcall malloc',
+        '\n\tadd rsp, 8',
+        '\n\tmov rsp, rbp',
+        '\n\tpop rbp',
+        '\n\tpush rax',
+        '\n\tcall Main$Main',
+        '\n\tadd rsp, 8',
+        '\n\tpush rax',
+        '\n\tcall main$Main',
+        '\n\tret',)
+        print(instr.out + ":")
         counter = 0
         for i in symbol_table.keys():
             if not is_temp_var(i) and i not in instr.arg_set and not is_valid_float(i):
                 counter += 1
                 symbol_table[i].address_descriptor_mem.add(-8 * counter)
+        sz=0
         for i, arg in enumerate(reversed(instr.arg_set)):
             sz+=8
             symbol_table[arg].address_descriptor_mem.add(sz + 8)
 
-        print("\tpush ebp")
-        print("\tmov ebp, esp")
-        print("\tsub esp, " + str(8*counter))
+        print("\tpush rbp")
+        print("\tmov rbp, rsp")
+        print("\tsub rsp, " + str(8*counter))
 
     def op_declare(self, instr):
-        loc = get_location(instr.inp1)
+        loc = get_location(instr.inp2)
         save_caller_context()
         if loc not in reg_descriptor.keys():
             print("\tmov rax," + loc)
             loc = "rax"
-        print("\tpush ebp")
-        print("\tmov ebp, esp")
-        print("\tshl " + loc + ", 2")
+        print("\tpush rbp")
+        print("\tmov rbp, rsp")
         print("\tpush " + loc)
         print("\tcall malloc")
-        print("\tadd esp, 4")
-        print("\tmov esp, ebp")
-        print("\tpop ebp")
-        update_reg_desc("rax", instr.inp1)
+        print("\tadd rsp, 8")
+        print("\tmov rsp, rbp")
+        print("\tpop rbp")
+        update_reg_desc("rax", instr.out)
+
+    def op_extract(self, instr):
+        R1,flag = get_reg(instr)
+        print("\tmov", R1, f"[rbp-8]")
+        update_reg_desc(R1,instr.out)
 
     def gen_code(self, instr):
         if instr.operation == "int_+":
@@ -823,6 +846,9 @@ class CodeGenerator:
         elif instr.operation == "push":
             self.op_param(instr)
 
+        elif instr.operation == "pop":
+            self.op_pop(instr)
+
         elif instr.operation == "call":
             self.op_call_function(instr)
         
@@ -846,7 +872,9 @@ class CodeGenerator:
         
         elif instr.operation =='i2c':
             self.int2char(instr)
-        
+
+        elif instr.operation =='EXTRACT_THIS':
+            self.op_extract(instr)
 
         # elif instr_type == "print_int":
         #     self.op_print_int(instr)
@@ -863,7 +891,7 @@ class CodeGenerator:
             # for sym, symentry in symbol_table.items():
                 # print(sym, symentry.address_descriptor_mem)
 
-        elif instr.operation == "declaration":
+        elif instr.operation == "declare":
              self.op_declare(instr)
 
 
@@ -946,9 +974,9 @@ def next_use(leader, IR_code):
 if __name__ == "__main__":
     # parser_main()
     leader, IR_code = read_three_address_code(sys.argv[1])
-    print(leader)
+    # print(leader)
     # print(len(IR_code))
     generator.gen_data_section()
     generator.gen_start_template()
     next_use(leader, IR_code)
-    # print(symbol_table)
+    # print(symbol_table.keys())

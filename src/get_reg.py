@@ -130,7 +130,7 @@ def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
                     if len(reg_descriptor[reg]) == 0:
                         return reg, True
 
-            if compulsory or instr.inst_info['next_use'][instr.inp1]:
+            if compulsory or instr.inst_info['next_use'][instr.inp1] or instr.inp1:
                 R = None
                 next_use = -1000000
                 for reg in reg_descriptor.keys():

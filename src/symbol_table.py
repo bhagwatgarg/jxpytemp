@@ -104,7 +104,7 @@ class ScopeTable:
         return None
     
     def get_last_label(self, sub=1):
-        return 'temp'+str(self.temp_var_counter-sub+1)
+        return '_temp'+str(self.temp_var_counter-sub+1)
 
     def get_curr_func(self):
         table=self.curr_sym_table
@@ -175,7 +175,7 @@ class SymbolTable:
                     pass
 
         self.offset = self.width
-        self.width += width
+        self.width += 8
 
         self.symbols[idName] = {
             'type' : idType,

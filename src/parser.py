@@ -864,8 +864,8 @@ def p_MethodDeclarator(p):
         for x in p[3]:
             q = q + [x.variable.name + '$'+get_func_name(p[0]['name'], p[0]['parameters'])]
         if p[-1].split('$')[-1] != 'abstract_method_marker':
-            print(p[-1])
-            tac.emit('func1', get_func_name(p[0]['name'], p[0]['parameters']),q,'')
+            #print(p[-1])
+            tac.emit('func', get_func_name(p[0]['name'], p[0]['parameters']),q,'')
 
 def p_FormalParametersList(p):
     '''
@@ -1540,8 +1540,8 @@ def p_ClassInstanceCreationExpression(p):
     ClassInstanceCreationExpression : NEW ClassType LPAREN RPAREN
     | NEW ClassType LPAREN ArgumentList RPAREN
     '''
-    if len(p) == 5: p[0] = InstanceCreation(type = p[2], arguments=[])
-    else: p[0] = InstanceCreation(type = p[2], arguments = p[4])
+    if len(p) == 5: p[0] = InstanceCreation(type = p[2], arguments=[], body=p[-2])
+    else: p[0] = InstanceCreation(type = p[2], arguments = p[4], body=p[-2])
 
 def p_ArgumentList(p):
     '''
