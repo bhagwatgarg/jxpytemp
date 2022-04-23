@@ -1319,6 +1319,7 @@ class MethodInvocation(Expression):
         ST.curr_scope = ST.get_parent_scope()
         ST.curr_sym_table = ST.curr_sym_table.parent_table
         old_var = ST.get_last_label(2)
+        if target=='this': old_var=ST.get_last_label()
         new_var = ST.get_temp_var()
         tac.emit(new_var, old_var, '', 'int_=')
         # tac.emit(new_var, 'OFFSET OF '+ get_func_name(name.value, arguments), '', '-=')
