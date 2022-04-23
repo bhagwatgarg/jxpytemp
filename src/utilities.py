@@ -261,26 +261,31 @@ def update_reg_desc(register,symbol):
     symbol_table[symbol].address_descriptor_reg.clear()
     symbol_table[symbol].address_descriptor_reg.add(register)
 
+
 def free_regs(instr):
     if is_valid_sym(instr.inp1):
         if instr.inst_info['next_use'][instr.inp1] == None and instr.inst_info['live'][instr.inp1] == False:
+            treg=''
             for reg in symbol_table[instr.inp1].address_descriptor_reg:
                 reg_descriptor[reg].remove(instr.inp1)
+                treg=reg
             symbol_table[instr.inp1].address_descriptor_reg.clear()
-            if is_val_reg(reg):
-                if reg.startswith('xmm'):
-                    print("\tmovsd qword " + get_loc_mem(instr.inp1) + ", " + reg)
+            if is_val_reg(treg):
+                if treg.startswith('xmm'):
+                    print("\tmovsd qword " + get_loc_mem(instr.inp1) + ", " + treg)
                 else:
-                    print("\tmov qword " + get_loc_mem(instr.inp1) + ", " + reg)
-
+                    print("\tmov qword " + get_loc_mem(instr.inp1) + ", " + treg)
+            #print('aaaaa',treg)
     if is_valid_sym(instr.inp2):
             if instr.inst_info['next_use'][instr.inp1] == None and instr.inst_info['live'][instr.inp1] == False:
+                treg = ''
                 for reg in symbol_table[instr.inp2].address_descriptor_reg:
                     reg_descriptor[reg].remove(instr.inp2)
+                    treg=reg
                 symbol_table[instr.inp2].address_descriptor_reg.clear()
-                if is_val_reg(reg):
-                    if reg.startswith('xmm'):
-                        print("\tmovsd qword " + get_loc_mem(instr.inp2) + ", " + reg)
+                if is_val_reg(treg):
+                    if treg.startswith('xmm'):
+                        print("\tmovsd qword " + get_loc_mem(instr.inp2) + ", " + treg)
                     else:
                         print("\tmov qword " + get_loc_mem(instr.inp2) + ", " + reg)
 
@@ -328,12 +333,13 @@ def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
                 for reg in symbol_table[instr.inp1].address_descriptor_reg:
                     if reg not in exclude:
                         if len(reg_descriptor[reg]) == 1 and instr.inst_info['next_use'][instr.inp1]== None and not instr.inst_info['live'][instr.inp1] and not reg.startswith('xmm'):
-                            symbol_table[instr.inp1].address_descriptor_reg.remove(reg)
+                            save_reg(reg)
                             return reg, False
 
             for reg in reg_descriptor.keys():
                 if reg not in exclude and not reg.startswith('xmm'):
                     if len(reg_descriptor[reg]) == 0:
+                        save_reg(reg)
                         return reg, True
 
             if compulsory or instr.inst_info['next_use'][instr.inp1]:
@@ -366,12 +372,13 @@ def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
                 for reg in symbol_table[instr.inp1].address_descriptor_reg:
                     if reg not in exclude:
                         if len(reg_descriptor[reg]) == 1 and instr.inst_info['next_use'][instr.inp1] == None and not instr.inst_info['live'][instr.inp1] and reg.startswith('xmm'):
-                            symbol_table[instr.inp1].address_descriptor_reg.remove(reg)
+                            save_reg(reg)
                             return reg, False
 
             for reg in reg_descriptor.keys():
                 if reg not in exclude and reg.startswith('xmm'):
                     if len(reg_descriptor[reg]) == 0:
+                        save_reg(reg)
                         return reg, True
 
             if compulsory or instr.inst_next_use[instr.out].next_use:

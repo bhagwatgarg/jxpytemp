@@ -125,7 +125,8 @@ class CodeGenerator:
         R2 = get_location(instr.inp2)
         print("\t"+op+ ' ' + R1 + ", " + R2)
         update_reg_desc(R1,instr.out)
-        free_regs(instr)
+        if instr.inp1!=instr.out and instr.inp2!=instr.out:
+            free_regs(instr)
     
     def op_fbinary(self,instr,op):
 

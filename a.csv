@@ -7,13 +7,13 @@ _temp1,,0,declare
 push,_temp1,,
 call,Imports$Imports,0,_temp1
 imp$main$Main,_temp1,,Imports_=
-_temp2,1,2,int_+
-a$main$Main,_temp2,,int_=
-_temp3,a$main$Main,a$main$Main,int_+
+a$main$Main,5,,int_=
+_temp2,a$main$Main,a$main$Main,int_+
+_temp3,_temp2,a$main$Main,int_+
 a$main$Main,_temp3,,int_=
 _temp4,,imp$main$Main,int_=
 _temp6,_temp4,,int_=
-push,55,,
+push,a$main$Main,,
 push,_temp6,,
 call,print_int$Imports$int,1,_temp5
 ret,a$main$Main,,

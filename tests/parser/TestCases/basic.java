@@ -7,9 +7,11 @@ class Main{
     void Main(){return;}
    int main(){
       Imports imp=new Imports();
-      int a = 1+2;
-      a=a+a;
-      imp.print_int(55);
+      int a = 5;
+      a=a+a+a;
+      //float b= 0.2
+
+      imp.print_int(a);
       return a;
   }
 }

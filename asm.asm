@@ -74,17 +74,16 @@ main$Main:
 	push rax
 	call Imports$Imports
 	add rsp, 8
-	mov rbx, 1
-	add rbx, 2
+	mov rbx, 5
 	mov rcx, rbx
 	add rcx, rbx
-	mov qword [rbp-32], rbx
-	mov qword [rbp-32], rbx
-	mov rdx, qword [rbp+16]
-	mov [rbp-32], rcx
-	mov [rbp+16], rdx
-	push 55
-	push rdx
+	mov rdx, rcx
+	add rdx, rbx
+	mov rbx, qword [rbp+16]
+	mov [rbp+16], rbx
+	mov [rbp-32], rdx
+	push qword [rbp-32]
+	push rbx
 	call print_int$Imports$int
 	add rsp, 16
 	mov rax, qword [rbp-32]
