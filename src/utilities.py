@@ -12,7 +12,7 @@ def is_valid_float(potential_float):
         return False
 
 def is_temp_var(symbol):
-    if symbol[0] == "_":
+    if len(symbol)>0 and symbol[0] == "_":
         return True
     return False
 
@@ -23,7 +23,7 @@ def reset_live_and_next_use():
     return symbol_table
 
 def is_valid_number(symbol):
-    if symbol[0] == "-":
+    if len(symbol)>0 and symbol[0] == "-":
         return True
     return symbol.isdigit()
 
@@ -99,8 +99,8 @@ class Instruction:
         if statement[0] == "ifgoto":
             # 10, ifgoto, leq, a, 50, 2
             self.operation = 'ifgoto'
-            self.inp1, self.array_index_i1 = self.extract(statement[1].strip())
-            self.inp2, self.array_index_i2 = self.extract(statement[2].strip())
+            self.inp1, self.array_index_i1 = self.extract(statement[1])
+            self.inp2, self.array_index_i2 = self.extract(statement[2])
             self.out = statement[3]
 
         elif statement[0] == "goto":
@@ -116,7 +116,7 @@ class Instruction:
             self.out = statement[3]   #TODO add temp for retval in emit
             self.inp1 = statement[1]
         
-        elif statement[0] == "label":
+        elif statement[0] == "label :":
             self.operation = 'label'
             self.out = statement[3]
 

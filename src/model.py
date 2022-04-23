@@ -340,9 +340,12 @@ class FieldDeclaration(BaseClass):
                         width *= widths[j.initializer.type ]
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),
                              width, '', 'declare')
+                elif j.initializer and t is not None:
+                    tac.emit(j.variable.name+'$'+str(ST.curr_scope),
+                             j.initializer.place, '', '_=')
                 elif j.initializer:
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),
-                             j.initializer.place, '', t+'_=')
+                             j.initializer.place, '', type+'_=')
 
                 ST.insert_in_sym_table(idName=name, idType=type_, is_array=is_array,
                                        dims=dims, arr_size=arr_size, modifiers=modifiers)

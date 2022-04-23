@@ -151,7 +151,7 @@ class CodeGenerator:
         if flag:
             print("\tmov "+ R1 + ", " + get_location(instr.inp1))
         # handle cases when inp2 is a power of 2
-        bitshift = False        # to avoid multiple operations
+        bitshift = False        # to avoid multiple operation
         if is_valid_number(instr.inp2):
             num = int(instr.inp2)
             if num & (num - 1) == 0 and num != 0:
@@ -711,13 +711,15 @@ class CodeGenerator:
         print(instr.out + ":")
 
     def op_param(self, instr):
+        global param_count
         if param_count==0:
             save_caller_context()
         param_count+=1
-        print("\tpush " + get_location(instr.inp1))
+        print("\tpush " + str(get_location(instr.out)))
 
 
     def op_call_function(self, instr):
+        global param_count
         save_caller_context()
         print("\tcall " + instr.inp1)
         print("\tadd rsp, " + str(8 * param_count))
@@ -754,8 +756,8 @@ class CodeGenerator:
         print("\tmov ebp, esp")
         print("\tsub esp, " + str(8*counter))
 
-    def op_array_decl(self, instr):
-        loc = get_location(instr.array_index_i1)
+    def op_declare(self, instr):
+        loc = get_location(instr.inp1)
         save_caller_context()
         if loc not in reg_descriptor.keys():
             print("\tmov rax," + loc)
@@ -793,15 +795,15 @@ class CodeGenerator:
             self.op_lshift(instr)
         elif instr.operation == ">>":
             self.op_rshift(instr)
-        elif instr.operation.endswith('&'):
+        elif instr.operation != None and instr.operation.endswith('&'):
             self.op_and(instr)
-        elif instr.operation.endswith('|'):
+        elif instr.operation != None and instr.operation.endswith('|'):
             self.op_or(instr)
-        elif instr.operation.endswith('^'):
+        elif instr.operation != None and instr.operation.endswith('^'):
             self.op_xor(instr)
-        elif(instr.operation.split("_")[-1] in relational_op_list and instr.operation.startswith("int")):
+        elif instr.operation != None and (instr.operation.split("_")[-1] in relational_op_list and instr.operation.startswith("int")):
             self.op_relational(instr,instr.operation.split("_")[-1])
-        elif(instr.operation.split("_")[-1] in relational_op_list and instr.operation.startswith("float")):
+        elif instr.operation != None and (instr.operation.split("_")[-1] in relational_op_list and instr.operation.startswith("float")):
             self.op_frelational(instr,instr.operation.split("_")[-1])
         elif instr.operation in ['!','~','--','++','-']:
             self.op_unary(instr)
@@ -818,7 +820,7 @@ class CodeGenerator:
         elif instr.operation == "label":
             self.op_label(instr)
 
-        elif instr.operation == "param":
+        elif instr.operation == "push":
             self.op_param(instr)
 
         elif instr.operation == "call":
@@ -827,10 +829,10 @@ class CodeGenerator:
         elif instr.operation == "func":
             self.op_stack_alloc(instr)
 
-        elif instr.operation.endswith('float_='):
+        elif instr.operation != None and instr.operation.endswith('float_='):
             self.op_fassign(instr)
         
-        elif instr.operation.endswith('_='):
+        elif instr.operation != None and instr.operation.endswith('_='):
             self.op_intassign(instr)
         
         elif instr.operation =='f2i':
@@ -861,8 +863,8 @@ class CodeGenerator:
             # for sym, symentry in symbol_table.items():
                 # print(sym, symentry.address_descriptor_mem)
 
-        # elif instr_type == "array_declaration":
-        #     self.op_array_decl(instr)
+        elif instr.operation == "declaration":
+             self.op_declare(instr)
 
 
 ###################################global generator############################
@@ -944,9 +946,9 @@ def next_use(leader, IR_code):
 if __name__ == "__main__":
     # parser_main()
     leader, IR_code = read_three_address_code(sys.argv[1])
-    # print(leader)
+    print(leader)
     # print(len(IR_code))
     generator.gen_data_section()
     generator.gen_start_template()
     next_use(leader, IR_code)
-    print(symbol_table)
+    # print(symbol_table)
