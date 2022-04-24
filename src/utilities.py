@@ -70,11 +70,12 @@ class Instruction:
                 self.inp2, self.array_index_i2,
                 self.out, self.array_index_o
             ]
+        #print(self.arg_set)
         for symbol in symbols:
-            if is_valid_sym(symbol):
+            if is_valid_sym(symbol) and symbol not in symbol_table.keys():
                 symbol_table[symbol] = symbol_data()
         for symbol in self.arg_set:
-            if is_valid_sym(symbol):
+            if is_valid_sym(symbol) and symbol not in symbol_table.keys():
                 symbol_table[symbol] = symbol_data(isArg=True)
 
     def extract(self, symbol):
@@ -87,8 +88,7 @@ class Instruction:
     
     def extract_args(self,args):
         # args
-        args= args.strip('][').split(', ')
-        args=[arg[1:-1] for arg in args]
+        args= args.split(':')[::-1]
         return args
 
     def get_info(self, statement):
@@ -299,6 +299,10 @@ def get_location(symbol,exclude_reg=[]):
         for reg in symbol_table[symbol].address_descriptor_reg:
             if reg not in exclude_reg:
                 return reg
+        if is_temp_var(symbol):
+            for reg in reg_descriptor.keys():
+                if symbol in reg_descriptor[reg]:
+                    return reg
         return 'qword ' + get_loc_mem(symbol)
 
 def save_caller_context():
@@ -348,19 +352,10 @@ def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
                 next_use = -1000000
                 for reg in reg_descriptor.keys():
                     if reg not in exclude and not reg.startswith('xmm'):
-                        to_break = False
-                        for sym in reg_descriptor[reg]:
-                            n_use = instr.inst_info['next_use'][instr.inp1]
-                            if n_use and n_use > next_use:
-                                if n_use:
-                                    next_use = n_use
-                                R = reg
-                            if not n_use:
-                                R = reg
-                                to_break = True
-                                break
-                        if to_break:
-                            break
+                        if R==None:
+                            R=reg
+                        elif len(reg_descriptor[reg])<len(reg_descriptor[R]):
+                            R=reg
                 save_reg(R)
                 return R, True
 
