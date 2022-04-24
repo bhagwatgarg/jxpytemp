@@ -865,7 +865,7 @@ def p_MethodDeclarator(p):
             q = q + [x.variable.name + '$'+get_func_name(p[0]['name'], p[0]['parameters'])]
         if p[-1].split('$')[-1] != 'abstract_method_marker':
             #print(p[-1])
-            tac.emit('func', get_func_name(p[0]['name'], p[0]['parameters']),q,'')
+            tac.emit('func', get_func_name(p[0]['name'], p[0]['parameters']),':'.join(q),'')
 
 def p_FormalParametersList(p):
     '''

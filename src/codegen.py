@@ -26,10 +26,11 @@ class CodeGenerator:
     def gen_data_section(self):
         #print("extern printf\n")
         #print("extern scanf\n")
+        print("default rel\n")
         print("extern malloc\n")
         print("extern printf\n")
         print("section\t.data\n")
-        print('pint: db	"%ld"')
+        print('pint: db	"%ld "')
         #print("print_char:\tdb\t\"%c\",0")
         #print("scan_int:\tdb\t\"%d\",0")
         for var in symbol_table.keys():
@@ -46,7 +47,7 @@ class CodeGenerator:
         print("section .text")
         print("\tglobal main")
 
-        print("print_int$Imports$int:	\n\tpush rbp\n\tmov rbp, rsp\n\tpush rsi\n\tpush rdi\n\tmov rsi, qword [rbp+24]\n\tmov rdi, pint\n\tcall printf\n\tpop rsi\n\tpop rdi\n\tmov rsp, rbp\n\tpop rbp\n\tret")
+        print("print_int$Imports$int:	\n\tpush rbp\n\tmov rbp, rsp\n\tpush rsi\n\tpush rdi\n\tmov rsi, qword [rbp+24]\n\tlea rdi, [rel pint]\n\txor rax, rax\n\tcall printf\n\txor rax, rax\n\tpop rsi\n\tpop rdi\n\tmov rsp, rbp\n\tpop rbp\n\tret")
 
     # def op_print_int(self, instr):
     #     loc = get_location(instr.inp1)
@@ -737,7 +738,7 @@ class CodeGenerator:
 
     def op_return(self, instr):
         save_caller_context()
-        if instr.inp1 != None:
+        if instr.inp1 != None and instr.inp1 != '':
             loc = get_location(instr.inp1)
             save_reg("rax")
             if(loc != "rax"):
@@ -775,9 +776,10 @@ class CodeGenerator:
                 #print(instr.out,i)
         sz=0
         for i, arg in enumerate(reversed(instr.arg_set)):
-            sz+=8
-            symbol_table[arg].address_descriptor_mem.add(sz + 16)
-            #print('here',arg,sz+16)
+            if arg!='':
+                sz+=8
+                symbol_table[arg].address_descriptor_mem.add(sz + 16)
+                #print('here',arg,sz+16)
 
         print("\tpush rbp")
         print("\tmov rbp, rsp")
@@ -795,6 +797,9 @@ class CodeGenerator:
         # print("\tmov rbp, rsp")
         print("\tpush " + loc)
         print("\tcall malloc")
+        loc=symbol_table[instr.inp1].address_descriptor_mem.pop()
+        symbol_table[instr.inp1].address_descriptor_mem.add(loc)
+        print("\tmov [rbp",loc,"], rax") 
         print("\tadd rsp, 8")
         print("\tmov rsp, rbp")
         print("\tpop rbp")
@@ -802,7 +807,7 @@ class CodeGenerator:
 
     def op_extract(self, instr):
         R1,flag = get_reg(instr)
-        print("\tmov", R1, f", [rbp-8]")
+        print("\tmov", R1, f", [rbp+16]")
         update_reg_desc(R1,instr.out)
 
     def gen_code(self, instr):
@@ -822,11 +827,11 @@ class CodeGenerator:
             self.op_div(instr)
         elif instr.operation == "float_/":
             self.op_fdiv(instr)
-        elif instr.operation == "%":
+        elif instr.operation == "int_%":
             self.op_modulo(instr)
-        elif instr.operation == "<<":
+        elif instr.operation == "int_<<":
             self.op_lshift(instr)
-        elif instr.operation == ">>":
+        elif instr.operation == "int_>>":
             self.op_rshift(instr)
         elif instr.operation != None and instr.operation.endswith('&'):
             self.op_and(instr)
@@ -989,4 +994,5 @@ if __name__ == "__main__":
     generator.gen_data_section()
     generator.gen_start_template()
     next_use(leader, IR_code)
-    # print(symbol_table.keys())
+    # for key in symbol_table.keys():
+    #     print(key,symbol_table[key].isArg)

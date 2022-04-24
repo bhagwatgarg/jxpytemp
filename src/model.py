@@ -1096,35 +1096,35 @@ class Unary(Expression):
                 temp1 = ST.get_temp_var()
                 #tac.emit(temp1, expression.place, ' ', '='+self.type)
                 if self.type in ['int', 'char', 'long']:
-                    tac.emit(temp1, expression.place, ' ', '='+'int')
+                    tac.emit(temp1, expression.place, ' ', 'int_'+'=')
                 elif self.type in ['float', 'double']:
-                    tac.emit(temp1, expression.place, ' ', '='+'float')
+                    tac.emit(temp1, expression.place, ' ', 'float_'+'=')
                 else:
-                    tac.emit(temp1, expression.place, ' ', '='+self.type)
+                    tac.emit(temp1, expression.place, ' ', self.type+'_=')
 
                 self.place = temp1
             if "++" in sign:
                 #tac.emit(temp, expression.place, '1', '+'+self.type)
                 #tac.emit(expression.place, temp, ' ', '='+self.type)
                 if self.type in ['int', 'char', 'long']:
-                    tac.emit(temp, expression.place, '1', '+'+'int')
-                    tac.emit(expression.place, temp, ' ', '='+'int')
+                    tac.emit(temp, expression.place, '1', 'int_'+'+')
+                    tac.emit(expression.place, temp, ' ', 'int_=')
                 elif self.type in ['float', 'double']:
-                    tac.emit(temp, expression.place, '1', '+'+'float')
-                    tac.emit(expression.place, temp, ' ', '='+'float')
+                    tac.emit(temp, expression.place, '1', 'float_+')
+                    tac.emit(expression.place, temp, ' ', 'float_=')
                 else:
-                    tac.emit(temp, expression.place, '1', '+'+self.type)
-                    tac.emit(expression.place, temp, ' ', '='+self.type)
+                    tac.emit(temp, expression.place, '1', self.type+'_+')
+                    tac.emit(expression.place, temp, ' ', self.type+'_=')
 
             elif "--" in sign:
                 #tac.emit(temp, expression.place, '1', '-'+self.type)
                 #tac.emit(expression.place, temp, ' ', '='+self.type)
                 if self.type in ['int', 'char', 'long']:
-                    tac.emit(temp, expression.place, '1', '-'+'int')
-                    tac.emit(expression.place, temp, ' ', '='+'int')
+                    tac.emit(temp, expression.place, '1', 'int_-')
+                    tac.emit(expression.place, temp, ' ', 'int_=')
                 elif self.type in ['float', 'double']:
-                    tac.emit(temp, expression.place, '1', '-'+'float')
-                    tac.emit(expression.place, temp, ' ', '='+'float')
+                    tac.emit(temp, expression.place, '1', 'float_-')
+                    tac.emit(expression.place, temp, ' ', 'float_=')
                 else:
                     tac.emit(temp, expression.place, '1', '-'+self.type)
                     tac.emit(expression.place, temp, ' ', '='+self.type)
@@ -1469,7 +1469,7 @@ class InstanceCreation(Expression):
         # self.place = ST.get_temp_var()
         self.place=ST.get_temp_var()
         # self.place=self.body.name+'$'+ST.get_curr_func()['name']
-        tac.emit(self.place,'', ST.scope_and_table_map[type].width, 'declare')
+        tac.emit(self.place,self.body.name+'$'+ST.get_curr_func()['name'], ST.scope_and_table_map[type].width, 'declare')
         if type in primitives: return
         temp_scope=ST.curr_scope
         temp_table=ST.curr_sym_table
@@ -1681,7 +1681,7 @@ class Name(BaseClass):
         # dereference the variable and store it in new variable
         new_var = ST.get_temp_var()
         # print(name, self.type)
-        tac.emit(new_var, '', self.place, 'int_=')
+        tac.emit(new_var, self.place,'', 'int_=')
         offset = ST.get_offset(self.type, name)
 
         if offset != None:
