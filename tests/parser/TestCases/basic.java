@@ -11,27 +11,52 @@ class Imports{
 }
 
 class Main{
-  int func(int b){
-    b=b*b;
-    int c=b+1;
-    return c;
+  // declare int fact2(int b);
+  int fact(int b){
+    if(b==0){return 1;}
+    else{
+        int k=b-1;
+        int k1=this.fact(k);
+        return b*k1;
+    }
+    return 0;
+  }
+  int fact(int b, int r, int p){
+    if(b==r){return r*p;}
+    else{
+        int k=b-1;
+        int k1=this.fact(k, r, p);
+        return b*k1;
+    }
+    return 0;
   }
   void Main(){return;}
   int main(){
     Imports imp=new Imports();
-    int a, b = 0;
-    a=1;
-    int i = 0;
-    for(; i < 10 ; i = i + 1){
-      a=a+1;
-      if(a > 5)
-      {
-      continue;
-      }
-      b = b + 1;
-      // i =i + 1;
-    }
-    imp.print_int(a);
+    int a =5, b_ = 6, c = 7;
+    a=5;
+    // int i;
+    // for(int i=0; i <10; i=i+1){
+    // while(a<10){
+    //   a=a+1;
+    //   for(int i = 0; i < 10; i = i + 1)
+    //   {
+    //     c = c + 1;
+    //   }
+    // }
+    // imp.print_int(a);
+    // imp.print_int(c);
+    int b= this.fact(5, 3, 10);
+    // int b = -5;
+    // b += 2;
+    imp.print_int(b);
+    // for(int i=0; i<100; i++){
+    //   imp.print_int(i);
+    // }
+    // int arr[]=new int[30];
+    // b=arr[2];
+    // int b=5;
+    // imp.print_int(b);
     // imp.print_int(b);
     return 0;
   }
