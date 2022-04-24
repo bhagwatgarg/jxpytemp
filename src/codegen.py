@@ -781,9 +781,9 @@ class CodeGenerator:
 
         print("\tpush rbp")
         print("\tmov rbp, rsp")
-        # print("\tsub rsp, " + str(8*counter + 10))
+        print("\tsub rsp, " + str(8*(counter + 10)))
         # TODO
-        print("\tsub rsp, " + "56")
+        # print("\tsub rsp, " + "56")
 
     def op_declare(self, instr):
         loc = get_location(instr.inp2)
@@ -791,8 +791,8 @@ class CodeGenerator:
         if loc not in reg_descriptor.keys():
             print("\tmov rax," + loc)
             loc = "rax"
-        print("\tpush rbp")
-        print("\tmov rbp, rsp")
+        # print("\tpush rbp")
+        # print("\tmov rbp, rsp")
         print("\tpush " + loc)
         print("\tcall malloc")
         print("\tadd rsp, 8")
