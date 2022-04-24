@@ -1,80 +1,28 @@
 func,Imports$Imports,[],
 ret,,,
-func,fact$Main$int,b$fact$Main$int,
-_temp1,b$fact$Main$int,0,int_==
-ifgoto,_temp1,eq0c,if3_$n_4
-goto,,,if1_$n_2
-label :,,,if1_$n_2
-ret,1,,
-goto,,,if3_$n_3
-label :,,,if3_$n_4
-_temp2,b$fact$Main$int,1,int_-
-k$$n_5,_temp2,,int_=
-_temp4,EXTRACT_THIS,,=
-_temp5,_temp4,,int_=
-push,k$$n_5,,
-push,_temp5,,
-call,fact$Main$int,1,_temp3
-k1$$n_5,_temp3,,int_=
-_temp6,b$fact$Main$int,k1$$n_5,int_*
-ret,_temp6,,
-label :,,,if3_$n_3
-ret,0,,
-func,fact$Main$int$int$int,b$fact$Main$int$int$int:r$fact$Main$int$int$int:p$fact$Main$int$int$int,
-_temp7,b$fact$Main$int$int$int,r$fact$Main$int$int$int,int_==
-ifgoto,_temp7,eq0c,if3_$n_9
-goto,,,if1_$n_7
-label :,,,if1_$n_7
-_temp8,r$fact$Main$int$int$int,p$fact$Main$int$int$int,int_*
-ret,_temp8,,
-goto,,,if3_$n_8
-label :,,,if3_$n_9
-_temp9,b$fact$Main$int$int$int,1,int_-
-k$$n_10,_temp9,,int_=
-_temp11,EXTRACT_THIS,,=
-_temp12,_temp11,,int_=
-push,p$fact$Main$int$int$int,,
-push,r$fact$Main$int$int$int,,
-push,k$$n_10,,
-push,_temp12,,
-call,fact$Main$int$int$int,3,_temp10
-k1$$n_10,_temp10,,int_=
-_temp13,b$fact$Main$int$int$int,k1$$n_10,int_*
-ret,_temp13,,
-label :,,,if3_$n_8
-ret,0,,
 func,Main$Main,[],
 ret,,,
 func,main$Main,[],
-_temp14,imp$main$Main,0,declare
-push,_temp14,,
-call,Imports$Imports,0,_temp14
-imp$main$Main,_temp14,,Imports_=
-a$main$Main,5,,int_=
-b_$main$Main,6,,int_=
-c$main$Main,7,,int_=
-a$main$Main,5,,int_=
-_temp16,EXTRACT_THIS,,=
-_temp17,_temp16,,int_=
-push,10,,
-push,3,,
-push,5,,
-push,_temp17,,
-call,fact$Main$int$int$int,3,_temp15
-b$main$Main,_temp15,,int_=
-_temp18,imp$main$Main,,int_=
-_temp20,_temp18,,int_=
-push,b$main$Main,,
-push,_temp20,,
-call,print$Imports$int,1,_temp19
-_temp21,imp$main$Main,,int_=
-_temp23,_temp21,,int_=
-push,_temp23,,
-call,scan_int$Imports,0,_temp22
-p$main$Main,_temp22,,int_=
-_temp24,imp$main$Main,,int_=
-_temp26,_temp24,,int_=
-push,p$main$Main,,
-push,_temp26,,
-call,print$Imports$int,1,_temp25
+_temp1,imp$main$Main,0,declare
+push,_temp1,,
+call,Imports$Imports,0,_temp1
+imp$main$Main,_temp1,,int_=
+i$main$Main,0,,int_=
+i$main$Main,0,,int_=
+label :,,,for_$n_2
+_temp2,i$main$Main,10,int_<
+ifgoto,_temp2,eq0c,for_$n_5
+goto,,,for_$n_4
+label :,,,for_$n_3
+_temp3,i$main$Main,1,int_+
+i$main$Main,_temp3,,int_=
+goto,,,for_$n_2
+label :,,,for_$n_4
+_temp4,imp$main$Main,,int_=
+_temp6,_temp4,,int_=
+push,i$main$Main,,
+push,_temp6,,
+call,print$Imports$int,1,_temp5
+goto,,,for_$n_3
+label :,,,for_$n_5
 ret,0,,

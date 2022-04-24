@@ -32,6 +32,7 @@ def int_or_real(type):  # given a type as input, returns its type
         return 'float'
     elif type in ['char']:
         return 'char'
+    return 'int'
 
 
 # def get_func_name(id, params):
@@ -509,6 +510,15 @@ class Assignment(BinaryExpression):
             #              '_' + int_or_real(higher_data_type) + '_' + '=')
             #     tac.emit(,rhs.place,
             #              higher_data_type+'_'+operator)
+            
+            if self.operator in ['+=', '-=', '*=', '/=', '&=', '|=', '^=', '%=', '<<=', '>>=', '>>>=']:
+                if len(operator)==4:operator=operator[1:]
+                tmp = ST.get_temp_var()
+                tac.emit(tmp, lhs.place, rhs.place, 'int_'+operator[:-1])
+                tac.emit(lhs.place, tmp,'',
+                          'int_=')
+                return
+
             if (int_or_real(rhs.type) != higher_data_type):
                 tmp = ST.get_temp_var()
                 tac.emit(tmp, rhs.place, '', int_or_real(rhs.type) +
@@ -828,6 +838,7 @@ class Equality(BinaryExpression):
         if lhs.type in ['int', 'char', 'long', 'bool', 'float', 'double'] and rhs.type in ['int', 'char', 'long', 'bool', 'float', 'double']:
             name = ST.get_temp_var()
             self.place = name
+            operator = "=="
             #tac.emit(name, lhs.place, rhs.place, operator+self.type)
             # if self.type in ['int', 'char', 'long']:
             #     tac.emit(name, lhs.place, rhs.place, operator+'int')
@@ -867,16 +878,24 @@ class Equality(BinaryExpression):
 
             self.type = 'bool'
             self.falselist = [len(tac.code)]
-            if self.type in ['int', 'long']:
-                tac.emit("ifgoto", self.place, 'eq0', '')
-            elif self.type in ['float', 'double']:
-                tac.emit("ifgoto", self.place, 'eq0.0', '')
+            if self.operator == "==":
+                if self.type in ['int', 'long']:
+                    tac.emit("ifgoto", self.place, 'eq0', '')
+                elif self.type in ['float', 'double']:
+                    tac.emit("ifgoto", self.place, 'eq0.0', '')
+                else:
+                    tac.emit("ifgoto", self.place, 'eq0c', '')
             else:
-                tac.emit("ifgoto", self.place, 'eq0c', '')
+                if self.type in ['int', 'long']:
+                    tac.emit("ifgoto", self.place, 'neq0', '')
+                elif self.type in ['float', 'double']:
+                    tac.emit("ifgoto", self.place, 'neq0.0', '')
+                else:
+                    tac.emit("ifgoto", self.place, 'neq0c', '')
             self.truelist = [len(tac.code)]
             tac.emit("goto", '', '', '')
         else:
-            print("Error in == operator operand types.")
+            print(f"Error in {self.operator} operator operand types.")
 
 
 class Relational(BinaryExpression):
@@ -1084,7 +1103,7 @@ class Unary(Expression):
 
     def __init__(self, sign, expression):
         super(Unary, self).__init__()
-        self._fields = ['sign', 'expression', 'type', 'place']
+        self._fields = ['sign', 'expression', 'type', 'place', 'truelist', 'falselist']
         self.sign = sign
         self.expression = expression
         self.type = expression.type
@@ -1139,6 +1158,10 @@ class Unary(Expression):
                     tac.emit('neg', expression.place, ' ', 'float')
                 else:
                     tac.emit('neg', expression.place, ' ', self.type)
+        elif '!' in sign:
+            if isinstance(self.expression, Relational) or isinstance(self.expression, Equality):
+                self.truelist = self.expression.falselist
+                self.falselist = self.expression.truelist
 
 # TODO shift operations
 

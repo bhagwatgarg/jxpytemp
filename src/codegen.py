@@ -60,8 +60,8 @@ class CodeGenerator:
 \txor rax, rax
 \tcall scanf
 \tmov rax, qword [rsp]
-\tpop rsi
 \tpop rdi
+\tpop rsi
 \tmov rsp, rbp
 \tpop rbp
 \tret
@@ -342,14 +342,14 @@ class CodeGenerator:
     def op_intassign(self, instr):
         if instr.array_index_i1 == None and instr.array_index_o == None and is_valid_number(instr.inp1):
             R1, flag = get_reg(instr, compulsory=False)
-            print("\tmov " + R1 + ", " + get_location(instr.inp1))
+            print("\tmov  " + R1 + ", " + get_location(instr.inp1))
             if R1 in reg_descriptor.keys():
                 update_reg_desc(R1, instr.out)
 
         elif instr.array_index_i1 == None and instr.array_index_o == None:
             if len(symbol_table[instr.inp1].address_descriptor_reg) == 0:
                 R1, flag = get_reg(instr)
-                print("\tmov " + R1 +", " + get_location(instr.inp1))
+                print("\tmov  " + R1 +", " + get_location(instr.inp1))
                 update_reg_desc(R1,instr.inp1)
 
             if len(symbol_table[instr.inp1].address_descriptor_reg):
@@ -722,6 +722,31 @@ class CodeGenerator:
             save_caller_context()
             print("\tcmp " + R1 + ", 0")
             print("\tje " + instr.out)
+
+        elif(instr.inp2=='neq0'):
+            R1,flag = get_reg(instr,compulsory=True)
+            save_reg(R1)
+            if flag:
+                print("\tmov " + R1 + ", " + get_location(instr.inp1))
+            save_caller_context()
+            print("\tcmp " + R1 + ", 0")
+            print("\tjne " + instr.out)
+        
+        elif instr.inp2=='neq0.0':
+            R1,flag = get_reg(instr,compulsory=True,isFloat=True)
+            if flag:
+                print("\tmovsd " + R1 + ", " + get_location(instr.inp1))
+            save_caller_context()
+            print("\tucomisd " + R1 + ", "+ get_loc_mem('0.0'))
+            print("\tjne " + instr.out)
+
+        elif instr.inp2=='neq0c':
+            R1,flag = get_reg(instr,compulsory=True)
+            if flag:
+                print("\tmov " + R1 + ", " + get_location(instr.inp1))
+            save_caller_context()
+            print("\tcmp " + R1 + ", 0")
+            print("\tjne " + instr.out)
             
 
     def op_goto(self, instr):
@@ -850,6 +875,11 @@ class CodeGenerator:
             self.op_lshift(instr)
         elif instr.operation == "int_>>":
             self.op_rshift(instr)
+        # elif instr.operation == "int_+=":
+        #     instr.operation = 'int_+'
+        #     self.op_add(instr)
+        #     instr.operation = 'int_='
+        #     self.op_intassign(instr)
         elif instr.operation != None and instr.operation.endswith('&'):
             self.op_and(instr)
         elif instr.operation != None and instr.operation.endswith('|'):

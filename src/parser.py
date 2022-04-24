@@ -1836,7 +1836,7 @@ def p_ConditionalOrExpression(p):
 
 def p_ConMarker(p):
         '''ConMarker : '''
-        p[0] = p[-1] + ST.make_label()
+        p[0] =  "con_" + ST.make_label()
         tac.emit('label :','','',p[0])
 
 def p_ConditionalExpression(p):

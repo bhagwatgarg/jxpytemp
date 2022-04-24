@@ -313,7 +313,7 @@ def save_caller_context():
                 if reg.startswith('xmm'):
                     print("\tmovsd " + get_loc_mem(symbol) + ", " + str(reg))
                 else :
-                    print("\tmov " + get_loc_mem(symbol) + ", " + str(reg))
+                    print("\tmov qword " + get_loc_mem(symbol) + ", " + str(reg))
                 symbol_table[symbol].address_descriptor_reg.clear()
                 saved.add(symbol)
         reg_descriptor[reg].clear()
@@ -325,7 +325,7 @@ def save_reg(reg):
             if reg.startswith('xmm'):
                 print("\tmovsd "+ get_loc_mem(symbol) + ", " + reg)
             else:
-                print("\tmov " + get_loc_mem(symbol) + ", " + reg)
+                print("\tmov qword " + get_loc_mem(symbol) + ", " + reg)
         symbol_table[symbol].address_descriptor_reg.remove(reg)
     reg_descriptor[reg].clear()
 
@@ -347,7 +347,7 @@ def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
                         save_reg(reg)
                         return reg, True
 
-            if compulsory or instr.inst_info['next_use'][instr.inp1]:
+            if compulsory or (instr.inp1 in instr.inst_info['next_use'].keys() and instr.inst_info['next_use'][instr.inp1]):
                 R = None
                 next_use = -1000000
                 for reg in reg_descriptor.keys():
