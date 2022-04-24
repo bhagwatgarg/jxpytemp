@@ -12,7 +12,7 @@ leader_instructions = [
     "return",
     "label",
     "call",
-    "print_int",
+    "print",
     "scan_int",
     "goto",
     "func",
@@ -24,13 +24,14 @@ relational_op_list = ['<','>','==','>=','<=']
 class CodeGenerator:
 
     def gen_data_section(self):
-        #print("extern printf\n")
-        #print("extern scanf\n")
+        
         print("default rel\n")
         print("extern malloc\n")
         print("extern printf\n")
+        print("extern scanf\n")
         print("section\t.data\n")
-        print('pint: db	"%ld "')
+        print('pint: db	"%ld ", 0')
+        print('sint: db	"%ld", 0')
         #print("print_char:\tdb\t\"%c\",0")
         #print("scan_int:\tdb\t\"%d\",0")
         for var in symbol_table.keys():
@@ -47,9 +48,25 @@ class CodeGenerator:
         print("section .text")
         print("\tglobal main")
 
-        print("print_int$Imports$int:	\n\tpush rbp\n\tmov rbp, rsp\n\tpush rsi\n\tpush rdi\n\tmov rsi, qword [rbp+24]\n\tlea rdi, [rel pint]\n\txor rax, rax\n\tcall printf\n\txor rax, rax\n\tpop rsi\n\tpop rdi\n\tmov rsp, rbp\n\tpop rbp\n\tret")
-
-    # def op_print_int(self, instr):
+        print("print$Imports$int:	\n\tpush rbp\n\tmov rbp, rsp\n\tpush rsi\n\tpush rdi\n\tmov rsi, qword [rbp+24]\n\tlea rdi, [rel pint]\n\txor rax, rax\n\tcall printf\n\txor rax, rax\n\tpop rsi\n\tpop rdi\n\tmov rsp, rbp\n\tpop rbp\n\tret")
+        print("""scan_int$Imports:
+\tpush rbp
+\tmov rbp, rsp
+\tpush rsi
+\tpush rdi
+\tadd rsp, 8
+\tmov rsi, rsp
+\tlea rdi, [rel sint]
+\txor rax, rax
+\tcall scanf
+\tmov rax, qword [rsp]
+\tpop rsi
+\tpop rdi
+\tmov rsp, rbp
+\tpop rbp
+\tret
+        """)
+    # def op_print(self, instr):
     #     loc = get_location(instr.inp1)
     #     save_caller_context()
     #     if loc not in reg_descriptor.keys():
@@ -58,7 +75,7 @@ class CodeGenerator:
     #     print("\tpush rbp")
     #     print("\tmov rbp,esp")
     #     print("\tpush qword " + str(loc))
-    #     print("\tpush qword print_int")
+    #     print("\tpush qword print")
     #     print("\tcall printf")
     #     print("\tadd esp, 8")
     #     print("\tmov esp, rbp")
@@ -891,8 +908,8 @@ class CodeGenerator:
         elif instr.operation =='EXTRACT_THIS':
             self.op_extract(instr)
 
-        # elif instr_type == "print_int":
-        #     self.op_print_int(instr)
+        # elif instr_type == "print":
+        #     self.op_print(instr)
 
         # elif instr_type == "print_char":
         #     self.op_print_char(instr)

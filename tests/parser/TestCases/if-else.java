@@ -5,8 +5,8 @@
 // TODO: add in pec: need {} in for, while, if
 
 class Imports{
-  // void print_int(int a){return;}
-  declare void print_int(int a);
+  // void print(int a){return;}
+  declare void print(int a);
   void Imports(){return ;}
 }
 
@@ -35,7 +35,7 @@ class Main{
       else{a=-4;}
     }
     else {a=-100;}
-    imp.print_int(a);
+    imp.print(a);
     return 0;
   }
 }

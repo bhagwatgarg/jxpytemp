@@ -13,7 +13,7 @@ _temp4	dd	0
 
 section .text
 	global main
-print_int$Imports$int:	
+print$Imports$int:	
 	push rbp
 	mov rbp, rsp
 	push rsi
@@ -82,7 +82,7 @@ main$Main:
 	mov [rbp-16], rdx
 	push qword [rbp-48]
 	push rdx
-	call print_int$Imports$int
+	call print$Imports$int
 	add rsp, 16
 	mov rax, qword [rbp-48]
 	mov rsp, rbp

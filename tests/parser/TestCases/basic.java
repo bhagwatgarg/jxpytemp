@@ -5,8 +5,9 @@
 // TODO: add in pec: need {} in for, while, if
 
 class Imports{
-  // void print_int(int a){return;}
-  declare void print_int(int a);
+  // void print(int a){return;}
+  declare void print(int a);
+  declare int scan_int();
   void Imports(){return ;}
 }
 
@@ -44,20 +45,22 @@ class Main{
     //     c = c + 1;
     //   }
     // }
-    // imp.print_int(a);
-    // imp.print_int(c);
+    // imp.print(a);
+    // imp.print(c);
     int b= this.fact(5, 3, 10);
     // int b = -5;
     // b += 2;
-    imp.print_int(b);
+    imp.print(b);
     // for(int i=0; i<100; i++){
-    //   imp.print_int(i);
+    //   imp.print(i);
     // }
     // int arr[]=new int[30];
     // b=arr[2];
     // int b=5;
-    // imp.print_int(b);
-    // imp.print_int(b);
+    // imp.print(b);
+    // imp.print(b);
+    int p = imp.scan_int();
+    imp.print(p);
     return 0;
   }
 }
