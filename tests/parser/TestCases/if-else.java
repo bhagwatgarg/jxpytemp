@@ -21,10 +21,20 @@ class Main{
     Imports imp=new Imports();
     int a;
     a=1;
-    int i;
-    for(i=0; i<10; i=i+1){
-      a=a+1;
+    if(a<10){
+      if(a>5){
+        if(a==7){
+          a=-7;
+        }
+        else{a=-8;}
+      }
+      else if(a>3){
+        a=-3;
+      }
+      else if(a==2){a=-2;}
+      else{a=-4;}
     }
+    else {a=-100;}
     imp.print_int(a);
     return 0;
   }
