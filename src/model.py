@@ -874,7 +874,7 @@ class Equality(BinaryExpression):
             else:
                 tac.emit("ifgoto", self.place, 'eq0c', '')
             self.truelist = [len(tac.code)]
-           # tac.emit("goto", '', '', '')
+            tac.emit("goto", '', '', '')
         else:
             print("Error in == operator operand types.")
 
@@ -932,7 +932,7 @@ class Relational(BinaryExpression):
             else:
                 tac.emit("ifgoto", self.place, 'eq0c', '')
             self.truelist = [len(tac.code)]
-          #  tac.emit("goto", '', '', '')
+            tac.emit("goto", '', '', '')
         else:
             print("Error in relational operator operand types.")
 

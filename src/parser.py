@@ -1111,7 +1111,6 @@ def p_IfThenStatement(p):
     '''
     IfThenStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 Statement ifMark1 end_scope 
     '''
-    p[4] = convert_expr_to_equality(p[4])
     p[0]=IfThenElse(predicate=p[4], if_true=p[7])
     tac.backpatch(p[4].truelist,p[6])
     tac.backpatch(p[4].falselist,p[8])
@@ -1137,7 +1136,6 @@ def p_IfThenElseStatement(p):
     '''
     IfThenElseStatement : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope Statement end_scope ifMark2
     '''
-    p[4] = convert_expr_to_equality(p[4])
     p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
     tac.backpatch(p[4].truelist,p[6])
     tac.backpatch(p[4].falselist,p[10][1])
@@ -1146,7 +1144,6 @@ def p_IfThenElseStatementNoShortIf(p):
     '''
     IfThenElseStatementNoShortIf : IF begin_scope LPAREN Expression RPAREN ifMark1 StatementNoShortIf end_scope ELSE ifMark3 begin_scope StatementNoShortIf end_scope ifMark2
     '''
-    p[4] = convert_expr_to_equality(p[4])
     p[0]=IfThenElse(predicate=p[4], if_true=p[7], if_false=p[11])
     tac.backpatch(p[4].truelist,p[6])
     tac.backpatch(p[4].falselist,p[10][1])
@@ -1355,6 +1352,9 @@ def p_ForStatement(p):
     tac.backpatch(breaks[-1], brks)
 
     tac.backpatch(predicate.truelist, tl_jumps)
+    # print(tl_jumps)
+    # print(predicate.truelist)
+    # print(predicate.falselist)
     tac.backpatch(predicate.falselist, brks)
 
     continues.pop()
