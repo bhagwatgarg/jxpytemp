@@ -39,12 +39,13 @@ def is_valid_sym(symbol):
     return False
 
 class symbol_data:
-    def __init__(self,isArr = False, size = 0 ,array_size=0):
+    def __init__(self,isArr = False, size = 0 ,array_size=0,isArg=False):
         # self.value = None
         self.live = True
         self.next_use = None
         self.array_size = array_size
         self.isArr = isArr
+        self.isArg = isArg
 #       self.size = (size+3//4)*4
         self.address_descriptor_mem = set()
         self.address_descriptor_reg = set()
@@ -74,7 +75,7 @@ class Instruction:
                 symbol_table[symbol] = symbol_data()
         for symbol in self.arg_set:
             if is_valid_sym(symbol):
-                symbol_table[symbol] = symbol_data()
+                symbol_table[symbol] = symbol_data(isArg=True)
 
     def extract(self, symbol):
 

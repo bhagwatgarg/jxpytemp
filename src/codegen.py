@@ -722,7 +722,7 @@ class CodeGenerator:
         print("\tpush " + str(get_location(instr.out)))
 
     def op_pop(self, instr):
-        
+        global param_count
         param_count+=1
         print("\tpush " + str(get_location(instr.out)))
 
@@ -769,17 +769,21 @@ class CodeGenerator:
         print(instr.out + ":")
         counter = 0
         for i in symbol_table.keys():
-            if not is_temp_var(i) and i not in instr.arg_set and not is_valid_float(i):
+            if not is_temp_var(i)  and not is_valid_float(i) and symbol_table[i].isArg == False:
                 counter += 1
                 symbol_table[i].address_descriptor_mem.add(-8 * counter)
+                #print(instr.out,i)
         sz=0
         for i, arg in enumerate(reversed(instr.arg_set)):
             sz+=8
-            symbol_table[arg].address_descriptor_mem.add(sz + 8)
+            symbol_table[arg].address_descriptor_mem.add(sz + 16)
+            #print('here',arg,sz+16)
 
         print("\tpush rbp")
         print("\tmov rbp, rsp")
-        print("\tsub rsp, " + str(8*counter))
+        # print("\tsub rsp, " + str(8*counter + 10))
+        # TODO
+        print("\tsub rsp, " + "56")
 
     def op_declare(self, instr):
         loc = get_location(instr.inp2)
@@ -798,7 +802,7 @@ class CodeGenerator:
 
     def op_extract(self, instr):
         R1,flag = get_reg(instr)
-        print("\tmov", R1, f"[rbp-8]")
+        print("\tmov", R1, f", [rbp-8]")
         update_reg_desc(R1,instr.out)
 
     def gen_code(self, instr):
