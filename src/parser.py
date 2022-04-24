@@ -1324,7 +1324,7 @@ def p_ForStatement(p):
             conts = p[9]
         else:
             init = p[5]
-            predicate = p[7]
+            predicate = p[8]
             conts = p[10]
     elif len(p) == 16:
         body = p[13]
@@ -1351,11 +1351,11 @@ def p_ForStatement(p):
     tac.backpatch(continues[-1], conts)
     tac.backpatch(breaks[-1], brks)
 
-    tac.backpatch(predicate.truelist, tl_jumps)
-    # print(tl_jumps)
-    # print(predicate.truelist)
-    # print(predicate.falselist)
-    tac.backpatch(predicate.falselist, brks)
+    if predicate is not None:
+        tac.backpatch(predicate.truelist, tl_jumps)
+        tac.backpatch(predicate.falselist, brks)
+    else:
+        print("Check condition missing in For loop")
 
     continues.pop()
     breaks.pop()
@@ -1394,7 +1394,7 @@ def p_ForStatementNoShortIf(p):
             conts = p[9]
         else:
             init = p[5]
-            predicate = p[7]
+            predicate = p[8]
             conts = p[10]
     elif len(p) == 16:
         body = p[13]
@@ -1421,8 +1421,11 @@ def p_ForStatementNoShortIf(p):
     tac.backpatch(continues[-1], conts)
     tac.backpatch(breaks[-1], brks)
 
-    tac.backpatch(predicate.truelist, tl_jumps)
-    tac.backpatch(predicate.falselist, brks)
+    if predicate is not None:
+        tac.backpatch(predicate.truelist, tl_jumps)
+        tac.backpatch(predicate.falselist, brks)
+    else:
+        print("Check condition missing in For loop")
 
     continues.pop()
     breaks.pop()
