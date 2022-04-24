@@ -19,13 +19,20 @@ class Main{
   void Main(){return;}
   int main(){
     Imports imp=new Imports();
-    int a;
+    int a, b = 0;
     a=1;
-    int i;
-    for(i=0; i<10; i=i+1){
+    int i = 0;
+    for(; i < 10 ; i = i + 1){
       a=a+1;
+      if(a > 5)
+      {
+      continue;
+      }
+      b = b + 1;
+      // i =i + 1;
     }
     imp.print_int(a);
+    // imp.print_int(b);
     return 0;
   }
 }
