@@ -122,12 +122,13 @@ def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
                 for reg in symbol_table[instr.inp1].address_descriptor_reg:
                     if reg not in exclude:
                         if len(reg_descriptor[reg]) == 1 and instr.inst_info['next_use'][instr.inp1]== None and not instr.inst_info['live'][instr.inp1] and not reg.startswith('xmm'):
-                            symbol_table[instr.inp1].address_descriptor_reg.remove(reg)
+                            #symbol_table[instr.inp1].address_descriptor_reg.remove(reg)
                             return reg, False
 
             for reg in reg_descriptor.keys():
                 if reg not in exclude and not reg.startswith('xmm'):
                     if len(reg_descriptor[reg]) == 0:
+                        save_reg(reg)
                         return reg, True
 
             if compulsory or instr.inst_info['next_use'][instr.inp1] or instr.inp1:
