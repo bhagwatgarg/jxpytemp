@@ -30,7 +30,7 @@ class CodeGenerator:
         print("extern malloc\n")
         print("extern printf\n")
         print("section\t.data\n")
-        print('pint: db	"%ld "')
+        print('pint: db	"%ld", 10, 0')
         #print("print_char:\tdb\t\"%c\",0")
         #print("scan_int:\tdb\t\"%d\",0")
         for var in symbol_table.keys():
@@ -47,8 +47,34 @@ class CodeGenerator:
         print("section .text")
         print("\tglobal main")
 
-        print("print_int$Imports$int:	\n\tpush rbp\n\tmov rbp, rsp\n\tpush rsi\n\tpush rdi\n\tmov rsi, qword [rbp+24]\n\tlea rdi, [rel pint]\n\txor rax, rax\n\tcall printf\n\txor rax, rax\n\tpop rsi\n\tpop rdi\n\tmov rsp, rbp\n\tpop rbp\n\tret")
+        print("""print$Imports$int:	
+	push rbp
+	mov rbp, rsp
 
+	push rsi
+	push rdi
+	push rax
+	push rbx
+	push rcx
+	push rdx
+	mov rsi, qword [rbp+24]
+	mov rdi, pint
+	xor rax, rax
+
+	call printf
+
+	xor rax, rax
+	pop rdx
+	pop rcx
+	pop rbx
+	pop rax
+	pop rdi
+	pop rsi
+
+	mov rsp, rbp
+	pop rbp
+	ret
+        """)
     # def op_print_int(self, instr):
     #     loc = get_location(instr.inp1)
     #     save_caller_context()
@@ -325,9 +351,14 @@ class CodeGenerator:
     def op_intassign(self, instr):
         if instr.array_index_i1 == None and instr.array_index_o == None and is_valid_number(instr.inp1):
             R1, flag = get_reg(instr, compulsory=False)
-            print("\tmov " + R1 + ", " + get_location(instr.inp1))
-            if R1 in reg_descriptor.keys():
-                update_reg_desc(R1, instr.out)
+            if R1[0]=='[':
+                print("\tmov qword " + R1 + ", " + get_location(instr.inp1))
+                if R1 in reg_descriptor.keys():
+                    update_reg_desc(R1, instr.out)
+            else:
+                print("\tmov " + R1 + ", " + get_location(instr.inp1))
+                if R1 in reg_descriptor.keys():
+                    update_reg_desc(R1, instr.out)
 
         elif instr.array_index_i1 == None and instr.array_index_o == None:
             if len(symbol_table[instr.inp1].address_descriptor_reg) == 0:
@@ -791,8 +822,8 @@ class CodeGenerator:
                 #print(arr,instr.out)
                 if arr == instr.out:
                    #print(i)
-                   size += symbol_table[i].size 
-                   symbol_table[i].address_descriptor_mem.add(-8 * counter+size)
+                   size+=8 
+                   symbol_table[i].address_descriptor_mem.add(-8 * counter-size)
 
 
 
@@ -818,8 +849,8 @@ class CodeGenerator:
         symbol_table[instr.inp1].address_descriptor_mem.add(loc)
         print("\tmov [rbp",loc,"], rax") 
         print("\tadd rsp, 8")
-        print("\tmov rsp, rbp")
-        print("\tpop rbp")
+        # print("\tmov rsp, rbp")
+        # print("\tpop rbp"
         update_reg_desc("rax", instr.out)
 
     def op_extract(self, instr):

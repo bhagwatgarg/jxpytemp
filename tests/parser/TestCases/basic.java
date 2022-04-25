@@ -6,7 +6,7 @@
 
 class Imports{
   // void print_int(int a){return;}
-  declare void print_int(int a);
+  declare void print(int a);
   void Imports(){return ;}
 }
 
@@ -54,15 +54,24 @@ class Main{
     // for(int i=0; i<100; i++){
     //   imp.print_int(i);
     // }
-    a=98;
-    // int arr[]=new int[30];
+    // a=98;
+    int arr[]=new int[30];
     // for (int i=0;i<10;i++){
     //   arr[i]=i;
-    //   imp.print_int(arr[i]);
-    // }
+    //   a=arr[i];
+    //   imp.print(a);
+    // } 
+    // for (int i=9;i>=0;i--){
+    //   arr[i]=arr[9-i];
+    // } 
+    arr[0]=6;
+    arr[1]=5;
+    arr[2]=8;
+    arr[3]=7;
+    arr[3]=arr[2]+arr[3];
+    int z = arr[3];
+    imp.print(z);
 
-    int arr[][] = new int[5][3];
-    arr[2][1]=0;
     return a;
   }
 }

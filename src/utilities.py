@@ -198,11 +198,7 @@ class Instruction:
             self.out = statement[0]
             self.arrdec = True
             self.size = int(statement[1])
-            self.dims = self.extract_args(statement[2])
-            i=0
-            for dim in self.dims:
-                self.dims[i]=int(self.dims[i])
-                i+=1
+
         
         elif statement[3] == 'DEREFERENCE':
             self.operation = statement[3]
@@ -363,7 +359,7 @@ def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
             if is_valid_sym(instr.inp1):
                 for reg in symbol_table[instr.inp1].address_descriptor_reg:
                     if reg not in exclude:
-                        if len(reg_descriptor[reg]) == 1 and instr.inst_info['next_use'][instr.inp1]== None and not instr.inst_info['live'][instr.inp1] and not reg.startswith('xmm'):
+                        if len(reg_descriptor[reg]) == 1 and instr.inst_info['next_use'][instr.inp1]== None  and not reg.startswith('xmm'):
                             save_reg(reg)
                             return reg, False
 
