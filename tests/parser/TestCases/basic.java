@@ -87,7 +87,7 @@ class Main{
     int e__ = 5;
     for(int i = 0; i < 4; ++i)
     {
-      int p = imp.scan_int();
+      int p = 2*i;
       p=this.fact(p);
       imp.print(p);
     }
@@ -95,7 +95,8 @@ class Main{
     imp.print(_b);
     // imp.print(a);
     int i=0;
-    // a=imp.scan_int();
+    // a=imp.scan_int();    int a__ = 5-1+6-2+7-3+8+9+10+5-1+6-2+7-3+8+9+10+5-1+6-2+7-3+8+9+10;;
+
     
     Math math=new Math();
     int v=math.abs(a);

@@ -587,8 +587,14 @@ def next_use(leader, instructions_arr):
         reset_info()
 
 
-if __name__ == "__main__":
+def main():
     leader, instructions_arr = read_tac(sys.argv[1])
     generator.gen_data_section()
     generator.gen_start_template()
     next_use(leader, instructions_arr)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except:
+        sys.exit("Compilation failed! Wrong 3 Address Provided!")

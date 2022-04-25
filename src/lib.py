@@ -234,16 +234,13 @@ print_int="""print$Imports$int:
 scan_int="""scan_int$Imports:
 \tpush rbp
 \tmov rbp, rsp
-\tpush rsi
-\tpush rdi
-\tadd rsp, 8
+\tsub rsp, 16
 \tmov rsi, rsp
-\tlea rdi, [rel sint]
+\tmov rdi, sint
 \txor rax, rax
 \tcall scanf
 \tmov rax, qword [rsp]
-\tpop rdi
-\tpop rsi
+\t add rsp, 16
 \tmov rsp, rbp
 \tpop rbp
 \tret"""
