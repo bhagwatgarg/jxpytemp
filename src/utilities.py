@@ -23,7 +23,9 @@ def reset_live_and_next_use():
     return symbol_table
 
 def is_valid_number(symbol):
-    if len(symbol)>0 and symbol[0] == "-":
+    if symbol is None:
+        return False
+    elif symbol is not None and len(symbol)>0 and symbol[0] == "-":
         return True
     return symbol.isdigit()
 
@@ -46,6 +48,7 @@ class symbol_data:
         self.array_size = array_size
         self.isArr = isArr
         self.isArg = isArg
+        self.size=0
 #       self.size = (size+3//4)*4
         self.address_descriptor_mem = set()
         self.address_descriptor_reg = set()
@@ -64,6 +67,8 @@ class Instruction:
         self.inst_info['next_use'] = {}
         self.inst_info['live'] ={}
         self.arg_set = []
+        self.arrdec = False
+        self.size = 0
         self.get_info(statement)
         symbols = [
                 self.inp1, self.array_index_i1,
@@ -71,6 +76,11 @@ class Instruction:
                 self.out, self.array_index_o
             ]
         #print(self.arg_set)
+        for symbol in symbols:
+            if is_valid_sym(symbol) and symbol not in symbol_table.keys() and self.arrdec:
+                for i in range(self.size//8):
+                    s = symbol+'$'+str(i)+'$'+'1'
+                    symbol_table[s] = symbol_data(isArr=True,size=self.size)
         for symbol in symbols:
             if is_valid_sym(symbol) and symbol not in symbol_table.keys():
                 symbol_table[symbol] = symbol_data()
@@ -177,6 +187,12 @@ class Instruction:
             self.operation = statement[3]
             self.out = statement[0]
             self.inp1 = statement[1]
+
+        elif statement[3] == 'declare_arr':
+            self.operation = statement[3]
+            self.out = statement[0]
+            self.arrdec = True
+            self.size = int(statement[1])
         
         elif statement[3] == 'DEREFERENCE':
             self.operation = statement[3]
@@ -225,7 +241,7 @@ reg_descriptor["xmm7"] = set()
 def get_loc_mem(symbol,flag=1):
 
     if not is_valid_sym(symbol):
-        return symbol
+        return 'qword '+symbol
 
     if len(symbol_table[symbol].address_descriptor_mem)==0:
         #print('aaaaaaaaa')
@@ -264,7 +280,7 @@ def update_reg_desc(register,symbol):
 
 
 def free_regs(instr):
-    if is_valid_sym(instr.inp1):
+    if not is_valid_number(instr.inp1) and is_valid_sym(instr.inp1):
         if instr.inst_info['next_use'][instr.inp1] == None and instr.inst_info['live'][instr.inp1] == False:
             treg=''
             for reg in symbol_table[instr.inp1].address_descriptor_reg:
@@ -277,8 +293,8 @@ def free_regs(instr):
                 else:
                     print("\tmov qword " + get_loc_mem(instr.inp1) + ", " + treg)
             #print('aaaaa',treg)
-    if is_valid_sym(instr.inp2):
-            if instr.inst_info['next_use'][instr.inp1] == None and instr.inst_info['live'][instr.inp1] == False:
+    if not is_valid_number(instr.inp2) and is_valid_sym(instr.inp2):
+            if instr.inst_info['next_use'][instr.inp2] == None and instr.inst_info['live'][instr.inp2] == False:
                 treg = ''
                 for reg in symbol_table[instr.inp2].address_descriptor_reg:
                     reg_descriptor[reg].remove(instr.inp2)
@@ -347,7 +363,7 @@ def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
                         save_reg(reg)
                         return reg, True
 
-            if compulsory or instr.inst_info['next_use'][instr.inp1]:
+            if compulsory or (is_valid_sym(instr.inp1) and instr.inst_info['next_use'][instr.inp1]) :
                 R = None
                 next_use = -1000000
                 for reg in reg_descriptor.keys():

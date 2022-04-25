@@ -337,9 +337,9 @@ class FieldDeclaration(BaseClass):
                     if j.initializer.type not in primitives:
                         width *= 8
                     else:
-                        width *= widths[j.initializer.type ]
+                        width *= 8
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),
-                             width, '', 'declare')
+                             width,':'.join(arr_size), 'declare_arr')
                 elif j.initializer and t is not None:
                     tac.emit(j.variable.name+'$'+str(ST.curr_scope),
                              j.initializer.place, '', t+'_=')
@@ -1523,7 +1523,7 @@ class ArrayAccess(Expression):
         self.target = target
         self.type = target.type
         width=8
-        if self.type in primitives: width=widths[self.type]
+        if self.type in primitives: width=8
         if index.type not in ['int', 'long']:
             print('Array index not of type int')
 
@@ -1547,31 +1547,114 @@ class ArrayAccess(Expression):
             value = ST.lookup(target.value)
             dimensions = value['arr_size']
             self.pass_dimension = dimensions
-
             length = 1
             for x in dimensions[self.depth:]:
                 length *= int(x)
             temp = ST.get_temp_var()
-            tac.emit(temp, index.place, width*length, '*')
-
+            #tac.emit(temp, index.place, width*length, 'int_*')
             self.len = temp
-            self.place = self.array + '['+temp+']'
-
+            self.place = self.array + '$'+str(index.place)
+            if self.dimension == 1:
+                self.place = self.place + '$'+str(self.dimension)
+                self.pass_dimension = dimensions
+                tac.emit(temp,self.place,'','int_=')
+        elif self.depth < self.dimension:
+            dimensions = target.pass_dimension
+            length = 1
+            for x in dimensions[self.depth:]:
+                length *= int(x)
+            temp = ST.get_temp_var()
+            #tac.emit(temp, index.place, width*length, 'int_*')
+            temp1 = ST.get_temp_var()
+            #tac.emit(temp1, temp, target.len, 'int_+')
+            self.place = target.place + '$'+str(index.place)
+            #self.array = target.array
+            # if self.depth == len(dimensions):
+            #     self.place = self.array + '['+temp1+']'
+            self.pass_dimension = dimensions
+            #tac.emit(temp1,self.place,'','int_=')
         else:
             dimensions = target.pass_dimension
             length = 1
             for x in dimensions[self.depth:]:
                 length *= int(x)
             temp = ST.get_temp_var()
-            tac.emit(temp, index.place, width*length, '*')
+            #tac.emit(temp, index.place, width*length, 'int_*')
             temp1 = ST.get_temp_var()
-            tac.emit(temp1, temp, target.len, '+')
-            self.place = temp1
-            self.array = target.array
-            if self.depth == len(dimensions):
-                self.place = self.array + '['+temp1+']'
+            #tac.emit(temp1, temp, target.len, 'int_+')
+            self.place = target.place+ '$'+str(index.place)
+            #self.array = target.array
+            # if self.depth == len(dimensions):
+            #     self.place = self.array + '['+temp1+']'
             self.pass_dimension = dimensions
-            self.len = temp1
+            tac.emit(temp1,self.place,'','int_=')
+        # if self.depth == 1:
+        #     #print(target.value,'ffffff')
+        #     self.array = target.place
+        #     value = ST.lookup(target.value)
+        #     dimensions = value['arr_size']
+        #     self.pass_dimension = dimensions
+        #     print(dimensions)
+        #     length = 1
+        #     for x in dimensions[self.depth:]:
+        #         length *= int(x)
+        #     temp = ST.get_temp_var()
+        #     #tac.emit(temp, index.place, width*length, '*')
+        #     self.len = temp
+        #     self.place = target.place+ '$'+str(length)
+        #     if self.dimension == 1:
+        #         temp = ST.get_temp_var()
+        #         self.place = self.place + '$'+str(self.dimension)
+        #         self.pass_dimension = dimensions
+        #         tac.emit(temp,self.place,'','int_=')
+                
+
+        # else:
+        #     dimensions = target.pass_dimension
+        #     length = 1
+        #     for x in dimensions[self.depth:]:
+        #         length *= int(x)
+        #     temp = ST.get_temp_var()
+        #     tac.emit(temp, index.place, width*length, '*')
+        #     temp1 = ST.get_temp_var()
+        #     tac.emit(temp1, temp, target.len, '+')
+        #     self.place = temp1
+        #     self.array = target.array
+        #     if self.depth == len(dimensions):
+        #         self.place = self.array + '['+temp1+']'
+        #     self.pass_dimension = dimensions
+        #     self.len = temp1
+        # if self.depth == 1:
+        #     self.array = target.place
+        #     value = ST.lookup(target.value)
+        #     dimensions = value['arr_size']
+        #     self.pass_dimension = dimensions
+        #     print(dimensions)
+        #     length = 1
+        #     for x in dimensions[self.depth:]:
+        #         print('ffffff',length)
+        #         length *= int(x)
+        #     temp = ST.get_temp_var()
+        #     tac.emit(temp, index.place, width*length, '*')
+
+        #     self.len = temp
+        #     self.place = self.array + '['+temp+']'
+
+        # else:
+        #     dimensions = target.pass_dimension
+        #     length = 1
+        #     for x in dimensions[self.depth:]:
+        #         length *= int(x)
+        #     temp = ST.get_temp_var()
+        #     tac.emit(temp, index.place, width*length, '*')
+        #     temp1 = ST.get_temp_var()
+        #     tac.emit(temp1, temp, target.len, '+')
+        #     self.place = temp1
+        #     self.array = target.array
+        #     if self.depth == len(dimensions):
+        #         self.place = self.array + '['+temp1+']'
+        #     self.pass_dimension = dimensions
+        #     self.len = temp1
 
 
 class ArrayCreation(Expression):

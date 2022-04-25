@@ -770,7 +770,7 @@ class CodeGenerator:
         print(instr.out + ":")
         counter = 0
         for i in symbol_table.keys():
-            if not is_temp_var(i)  and not is_valid_float(i) and symbol_table[i].isArg == False:
+            if not is_temp_var(i)  and not is_valid_float(i) and symbol_table[i].isArg == False and symbol_table[i].isArr==False:
                 counter += 1
                 symbol_table[i].address_descriptor_mem.add(-8 * counter)
                 #print(instr.out,i)
@@ -780,10 +780,27 @@ class CodeGenerator:
                 sz+=8
                 symbol_table[arg].address_descriptor_mem.add(sz + 16)
                 #print('here',arg,sz+16)
+        size=0
+        for i in symbol_table.keys(): 
+           if not is_temp_var(i)  and not is_valid_float(i) and symbol_table[i].isArr==True:
+                arr = i.split('$')
+                #print(arr)
+                dim = int(arr[-1])
+                arr = '$'.join(arr[1:-2])
+                # print(arr)
+                #print(arr,instr.out)
+                if arr == instr.out:
+                   #print(i)
+                   size += symbol_table[i].size 
+                   symbol_table[i].address_descriptor_mem.add(-8 * counter+size)
+
+
+
+
 
         print("\tpush rbp")
         print("\tmov rbp, rsp")
-        print("\tsub rsp, " + str(8*(counter + 10)))
+        print("\tsub rsp, " + str(8*(counter + 10)+size))
         # TODO
         # print("\tsub rsp, " + "56")
 
@@ -890,6 +907,7 @@ class CodeGenerator:
 
         elif instr.operation =='EXTRACT_THIS':
             self.op_extract(instr)
+        
 
         # elif instr_type == "print_int":
         #     self.op_print_int(instr)
