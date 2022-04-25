@@ -3,7 +3,16 @@
 
 // ++ +=
 // TODO: add in pec: need {} in for, while, if
-
+class Math{
+  void Math(){return;}
+  declare int max(int a, int b);
+  declare int min(int a, int b);
+  declare int signum(int a);
+  declare int abs(int a);
+  declare int is_prime(int a);
+  declare int square(int a);
+  declare int cube(int a);
+}
 class Imports{
   // void print(int a){return;}
   declare void print(int a);
@@ -12,6 +21,7 @@ class Imports{
 }
 
 class Main{
+  int c;
   // declare int fact2(int b);
   // int fact(int b){
   //   if(b==0){return 1;}
@@ -35,6 +45,7 @@ class Main{
   int main(){
     Imports imp=new Imports();
     int a =5, _b = 6, c_ = 7;
+    this.c=12;
     // a=5;
     // int i;
     // for(int i=0; i <10; i=i+1){
@@ -81,15 +92,27 @@ class Main{
     //   int p = imp.scan_int();
     //   imp.print(p);
     // }
-    imp.print(b);
-    imp.print(a__);
-    imp.print(a);
+    // imp.print(b);
+    imp.print(_b);
+    // imp.print(a);
     int i=0;
-    for(i=0; i<10; i++){
-      imp.print(i);
-      a = i;
-    }
-  imp.print(a);
+    a=imp.scan_int();
+
+    Math math=new Math();
+    int v=math.abs(a);
+    imp.print(v);
+    v=(math.cube(a));
+    imp.print(v);
+    v=(math.is_prime(a));
+    imp.print(v);
+    v=(math.max(a, 10000));
+    imp.print(v);
+    v=(math.min(a, 10000));
+    imp.print(v);
+    v=(math.signum(a));
+    imp.print(v);
+    v=(math.square(a));
+    imp.print(v);
     return 0;
   }
 }
