@@ -34,7 +34,7 @@ class Main{
   void Main(){return;}
   int main(){
     Imports imp=new Imports();
-    int a =5, b = 6, c_ = 7;
+    int a =5, _b = 6, c_ = 7;
     // a=5;
     // int i;
     // for(int i=0; i <10; i=i+1){
@@ -70,19 +70,19 @@ class Main{
     //   a = 3;
     // }
     // a = a+ 2;
-    // int a_ = 5, b=23, c = 3, d = 4, e = 5;
-    // int a__ = 5-1+6-2+7-3+8+9+10+5-1+6-2+7-3+8+9+10+5-1+6-2+7-3+8+9+10;;
-    // int b__=23;
-    // int c__ = 3;
-    // int d__ = 4; 
-    // int e__ = 5;
-    // for(int i = 0; i < 4; ++i)
-    // {
-    //   int p = imp.scan_int();
-    //   imp.print(p);
-    // }
-    // imp.print(b);
-    // imp.print(a__);
+    int a_ = 5, b=23, c = 3, d = 4, e = 5;
+    int a__ = 5-1+6-2+7-3+8+9+10+5-1+6-2+7-3+8+9+10+5-1+6-2+7-3+8+9+10;;
+    int b__=23;
+    int c__ = 3;
+    int d__ = 4; 
+    int e__ = 5;
+    for(int i = 0; i < 4; ++i)
+    {
+      int p = imp.scan_int();
+      imp.print(p);
+    }
+    imp.print(b);
+    imp.print(a__);
     imp.print(a);
     int i=0;
     for(i=0; i<10; i++){

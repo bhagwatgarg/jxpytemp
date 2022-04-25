@@ -345,14 +345,14 @@ print$Imports$int:
     def op_intassign(self, instr):
         if instr.array_index_i1 == None and instr.array_index_o == None and is_valid_number(instr.inp1):
             R1, flag = get_reg(instr, compulsory=False)
-            print("\tmov  " + R1 + ", " + get_location(instr.inp1))
+            print("\tmov qword " + R1 + ", " + get_location(instr.inp1))
             if R1 in reg_descriptor.keys():
                 update_reg_desc(R1, instr.out)
 
         elif instr.array_index_i1 == None and instr.array_index_o == None:
             if len(symbol_table[instr.inp1].address_descriptor_reg) == 0:
                 R1, flag = get_reg(instr)
-                print("\tmov  " + R1 +", " + get_location(instr.inp1))
+                print("\tmov qword " + R1 +", " + get_location(instr.inp1))
                 update_reg_desc(R1,instr.inp1)
 
             if len(symbol_table[instr.inp1].address_descriptor_reg):

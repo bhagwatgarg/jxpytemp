@@ -8,36 +8,104 @@ push,_temp1,,
 call,Imports$Imports,0,_temp1
 imp$main$Main,_temp1,,int_=
 a$main$Main,5,,int_=
-b$main$Main,6,,int_=
+_b$main$Main,6,,int_=
 c_$main$Main,7,,int_=
-_temp2,imp$main$Main,,int_=
-_temp4,_temp2,,int_=
-push,a$main$Main,,
-push,_temp4,,
-call,print$Imports$int,1,_temp3
-i$main$Main,0,,int_=
-i$main$Main,0,,int_=
+a_$main$Main,5,,int_=
+b$main$Main,23,,int_=
+c$main$Main,3,,int_=
+d$main$Main,4,,int_=
+e$main$Main,5,,int_=
+_temp2,5,1,int_-
+_temp3,_temp2,6,int_+
+_temp4,_temp3,2,int_-
+_temp5,_temp4,7,int_+
+_temp6,_temp5,3,int_-
+_temp7,_temp6,8,int_+
+_temp8,_temp7,9,int_+
+_temp9,_temp8,10,int_+
+_temp10,_temp9,5,int_+
+_temp11,_temp10,1,int_-
+_temp12,_temp11,6,int_+
+_temp13,_temp12,2,int_-
+_temp14,_temp13,7,int_+
+_temp15,_temp14,3,int_-
+_temp16,_temp15,8,int_+
+_temp17,_temp16,9,int_+
+_temp18,_temp17,10,int_+
+_temp19,_temp18,5,int_+
+_temp20,_temp19,1,int_-
+_temp21,_temp20,6,int_+
+_temp22,_temp21,2,int_-
+_temp23,_temp22,7,int_+
+_temp24,_temp23,3,int_-
+_temp25,_temp24,8,int_+
+_temp26,_temp25,9,int_+
+_temp27,_temp26,10,int_+
+a__$main$Main,_temp27,,int_=
+b__$main$Main,23,,int_=
+c__$main$Main,3,,int_=
+d__$main$Main,4,,int_=
+e__$main$Main,5,,int_=
+i$$n_1,0,,int_=
 label :,,,for_$n_2
-_temp5,i$main$Main,10,int_<
-ifgoto,_temp5,eq0c,for_$n_5
+_temp28,i$$n_1,4,int_<
+ifgoto,_temp28,eq0c,for_$n_5
 goto,,,for_$n_4
 label :,,,for_$n_3
-_temp7,i$main$Main, ,int_=
-_temp6,i$main$Main,1,int_+
-i$main$Main,_temp6, ,int_=
+_temp29,i$$n_1,1,int_+
+i$$n_1,_temp29, ,int_=
 goto,,,for_$n_2
 label :,,,for_$n_4
-_temp8,imp$main$Main,,int_=
-_temp10,_temp8,,int_=
-push,i$main$Main,,
-push,_temp10,,
-call,print$Imports$int,1,_temp9
-a$main$Main,i$main$Main,,int_=
+_temp30,imp$main$Main,,int_=
+_temp32,_temp30,,int_=
+push,_temp32,,
+call,scan_int$Imports,0,_temp31
+p$$n_1,_temp31,,int_=
+_temp33,imp$main$Main,,int_=
+_temp35,_temp33,,int_=
+push,p$$n_1,,
+push,_temp35,,
+call,print$Imports$int,1,_temp34
 goto,,,for_$n_3
 label :,,,for_$n_5
-_temp11,imp$main$Main,,int_=
-_temp13,_temp11,,int_=
+_temp36,imp$main$Main,,int_=
+_temp38,_temp36,,int_=
+push,b$main$Main,,
+push,_temp38,,
+call,print$Imports$int,1,_temp37
+_temp39,imp$main$Main,,int_=
+_temp41,_temp39,,int_=
+push,a__$main$Main,,
+push,_temp41,,
+call,print$Imports$int,1,_temp40
+_temp42,imp$main$Main,,int_=
+_temp44,_temp42,,int_=
 push,a$main$Main,,
-push,_temp13,,
-call,print$Imports$int,1,_temp12
+push,_temp44,,
+call,print$Imports$int,1,_temp43
+i$main$Main,0,,int_=
+i$main$Main,0,,int_=
+label :,,,for_$n_7
+_temp45,i$main$Main,10,int_<
+ifgoto,_temp45,eq0c,for_$n_10
+goto,,,for_$n_9
+label :,,,for_$n_8
+_temp47,i$main$Main, ,int_=
+_temp46,i$main$Main,1,int_+
+i$main$Main,_temp46, ,int_=
+goto,,,for_$n_7
+label :,,,for_$n_9
+_temp48,imp$main$Main,,int_=
+_temp50,_temp48,,int_=
+push,i$main$Main,,
+push,_temp50,,
+call,print$Imports$int,1,_temp49
+a$main$Main,i$main$Main,,int_=
+goto,,,for_$n_8
+label :,,,for_$n_10
+_temp51,imp$main$Main,,int_=
+_temp53,_temp51,,int_=
+push,a$main$Main,,
+push,_temp53,,
+call,print$Imports$int,1,_temp52
 ret,0,,

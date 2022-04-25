@@ -12,18 +12,59 @@ pint: db	"%ld ", 0
 neg_: db "-"
 sint: db	"%ld", 0
 _temp1	dd	0
+_b$main$Main	dd	0
 _temp2	dd	0
-_temp4	dd	0
 _temp3	dd	0
+_temp4	dd	0
 _temp5	dd	0
-_temp7	dd	0
 _temp6	dd	0
+_temp7	dd	0
 _temp8	dd	0
-_temp10	dd	0
 _temp9	dd	0
+_temp10	dd	0
 _temp11	dd	0
-_temp13	dd	0
 _temp12	dd	0
+_temp13	dd	0
+_temp14	dd	0
+_temp15	dd	0
+_temp16	dd	0
+_temp17	dd	0
+_temp18	dd	0
+_temp19	dd	0
+_temp20	dd	0
+_temp21	dd	0
+_temp22	dd	0
+_temp23	dd	0
+_temp24	dd	0
+_temp25	dd	0
+_temp26	dd	0
+_temp27	dd	0
+_temp28	dd	0
+_temp29	dd	0
+_temp30	dd	0
+_temp32	dd	0
+_temp31	dd	0
+_temp33	dd	0
+_temp35	dd	0
+_temp34	dd	0
+_temp36	dd	0
+_temp38	dd	0
+_temp37	dd	0
+_temp39	dd	0
+_temp41	dd	0
+_temp40	dd	0
+_temp42	dd	0
+_temp44	dd	0
+_temp43	dd	0
+_temp45	dd	0
+_temp47	dd	0
+_temp46	dd	0
+_temp48	dd	0
+_temp50	dd	0
+_temp49	dd	0
+_temp51	dd	0
+_temp53	dd	0
+_temp52	dd	0
 
 section .text
 	global main
@@ -118,14 +159,14 @@ scan_int$Imports:
 Imports$Imports:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 200
+	sub rsp, 328
 	mov rsp, rbp
 	pop rbp
 	ret
 Main$Main:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 200
+	sub rsp, 328
 	mov rsp, rbp
 	pop rbp
 	ret
@@ -148,7 +189,7 @@ main:
 main$Main:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 200
+	sub rsp, 328
 	mov rax,0
 	push rax
 	call malloc
@@ -157,23 +198,80 @@ main$Main:
 	push rax
 	call Imports$Imports
 	add rsp, 8
-	mov  rbx, 5
-	mov  rcx, 6
-	mov  rdx, 7
-	mov qword [rbp-40], rax
+	mov qword rbx, 5
+	mov qword rcx, 6
+	mov qword rdx, 7
+	mov qword rsi, 5
+	mov qword rdi, 23
+	mov qword [rbp-80], 3
+	mov qword [rbp-88], 4
+	mov qword [rbp-96], 5
 	mov qword [rbp-48], rbx
-	mov qword [rbp-56], rcx
-	mov qword [rbp-64], rdx
-	push qword [rbp-48]
-	push rax
-	call print$Imports$int
-	add rsp, 16
-	mov  rbx, 0
-	mov  rcx, 0
-	mov qword [rbp-80], rcx
+	mov rbx, 5
+	sub rbx, 1
+	mov rbx, qword _temp2
+	add rbx, 6
+	mov rbx, qword _temp3
+	sub rbx, 2
+	mov rbx, qword _temp4
+	add rbx, 7
+	mov rbx, qword _temp5
+	sub rbx, 3
+	mov rbx, qword _temp6
+	add rbx, 8
+	mov rbx, qword _temp7
+	add rbx, 9
+	mov rbx, qword _temp8
+	add rbx, 10
+	mov rbx, qword _temp9
+	add rbx, 5
+	mov rbx, qword _temp10
+	sub rbx, 1
+	mov rbx, qword _temp11
+	add rbx, 6
+	mov rbx, qword _temp12
+	sub rbx, 2
+	mov rbx, qword _temp13
+	add rbx, 7
+	mov rbx, qword _temp14
+	sub rbx, 3
+	mov rbx, qword _temp15
+	add rbx, 8
+	mov rbx, qword _temp16
+	add rbx, 9
+	mov rbx, qword _temp17
+	add rbx, 10
+	mov rbx, qword _temp18
+	add rbx, 5
+	mov rbx, qword _temp19
+	sub rbx, 1
+	mov rbx, qword _temp20
+	add rbx, 6
+	mov rbx, qword _temp21
+	sub rbx, 2
+	mov rbx, qword _temp22
+	add rbx, 7
+	mov rbx, qword _temp23
+	sub rbx, 3
+	mov rbx, qword _temp24
+	add rbx, 8
+	mov rbx, qword _temp25
+	add rbx, 9
+	mov rbx, qword _temp26
+	add rbx, 10
+	mov qword [rbp-112], 23
+	mov qword [rbp-120], 3
+	mov qword [rbp-128], 4
+	mov qword [rbp-136], 5
+	mov qword [rbp-144], 0
+	mov qword [rbp-40], rax
+	mov qword [rbp-104], rbx
+	mov qword [rbp-56], rdx
+	mov qword [rbp-64], rsi
+	mov qword [rbp-72], rdi
 for_$n_2:
-	mov rax, qword [rbp-80]
-	cmp rax, 10
+	mov rax, qword [rbp-144]
+	cmp rax, 4
 	jl $n_1
 	mov rax, 0
 	jmp $n_2
@@ -185,25 +283,79 @@ $n_2:
 	je for_$n_5
 	jmp for_$n_4
 for_$n_3:
-	mov  rax, qword [rbp-80]
-	mov rbx, rax
-	add rbx, 1
-	mov qword [rbp-80], rax
-	mov qword [rbp-80], rbx
+	mov rax, qword [rbp-144]
+	add rax, 1
+	mov qword [rbp-144], rax
 	jmp for_$n_2
 for_$n_4:
-	mov  rax, qword [rbp-40]
+	mov qword rax, qword [rbp-40]
 	mov qword [rbp-40], rax
-	push qword [rbp-80]
+	push rax
+	call scan_int$Imports
+	add rsp, 8
+	mov qword rbx, qword [rbp-40]
+	mov qword [rbp-200], rax
+	mov qword [rbp-40], rbx
+	push qword [rbp-200]
+	push rbx
+	call print$Imports$int
+	add rsp, 16
+	jmp for_$n_3
+for_$n_5:
+	mov qword rax, qword [rbp-40]
+	mov qword [rbp-40], rax
+	push qword [rbp-72]
 	push rax
 	call print$Imports$int
 	add rsp, 16
-	mov  rbx, qword [rbp-80]
+	mov qword rbx, qword [rbp-40]
+	mov qword [rbp-40], rbx
+	push qword [rbp-104]
+	push rbx
+	call print$Imports$int
+	add rsp, 16
+	mov qword rbx, qword [rbp-40]
+	mov qword [rbp-40], rbx
+	push qword [rbp-48]
+	push rbx
+	call print$Imports$int
+	add rsp, 16
+	mov qword rbx, 0
+	mov qword rcx, 0
+	mov qword [rbp-216], rcx
+for_$n_7:
+	mov rax, qword [rbp-216]
+	cmp rax, 10
+	jl $n_3
+	mov rax, 0
+	jmp $n_4
+$n_3:
+	mov rax, 1
+$n_4:
+	mov rbx, rax
+	cmp rbx, 0
+	je for_$n_10
+	jmp for_$n_9
+for_$n_8:
+	mov qword rax, qword [rbp-216]
+	mov rbx, rax
+	add rbx, 1
+	mov qword [rbp-216], rax
+	mov qword [rbp-216], rbx
+	jmp for_$n_7
+for_$n_9:
+	mov qword rax, qword [rbp-40]
+	mov qword [rbp-40], rax
+	push qword [rbp-216]
+	push rax
+	call print$Imports$int
+	add rsp, 16
+	mov qword rbx, qword [rbp-216]
+	mov qword [rbp-216], rbx
 	mov qword [rbp-48], rbx
-	mov qword [rbp-80], rbx
-	jmp for_$n_3
-for_$n_5:
-	mov  rax, qword [rbp-40]
+	jmp for_$n_8
+for_$n_10:
+	mov qword rax, qword [rbp-40]
 	mov qword [rbp-40], rax
 	push qword [rbp-48]
 	push rax
