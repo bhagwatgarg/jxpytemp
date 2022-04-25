@@ -70,7 +70,7 @@ print_uint32_c:
     mov    rsi, rsp
     sub    rsp, 16               ; not needed on 64-bit Linux, the red-zone is big enough.  Change the LEA below if you remove this.
 
-;;; rsi is pointing at nl on the stack, with 16B of "allocated" space below that.
+;;; rsi is pointing at nl on the stack, with 16B of allocated space below that.
 .toascii_digit:                ; do {
     xor    edx, edx
     div    ecx                   ; edx=remainder = low digit = 0..9.  eax/=10
@@ -89,7 +89,7 @@ print_uint32_c:
     ; pointer already in RSI    ; buf = last digit stored = most significant
     lea    edx, [rsp+16 + 1]    ; yes, its safe to truncate pointers before subtracting to find length.
     sub    edx, esi             ; RDX = length = end-start, including the
-    syscall                     ; write(1, string /*RSI*/,  digits + 1)
+    syscall                     ; write(1, string RSI,  digits + 1)
 
     add  rsp, 24                ; (in 32-bit: add esp,20) undo the push and the buffer reservation
     ret
@@ -137,74 +137,6 @@ print$Imports$int:
 \tpop rbp
 \tret
         """)
-    # def op_print(self, instr):
-    #     loc = get_location(instr.inp1)
-    #     save_caller_context()
-    #     if loc not in reg_descriptor.keys():
-    #         print("\tmov rax, " + loc)
-    #         loc = "rax"
-    #     print("\tpush rbp")
-    #     print("\tmov rbp,esp")
-    #     print("\tpush qword " + str(loc))
-    #     print("\tpush qword print")
-    #     print("\tcall printf")
-    #     print("\tadd esp, 8")
-    #     print("\tmov esp, rbp")
-    #     print("\tpop rbp")
-
-    # def op_print_char(self, instr):
-    #     loc = get_location(instr.inp1)
-    #     save_caller_context()
-    #     if loc not in reg_descriptor.keys():
-    #         print("\tmov rax, " + loc)
-    #         loc = "rax"
-    #     print("\tpush rbp")
-    #     print("\tmov rbp,esp")
-    #     print("\tpush qword " + str(loc))
-    #     print("\tpush qword print_char")
-    #     print("\tcall printf")
-    #     print("\tadd esp, 8")
-    #     print("\tmov esp, rbp")
-    #     print("\tpop rbp")
-
-    # def op_scan_int(self, instr):
-    #     save_caller_context()
-    #     loc = get_location(instr.out)
-    #     print("\tlea rax, " + loc)
-    #     print("\tpush rbp")
-    #     print("\tmov rbp,esp")
-    #     print("\tpush rax")
-    #     print("\tpush scan_int")
-    #     print("\tcall scanf")
-    #     print("\tadd esp, 8")
-    #     print("\tmov esp, rbp")
-    #     print("\tpop rbp")
-
-    # def optimize_if_possible(self, out, inp1, inp2, op):
-    #     '''
-    #     If both inputs are integers; compute them beforehand
-    #     '''
-    #     if is_valid_number(inp1) and is_valid_number(inp2):
-    #         inp1 = int(inp1)
-    #         inp2 = int(inp2)
-    #         if op == "+":
-    #             res = inp1 + inp2
-    #         elif op == "-":
-    #             res = inp1 - inp2
-    #         elif op == "*":
-    #             res = inp1 * inp2
-    #         elif op == "/":
-    #             res = inp1 / inp2
-    #         elif op == "%":
-    #             res = inp1 % inp2
-    #         elif op == "<<":
-    #             res = inp1 << inp2
-    #         elif op == ">>":
-    #             res = inp1 >> inp2
-    #         res = int(res)
-    #         print("\tmov " + get_location(out) + ", " + get_location(str(res)))
-    #         return True
-    #     return False
 
     def op_binary(self,instr,op):
 
@@ -434,127 +366,7 @@ print$Imports$int:
 
                 free_regs(instr)
 
-        # elif instr.array_index_i1 != None:
-        #     # assert len(symbol_table[instr.inp1].address_descriptor_reg) == 0
-        #     R1, flag = get_reg(instr)
-        #     print("\tmov " + R1 + ", " + get_location(instr.array_index_i1))
-        #     print("\tshl " + R1 + ", 2")
-        #     print("\tadd " + R1 + ", " + get_location(instr.inp1))
-        #     print("\tmov " + R1 + ", [" + R1 + "]")
-        #     update_reg_desc(R1, instr.out)
         
-        # elif instr.array_index_i1 != None and instr.array_index_o != None:
-            
-        #     index1 = instr.array_index_i1
-        #     loc_arr1 = get_location(instr.inp1)
-        #     R3 = None
-        #     R4 = None
-        #     if loc_arr1 in reg_descriptor.keys():
-        #         R1 = None
-        #         if is_valid_sym(index1):
-        #             if len(symbol_table[index].address_descriptor_reg) == 0:
-        #                 R1, _ = get_reg(instr, exclude=[loc_arr1])
-        #                 print("\tmov " + R1 + ", " + get_location(index1))
-        #                 update_reg_desc(R1, index1)
-        #             else:
-        #                 R1 = get_location(index1)
-        #             R3 = R1
-        #         else:
-        #             index1 = 4 * int(index1)
-        #     else:
-        #         R1, _ = get_reg(instr)
-        #         print("\tmov " + R1 + ", " + get_location(index1))
-        #         print("\tshl " + R1 + ", 2")
-        #         print("\tadd " + R1 + ", " + loc_arr1)
-        #         R4 = R1
-            
-
-        #     index = instr.array_index_o
-        #     loc_arr = get_location(instr.out)
-        #     if loc_arr in reg_descriptor.keys():
-        #         R1 = None
-        #         if is_valid_sym(index):
-        #             if len(symbol_table[index].address_descriptor_reg) == 0:
-        #                 R1, _ = get_reg(instr, exclude=[loc_arr])
-        #                 print("\tmov " + R1 + ", " + get_location(index))
-        #                 update_reg_desc(R1, index)
-        #             else:
-        #                 R1 = get_location(index)
-
-        #             if R3:
-        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-        #             elif R4:
-        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + R4 + "]" )
-        #             else:
-        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr + "+" + str(index1) + "]" )
-        #         else:
-        #             index = 4 * int(index)
-        #             inp_reg, flag = get_reg(instr)
-        #             if flag:
-        #                 print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-        #                 update_reg_desc(inp_reg,instr.inp1)
-        #             if R3:
-        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-        #             elif R4:
-        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + R4 + "]" )
-        #             else:
-        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
-
-        #     else:
-        #         R1, _ = get_reg(instr, exclude=[loc_inp1])
-        #         print("\tmov " + R1 + ", " + get_location(index))
-        #         print("\tshl " + R1 + ", 2")
-        #         print("\tadd " + R1 + ", " + loc_arr)
-        #         # print("\tmov [" + R1 + "], " + loc_inp1)
-        #         if R3:
-        #             print("\tmov [" + R1 + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-        #         elif R4:
-        #             print("\tmov [" + R1 + "], " + "[" + R4 + "]" )
-        #         else:
-        #             print("\tmov [" + R1 + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
-
-
-        # else:
-        #     index = instr.array_index_o
-        #     loc_arr = get_location(instr.out)
-        #     if loc_arr in reg_descriptor.keys():
-        #         R1 = None
-        #         if is_valid_sym(index):
-        #             if len(symbol_table[index].address_descriptor_reg) == 0:
-        #                 R1, _ = get_reg(instr, exclude=[loc_arr])
-        #                 print("\tmov " + R1 + ", " + get_location(index))
-        #                 update_reg_desc(R1, index)
-        #             else:
-        #                 R1 = get_location(index)
-
-        #             inp_reg = R1
-        #             if index != instr.inp1:
-        #                 inp_reg, flag = get_reg(instr, exclude=[R1, loc_arr])
-        #                 if flag:
-        #                     print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-        #                     update_reg_desc(inp_reg,instr.inp1)
-        #             print("\tmov [" + loc_arr + "," + R1 + "*4], " + inp_reg)
-        #         else:
-        #             index = 4 * int(index)
-        #             inp_reg, flag = get_reg(instr)
-        #             if flag:
-        #                 print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-        #                 update_reg_desc(inp_reg,instr.inp1)
-        #             print("\tmov [" + loc_arr + "+" + str(index) + "], " + inp_reg)
-        #     else:
-        #         loc_inp1 = get_location(instr.inp1)
-        #         R1, _ = get_reg(instr, exclude=[loc_inp1])
-        #         print("\tmov " + R1 + ", " + get_location(index))
-        #         print("\tshl " + R1 + ", 2")
-        #         print("\tadd " + R1 + ", " + loc_arr)
-        #         if loc_inp1 in reg_descriptor.keys():
-        #             print("\tmov [" + R1 + "], " + loc_inp1)
-        #         else:
-        #             inp_reg, _ = get_reg(instr, exclude=[R1])
-        #             print("\tmov " + inp_reg + ", " + loc_inp1)
-        #             update_reg_desc(inp_reg, instr.inp1)
-        #             print("\tmov [" + R1 + "], " + inp_reg)
-    
     def op_fassign(self, instr):
         if instr.array_index_i1 == None and instr.array_index_o == None and is_valid_float(instr.inp1):
             R1, flag = get_reg(instr, compulsory=False,isFloat=True)
@@ -579,128 +391,7 @@ print$Imports$int:
 
                 free_regs(instr)
 
-        # elif instr.array_index_i1 != None:
-        #     # assert len(symbol_table[instr.inp1].address_descriptor_reg) == 0
-        #     R1, flag = get_reg(instr)
-        #     print("\tmov " + R1 + ", " + get_location(instr.array_index_i1))
-        #     print("\tshl " + R1 + ", 2")
-        #     print("\tadd " + R1 + ", " + get_location(instr.inp1))
-        #     print("\tmov " + R1 + ", [" + R1 + "]")
-        #     update_reg_desc(R1, instr.out)
         
-        # elif instr.array_index_i1 != None and instr.array_index_o != None:
-            
-        #     index1 = instr.array_index_i1
-        #     loc_arr1 = get_location(instr.inp1)
-        #     R3 = None
-        #     R4 = None
-        #     if loc_arr1 in reg_descriptor.keys():
-        #         R1 = None
-        #         if is_valid_sym(index1):
-        #             if len(symbol_table[index].address_descriptor_reg) == 0:
-        #                 R1, _ = get_reg(instr, exclude=[loc_arr1])
-        #                 print("\tmov " + R1 + ", " + get_location(index1))
-        #                 update_reg_desc(R1, index1)
-        #             else:
-        #                 R1 = get_location(index1)
-        #             R3 = R1
-        #         else:
-        #             index1 = 4 * int(index1)
-        #     else:
-        #         R1, _ = get_reg(instr)
-        #         print("\tmov " + R1 + ", " + get_location(index1))
-        #         print("\tshl " + R1 + ", 2")
-        #         print("\tadd " + R1 + ", " + loc_arr1)
-        #         R4 = R1
-            
-
-        #     index = instr.array_index_o
-        #     loc_arr = get_location(instr.out)
-        #     if loc_arr in reg_descriptor.keys():
-        #         R1 = None
-        #         if is_valid_sym(index):
-        #             if len(symbol_table[index].address_descriptor_reg) == 0:
-        #                 R1, _ = get_reg(instr, exclude=[loc_arr])
-        #                 print("\tmov " + R1 + ", " + get_location(index))
-        #                 update_reg_desc(R1, index)
-        #             else:
-        #                 R1 = get_location(index)
-
-        #             if R3:
-        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-        #             elif R4:
-        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + R4 + "]" )
-        #             else:
-        #                 print("\tmov [" + loc_arr + "," + R1 + "*4], " + "[" + loc_arr + "+" + str(index1) + "]" )
-        #         else:
-        #             index = 4 * int(index)
-        #             inp_reg, flag = get_reg(instr)
-        #             if flag:
-        #                 print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-        #                 update_reg_desc(inp_reg,instr.inp1)
-        #             if R3:
-        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-        #             elif R4:
-        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + R4 + "]" )
-        #             else:
-        #                 print("\tmov [" + loc_arr + "+" + str(index) + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
-
-        #     else:
-        #         R1, _ = get_reg(instr, exclude=[loc_inp1])
-        #         print("\tmov " + R1 + ", " + get_location(index))
-        #         print("\tshl " + R1 + ", 2")
-        #         print("\tadd " + R1 + ", " + loc_arr)
-        #         # print("\tmov [" + R1 + "], " + loc_inp1)
-        #         if R3:
-        #             print("\tmov [" + R1 + "], " + "[" + loc_arr1 + "," + R3 + "*4]" )
-        #         elif R4:
-        #             print("\tmov [" + R1 + "], " + "[" + R4 + "]" )
-        #         else:
-        #             print("\tmov [" + R1 + "], " + "[" + loc_arr + "+" + str(index1) + "]" )
-
-
-        # else:
-        #     index = instr.array_index_o
-        #     loc_arr = get_location(instr.out)
-        #     if loc_arr in reg_descriptor.keys():
-        #         R1 = None
-        #         if is_valid_sym(index):
-        #             if len(symbol_table[index].address_descriptor_reg) == 0:
-        #                 R1, _ = get_reg(instr, exclude=[loc_arr])
-        #                 print("\tmov " + R1 + ", " + get_location(index))
-        #                 update_reg_desc(R1, index)
-        #             else:
-        #                 R1 = get_location(index)
-
-        #             inp_reg = R1
-        #             if index != instr.inp1:
-        #                 inp_reg, flag = get_reg(instr, exclude=[R1, loc_arr])
-        #                 if flag:
-        #                     print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-        #                     update_reg_desc(inp_reg,instr.inp1)
-        #             print("\tmov [" + loc_arr + "," + R1 + "*4], " + inp_reg)
-        #         else:
-        #             index = 4 * int(index)
-        #             inp_reg, flag = get_reg(instr)
-        #             if flag:
-        #                 print("\tmov " + inp_reg + ", " + get_location(instr.inp1))
-        #                 update_reg_desc(inp_reg,instr.inp1)
-        #             print("\tmov [" + loc_arr + "+" + str(index) + "], " + inp_reg)
-        #     else:
-        #         loc_inp1 = get_location(instr.inp1)
-        #         R1, _ = get_reg(instr, exclude=[loc_inp1])
-        #         print("\tmov " + R1 + ", " + get_location(index))
-        #         print("\tshl " + R1 + ", 2")
-        #         print("\tadd " + R1 + ", " + loc_arr)
-        #         if loc_inp1 in reg_descriptor.keys():
-        #             print("\tmov [" + R1 + "], " + loc_inp1)
-        #         else:
-        #             inp_reg, _ = get_reg(instr, exclude=[R1])
-        #             print("\tmov " + inp_reg + ", " + loc_inp1)
-        #             update_reg_desc(inp_reg, instr.inp1)
-        #             print("\tmov [" + R1 + "], " + inp_reg)
-    
-
     def op_unary(self, instr):
         R1, flag = get_reg(instr,compulsory=False)
         if R1 not in reg_descriptor.keys():
@@ -914,8 +605,8 @@ print$Imports$int:
         symbol_table[instr.inp1].address_descriptor_mem.add(loc)
         print("\tmov [rbp",loc,"], rax") 
         print("\tadd rsp, 8")
-        print("\tmov rsp, rbp")
-        print("\tpop rbp")
+        # print("\tmov rsp, rbp")
+        # print("\tpop rbp")
         update_reg_desc("rax", instr.out)
 
     def op_extract(self, instr):

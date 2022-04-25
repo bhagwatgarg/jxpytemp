@@ -21,6 +21,9 @@ _temp6	dd	0
 _temp8	dd	0
 _temp10	dd	0
 _temp9	dd	0
+_temp11	dd	0
+_temp13	dd	0
+_temp12	dd	0
 
 section .text
 	global main
@@ -45,7 +48,7 @@ print_uint32_c:
     mov    rsi, rsp
     sub    rsp, 16               ; not needed on 64-bit Linux, the red-zone is big enough.  Change the LEA below if you remove this.
 
-;;; rsi is pointing at nl on the stack, with 16B of "allocated" space below that.
+;;; rsi is pointing at nl on the stack, with 16B of allocated space below that.
 .toascii_digit:                ; do {
     xor    edx, edx
     div    ecx                   ; edx=remainder = low digit = 0..9.  eax/=10
@@ -64,7 +67,7 @@ print_uint32_c:
     ; pointer already in RSI    ; buf = last digit stored = most significant
     lea    edx, [rsp+16 + 1]    ; yes, its safe to truncate pointers before subtracting to find length.
     sub    edx, esi             ; RDX = length = end-start, including the
-    syscall                     ; write(1, string /*RSI*/,  digits + 1)
+    syscall                     ; write(1, string RSI,  digits + 1)
 
     add  rsp, 24                ; (in 32-bit: add esp,20) undo the push and the buffer reservation
     ret
@@ -115,14 +118,14 @@ scan_int$Imports:
 Imports$Imports:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 176
+	sub rsp, 200
 	mov rsp, rbp
 	pop rbp
 	ret
 Main$Main:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 176
+	sub rsp, 200
 	mov rsp, rbp
 	pop rbp
 	ret
@@ -145,23 +148,31 @@ main:
 main$Main:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 176
+	sub rsp, 200
 	mov rax,0
 	push rax
 	call malloc
 	mov [rbp -40 ], rax
 	add rsp, 8
-	mov rsp, rbp
-	pop rbp
 	push rax
 	call Imports$Imports
 	add rsp, 8
+	mov  rbx, 5
+	mov  rcx, 6
+	mov  rdx, 7
+	mov qword [rbp-40], rax
+	mov qword [rbp-48], rbx
+	mov qword [rbp-56], rcx
+	mov qword [rbp-64], rdx
+	push qword [rbp-48]
+	push rax
+	call print$Imports$int
+	add rsp, 16
 	mov  rbx, 0
 	mov  rcx, 0
-	mov qword [rbp-40], rax
-	mov qword [rbp-48], rcx
+	mov qword [rbp-80], rcx
 for_$n_2:
-	mov rax, qword [rbp-48]
+	mov rax, qword [rbp-80]
 	cmp rax, 10
 	jl $n_1
 	mov rax, 0
@@ -174,19 +185,22 @@ $n_2:
 	je for_$n_5
 	jmp for_$n_4
 for_$n_3:
-	mov  rax, qword [rbp-48]
+	mov  rax, qword [rbp-80]
 	mov rbx, rax
 	add rbx, 1
-	mov qword [rbp-48], rax
-	mov qword [rbp-48], rbx
+	mov qword [rbp-80], rax
+	mov qword [rbp-80], rbx
 	jmp for_$n_2
 for_$n_4:
 	mov  rax, qword [rbp-40]
 	mov qword [rbp-40], rax
-	push qword [rbp-48]
+	push qword [rbp-80]
 	push rax
 	call print$Imports$int
 	add rsp, 16
+	mov  rbx, qword [rbp-80]
+	mov qword [rbp-48], rbx
+	mov qword [rbp-80], rbx
 	jmp for_$n_3
 for_$n_5:
 	mov  rax, qword [rbp-40]

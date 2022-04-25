@@ -34,7 +34,7 @@ class Main{
   void Main(){return;}
   int main(){
     Imports imp=new Imports();
-    // int a =5, b = 6, c_ = 7;
+    int a =5, b = 6, c_ = 7;
     // a=5;
     // int i;
     // for(int i=0; i <10; i=i+1){
@@ -83,11 +83,13 @@ class Main{
     // }
     // imp.print(b);
     // imp.print(a__);
+    imp.print(a);
     int i=0;
     for(i=0; i<10; i++){
       imp.print(i);
+      a = i;
     }
-  imp.print(i);
+  imp.print(a);
     return 0;
   }
 }
