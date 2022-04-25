@@ -57,7 +57,7 @@ class Main{
     // int arr[]=new int[30];
     // b=arr[2];
     // int b=5;
-    // imp.print(b);
+    // imp.print1(b);
     // imp.print(b);
     // int p = imp.scan_int();
     // imp.print(p);

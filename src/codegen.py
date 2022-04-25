@@ -5,9 +5,9 @@ from math import log
 from utilities import *
 from tac import ST
 import codecs
-param_count = 0
+n_args = 0
 
-leader_instructions = [
+leader_instr = [
     "ifgoto",
     "return",
     "label",
@@ -16,12 +16,11 @@ leader_instructions = [
     "scan_int",
     "goto",
     "func",
-    "begin_func",
-    "end_func"
 ]
+
 relational_op_list = ['<','>','==','>=','<=']
 
-class CodeGenerator:
+class Codegen:
 
     def gen_data_section(self):
         
@@ -33,16 +32,9 @@ class CodeGenerator:
         print('pint: db	"%ld ", 0')
         print('neg_: db "-"')
         print('sint: db	"%ld", 0')
-        #print("print_char:\tdb\t\"%c\",0")
-        #print("scan_int:\tdb\t\"%d\",0")
         for var in symbol_table.keys():
             if is_temp_var(var):
                 print(var + "\tdd\t0")
-        # for symbol in symbol_table.keys():
-            # if symbol_table[symbol].array_size != None:
-                # print(str(symbol) + "\ttimes\t" + str(symbol_table[symbol].array_size) + "\tdd\t0")
-            # else:
-                # print(str(symbol) + "\tdd\t0")
 
     def gen_start_template(self):
         print()
@@ -57,7 +49,7 @@ class CodeGenerator:
     add eax, 1
     push rax
     mov eax, 4               ; __NR_write from /usr/include/asm/unistd_64.h
-    mov ebx, 1               ; fd = STDOUT_FILENO
+    mov ebx, 1               ; fd = STDdest_FILENO
     mov ecx, neg_
     mov edx, 1
     int 80h
@@ -85,7 +77,7 @@ print_uint32_c:
 
 
     mov    eax, 1               ; __NR_write from /usr/include/asm/unistd_64.h
-    mov    edi, 1               ; fd = STDOUT_FILENO
+    mov    edi, 1               ; fd = STDdest_FILENO
     ; pointer already in RSI    ; buf = last digit stored = most significant
     lea    edx, [rsp+16 + 1]    ; yes, its safe to truncate pointers before subtracting to find length.
     sub    edx, esi             ; RDX = length = end-start, including the
@@ -142,21 +134,21 @@ print$Imports$int:
 
         R1, flag = get_reg(instr)
         if flag:
-            print("\tmov"+ ' '+ R1 + ", " + get_location(instr.inp1))
-        R2 = get_location(instr.inp2)
+            print("\tmov"+ ' '+ R1 + ", " + get_location(instr.source1))
+        R2 = get_location(instr.source2)
         print("\t"+op+ ' ' + R1 + ", " + R2)
-        update_reg_desc(R1,instr.out)
-        if instr.inp1!=instr.out and instr.inp2!=instr.out:
+        update_reg_desc(R1,instr.dest)
+        if instr.source1!=instr.dest and instr.source2!=instr.dest:
             free_regs(instr)
     
     def op_fbinary(self,instr,op):
 
         R1, flag = get_reg(instr,isFloat=True)
         if flag:
-            print("\tmovsd"+ ' '+ R1 + ", " + get_location(instr.inp1))
-        R2 = get_location(instr.inp2)
+            print("\tmovsd"+ ' '+ R1 + ", " + get_location(instr.source1))
+        R2 = get_location(instr.source2)
         print("\t"+op+ ' ' + R1 + ", " + R2)
-        update_reg_desc(R1,instr.out)
+        update_reg_desc(R1,instr.dest)
         free_regs(instr)
 
 
@@ -174,37 +166,27 @@ print$Imports$int:
 
         R1, flag = get_reg(instr)
         if flag:
-            print("\tmov "+ R1 + ", " + get_location(instr.inp1))
-        # handle cases when inp2 is a power of 2
-        bitshift = False        # to avoid multiple operation
-        if is_valid_number(instr.inp2):
-            num = int(instr.inp2)
-            if num & (num - 1) == 0 and num != 0:
-                # use bitshift
-                power = int(log(int(instr.inp2)))
-                print("\tshl " + R1 + ", " + str(power))
-                bitshift = False
-        if not bitshift:
-            R2 = get_location(instr.inp2)
-            print("\timul " + R1 + ", " + R2)
-        update_reg_desc(R1, instr.out)
+            print("\tmov "+ R1 + ", " + get_location(instr.source1))
+        R2 = get_location(instr.source2)
+        print("\timul " + R1 + ", " + R2)
+        update_reg_desc(R1, instr.dest)
         free_regs(instr)
 
 
     def op_div(self, instr):
 
         save_reg("rax")
-        print("\tmov rax, " + get_location(instr.inp1))
+        print("\tmov rax, " + get_location(instr.source1))
         save_reg("rdx")
-        if is_valid_number(instr.inp2):
+        if is_valid_number(instr.source2):
             R1, flag = get_reg(instr,exclude=["rax","rdx"])
-            print("\tmov " + R1 + ", " + get_location(instr.inp2))
+            print("\tmov " + R1 + ", " + get_location(instr.source2))
             print("\tcdq")
             print("\tidiv " + R1)
         else:
             print("\tcdq")
-            print("\tidiv qword " + get_location(instr.inp2))
-        update_reg_desc("rax", instr.out)
+            print("\tidiv qword " + get_location(instr.source2))
+        update_reg_desc("rax", instr.dest)
         free_regs(instr)
     
     def op_fadd(self,instr):
@@ -225,32 +207,30 @@ print$Imports$int:
         R1, flag = get_reg(instr,isFloat=True)
         if flag:
             save_reg(R1)
-            print("\tmov"+ ' '+ R1 + ", " + get_location(instr.inp1))
-        R2 = get_location(instr.inp2)
+            print("\tmov"+ ' '+ R1 + ", " + get_location(instr.source1))
+        R2 = get_location(instr.source2)
         R3, flag1 = get_reg(instr,isFloat=True)
         print("\t"+'ucomisd'+ ' ' + R1 + ", " + R2)
 
-        lbl = ST.make_label()
+        temp_label = ST.make_label()
+        temp_label2 = ST.make_label()
         if(op == "<"):
-            print("\tjb " + lbl)
+            print("\tjb " + temp_label)
         elif(op == ">"):
-            print("\tja " + lbl)
+            print("\tja " + temp_label)
         elif(op == "=="):
-            print("\tje " + lbl)
-        elif(op == "!="):
-            print("\tjne " + lbl)
+            print("\tje " + temp_label)
         elif(op == "<="):
-            print("\tjbe " + lbl)
+            print("\tjbe " + temp_label)
         elif(op == ">="):
-            print("\tjae " + lbl)
+            print("\tjae " + temp_label)
         print("\tmov " + R3 + ", 0")
-        lbl2 = ST.make_label()
-        print("\tjmp " + lbl2)
-        print(lbl + ":") 
+        print("\tjmp " + temp_label2)
+        print(temp_label + ":") 
         print("\tmov " + R3 + ", 1")
-        print(lbl2 + ":")
+        print(temp_label2 + ":")
 
-        update_reg_desc(R3,instr.out)
+        update_reg_desc(R3,instr.dest)
         free_regs(instr)
 
     def op_relational(self,instr,op):
@@ -258,48 +238,46 @@ print$Imports$int:
         R1, flag = get_reg(instr)
         if flag:
             save_reg(R1)
-            print("\tmov"+ ' '+ R1 + ", " + get_location(instr.inp1))
-        R2 = get_location(instr.inp2)
+            print("\tmov"+ ' '+ R1 + ", " + get_location(instr.source1))
+        R2 = get_location(instr.source2)
         print("\t"+'cmp'+ ' ' + R1 + ", " + R2)
 
-        lbl = ST.make_label()
+        temp_label = ST.make_label()
+        temp_label2 = ST.make_label()
         if(op == "<"):
-            print("\tjl " + lbl)
+            print("\tjl " + temp_label)
         elif(op == ">"):
-            print("\tjg " + lbl)
+            print("\tjg " + temp_label)
         elif(op == "=="):
-            print("\tje " + lbl)
-        elif(op == "!="):
-            print("\tjne " + lbl)
+            print("\tje " + temp_label)
         elif(op == "<="):
-            print("\tjle " + lbl)
+            print("\tjle " + temp_label)
         elif(op == ">="):
-            print("\tjge " + lbl)
+            print("\tjge " + temp_label)
         print("\tmov " + R1 + ", 0")
-        lbl2 = ST.make_label()
-        print("\tjmp " + lbl2)
-        print(lbl + ":") 
+        print("\tjmp " + temp_label2)
+        print(temp_label + ":") 
         print("\tmov " + R1 + ", 1")
-        print(lbl2 + ":")
+        print(temp_label2 + ":")
 
-        update_reg_desc(R1,instr.out)
+        update_reg_desc(R1,instr.dest)
         free_regs(instr)
 
     def op_modulo(self, instr):
 
         save_reg("rax")
-        print("\tmov rax, " + get_location(instr.inp1))
+        print("\tmov rax, " + get_location(instr.source1))
         save_reg("rdx")
-        if is_valid_number(instr.inp2):
+        if is_valid_number(instr.source2):
             R1, flag = get_reg(instr,exclude=["rax","rdx"])
-            print("\tmov " + R1 + ", " + get_location(instr.inp2))
+            print("\tmov " + R1 + ", " + get_location(instr.source2))
             print("\tcdq")
             print("\tidiv " + R1)
         else:
             print("\tcdq")
-            print("\tidiv qword" + get_location(instr.inp2))
+            print("\tidiv qword" + get_location(instr.source2))
 
-        update_reg_desc("rdx", instr.out)
+        update_reg_desc("rdx", instr.dest)
         free_regs(instr)
 
 
@@ -307,14 +285,14 @@ print$Imports$int:
 
         R1, flag = get_reg(instr)
         if flag:
-            print("\tmov "+ R1 + ", " + get_location(instr.inp1))
+            print("\tmov "+ R1 + ", " + get_location(instr.source1))
         R2 = None
-        if is_valid_number(instr.inp2):
-            R2 = instr.inp2
+        if is_valid_number(instr.source2):
+            R2 = instr.source2
         else:
-            R2 = get_location(instr.inp2)
+            R2 = get_location(instr.source2)
         print("\tshl " + R1 + ", " + R2)
-        update_reg_desc(R1, instr.out)
+        update_reg_desc(R1, instr.dest)
         free_regs(instr)
 
 
@@ -322,14 +300,14 @@ print$Imports$int:
 
         R1, flag = get_reg(instr)
         if flag:
-            print("\tmov "+ R1 + ", " + get_location(instr.inp1))
+            print("\tmov "+ R1 + ", " + get_location(instr.source1))
         R2 = None
-        if is_valid_number(instr.inp2):
-            R2 = instr.inp2
+        if is_valid_number(instr.source2):
+            R2 = instr.source2
         else:
-            R2 = get_location(instr.inp2)
+            R2 = get_location(instr.source2)
         print("\tshr " + R1 + ", " + R2)
-        update_reg_desc(R1, instr.out)
+        update_reg_desc(R1, instr.dest)
         free_regs(instr)
 
     def op_and(self,instr):
@@ -343,61 +321,60 @@ print$Imports$int:
 
 
     def op_intassign(self, instr):
-        if instr.array_index_i1 == None and instr.array_index_o == None and is_valid_number(instr.inp1):
-            R1, flag = get_reg(instr, compulsory=False)
-            print("\tmov qword " + R1 + ", " + get_location(instr.inp1))
+        if is_valid_number(instr.source1):
+            R1, flag = get_reg(instr, reg_nes=False)
+            print("\tmov qword " + R1 + ", " + get_location(instr.source1))
             if R1 in reg_descriptor.keys():
-                update_reg_desc(R1, instr.out)
+                update_reg_desc(R1, instr.dest)
 
-        elif instr.array_index_i1 == None and instr.array_index_o == None:
-            if len(symbol_table[instr.inp1].address_descriptor_reg) == 0:
+        else:
+            if len(symbol_table[instr.source1].address_descriptor_reg) == 0:
                 R1, flag = get_reg(instr)
-                print("\tmov qword " + R1 +", " + get_location(instr.inp1))
-                update_reg_desc(R1,instr.inp1)
+                print("\tmov qword " + R1 +", " + get_location(instr.source1))
+                update_reg_desc(R1,instr.source1)
 
-            if len(symbol_table[instr.inp1].address_descriptor_reg):
-                for regs in symbol_table[instr.out].address_descriptor_reg:
-                    reg_descriptor[regs].remove(instr.out)
-                symbol_table[instr.out].address_descriptor_reg.clear()
-                symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(symbol_table[instr.inp1].address_descriptor_reg)
+            if len(symbol_table[instr.source1].address_descriptor_reg):
+                for regs in symbol_table[instr.dest].address_descriptor_reg:
+                    reg_descriptor[regs].remove(instr.dest)
+                symbol_table[instr.dest].address_descriptor_reg.clear()
+                symbol_table[instr.dest].address_descriptor_reg = copy.deepcopy(symbol_table[instr.source1].address_descriptor_reg)
 
-                for reg in symbol_table[instr.out].address_descriptor_reg:
-                    reg_descriptor[reg].add(instr.out)
+                for reg in symbol_table[instr.dest].address_descriptor_reg:
+                    reg_descriptor[reg].add(instr.dest)
 
                 free_regs(instr)
 
         
     def op_fassign(self, instr):
-        if instr.array_index_i1 == None and instr.array_index_o == None and is_valid_float(instr.inp1):
-            R1, flag = get_reg(instr, compulsory=False,isFloat=True)
-            print("\tmovsd " + R1 + ", " + get_location(instr.inp1))
+        if  is_valid_float(instr.source1):
+            R1, flag = get_reg(instr, reg_nes=False,isFloat=True)
+            print("\tmovsd " + R1 + ", " + get_location(instr.source1))
             if R1 in reg_descriptor.keys():
-                update_reg_desc(R1, instr.out)
+                update_reg_desc(R1, instr.dest)
 
-        elif instr.array_index_i1 == None and instr.array_index_o == None:
-            if len(symbol_table[instr.inp1].address_descriptor_reg) == 0:
+        else :
+            if len(symbol_table[instr.source1].address_descriptor_reg) == 0:
                 R1, flag = get_reg(instr)
-                print("\tmov " + R1 +", " + get_location(instr.inp1))
-                update_reg_desc(R1,instr.inp1)
+                print("\tmov " + R1 +", " + get_location(instr.source1))
+                update_reg_desc(R1,instr.source1)
 
-            if len(symbol_table[instr.inp1].address_descriptor_reg):
-                for regs in symbol_table[instr.out].address_descriptor_reg:
-                    reg_descriptor[regs].remove(instr.out)
-                symbol_table[instr.out].address_descriptor_reg.clear()
-                symbol_table[instr.out].address_descriptor_reg = copy.deepcopy(symbol_table[instr.inp1].address_descriptor_reg)
+            if len(symbol_table[instr.source1].address_descriptor_reg):
+                for regs in symbol_table[instr.dest].address_descriptor_reg:
+                    reg_descriptor[regs].remove(instr.dest)
+                symbol_table[instr.dest].address_descriptor_reg.clear()
+                symbol_table[instr.dest].address_descriptor_reg = copy.deepcopy(symbol_table[instr.source1].address_descriptor_reg)
 
-                for reg in symbol_table[instr.out].address_descriptor_reg:
-                    reg_descriptor[reg].add(instr.out)
-
+                for reg in symbol_table[instr.dest].address_descriptor_reg:
+                    reg_descriptor[reg].add(instr.dest)
                 free_regs(instr)
 
         
     def op_unary(self, instr):
-        R1, flag = get_reg(instr,compulsory=False)
+        R1, flag = get_reg(instr,reg_nes=False)
         if R1 not in reg_descriptor.keys():
             R1 = "qword " + R1
         if flag:
-            print("\tmov "+ R1 + ", " + get_location(instr.inp1))
+            print("\tmov "+ R1 + ", " + get_location(instr.source1))
         if instr.operation == "!" or instr.operation == "~":
             print("\tnot "+ R1)
         elif instr.operation == "++":
@@ -407,143 +384,97 @@ print$Imports$int:
         elif instr.operation == "-":
             print("\tneg "+ R1)
         if R1 in reg_descriptor.keys():
-            update_reg_desc(R1,instr.out)
+            update_reg_desc(R1,instr.dest)
         free_regs(instr)
 
-    def int2float(self, instr):
-        R1,flag = get_reg(instr, isFloat=True)
-        update_reg_desc(R1,instr.out)
-        print("\tcvtsi2ss " + R1 + ", " +  get_location(instr.inp1))
-
-
-    def float2int(self, instr):
-        R1,flag = get_reg(instr)
-        update_reg_desc(R1,instr.out)
-        print("\tcvttss2si " + R1 + ", " +  get_location(instr.inp1))
-
-
-    def char2int(self, instr):
-        R1,flag = get_reg(instr,exclude=['esi','edi'])
-        print("\txor " + R1  + ", " + R1)
-        print("\tmov " + R1 + ", " + get_location(instr.inp1))
-        update_reg_desc(R1,instr.out)
-
-
-    def char2float(self, instr):
-        R1,flag = get_reg(instr,exclude=['esi','edi'])
-        print("\txor " + R1 + ", " + R1)
-        print("\tmov " + R1 +", " + get_location(instr.inp1))
-        R2,flag2 = get_reg(instr, isFloat=True)
-        update_reg_desc(R2, instr.out)
-        print("\tcvtsi2ss " + R2 + ", " + R1)
-
-
-    def int2char(self, instr):
-        R1,flag = get_reg(instr,  exclude = ["rsi", "rdi"])
-        R2,flag2 = get_reg(instr, exclude = [R1, "rsi", "rdi"])
-        print("\tmov " + R1 +", " + get_location(instr.inp1))
-        update_reg_desc(R2, instr.out)
-        print("\txor " + R2 + ", " + R2)
-        print("\tmov " + R2 + ", " + R1)
-
-
-    def float2char(self, instr):
-        R1 = get_reg(instr, isFloat=True)
-        print("\tmovsd " + R1 + ", " + get_location(instr.inp1))
-        R2 = get_reg(instr)
-        print("\tcvttss2si " + R2  + ", " + R1)
-        R3 = get_reg(instr, exclude = [R2, "rsi", "rdi"])
-        print("\txor " + R3 + ", " + R3)
-        print("\tmov " + R3 + ", " + R2)
-        update_reg_desc(R3, instr.out)
 
 
     def op_ifgoto(self, instr):
         
-        if(instr.inp2=='eq0'):
-            R1,flag = get_reg(instr,compulsory=True)
+        if(instr.source2=='eq0'):
+            R1,flag = get_reg(instr,reg_nes=True)
             save_reg(R1)
             if flag:
-                print("\tmov " + R1 + ", " + get_location(instr.inp1))
+                print("\tmov " + R1 + ", " + get_location(instr.source1))
             save_caller_context()
             print("\tcmp " + R1 + ", 0")
-            print("\tje " + instr.out)
+            print("\tje " + instr.dest)
         
-        elif instr.inp2=='eq0.0':
-            R1,flag = get_reg(instr,compulsory=True,isFloat=True)
+        elif instr.source2=='eq0.0':
+            R1,flag = get_reg(instr,reg_nes=True,isFloat=True)
             if flag:
-                print("\tmovsd " + R1 + ", " + get_location(instr.inp1))
+                print("\tmovsd " + R1 + ", " + get_location(instr.source1))
             save_caller_context()
             print("\tucomisd " + R1 + ", "+ get_loc_mem('0.0'))
-            print("\tje " + instr.out)
+            print("\tje " + instr.dest)
 
-        elif instr.inp2=='eq0c':
-            R1,flag = get_reg(instr,compulsory=True)
+        elif instr.source2=='eq0c':
+            R1,flag = get_reg(instr,reg_nes=True)
             if flag:
-                print("\tmov " + R1 + ", " + get_location(instr.inp1))
+                print("\tmov " + R1 + ", " + get_location(instr.source1))
             save_caller_context()
             print("\tcmp " + R1 + ", 0")
-            print("\tje " + instr.out)
+            print("\tje " + instr.dest)
 
-        elif(instr.inp2=='neq0'):
-            R1,flag = get_reg(instr,compulsory=True)
+        elif(instr.source2=='neq0'):
+            R1,flag = get_reg(instr,reg_nes=True)
             save_reg(R1)
             if flag:
-                print("\tmov " + R1 + ", " + get_location(instr.inp1))
+                print("\tmov " + R1 + ", " + get_location(instr.source1))
             save_caller_context()
             print("\tcmp " + R1 + ", 0")
-            print("\tjne " + instr.out)
+            print("\tjne " + instr.dest)
         
-        elif instr.inp2=='neq0.0':
-            R1,flag = get_reg(instr,compulsory=True,isFloat=True)
+        elif instr.source2=='neq0.0':
+            R1,flag = get_reg(instr,reg_nes=True,isFloat=True)
             if flag:
-                print("\tmovsd " + R1 + ", " + get_location(instr.inp1))
+                print("\tmovsd " + R1 + ", " + get_location(instr.source1))
             save_caller_context()
             print("\tucomisd " + R1 + ", "+ get_loc_mem('0.0'))
-            print("\tjne " + instr.out)
+            print("\tjne " + instr.dest)
 
-        elif instr.inp2=='neq0c':
-            R1,flag = get_reg(instr,compulsory=True)
+        elif instr.source2=='neq0c':
+            R1,flag = get_reg(instr,reg_nes=True)
             if flag:
-                print("\tmov " + R1 + ", " + get_location(instr.inp1))
+                print("\tmov " + R1 + ", " + get_location(instr.source1))
             save_caller_context()
             print("\tcmp " + R1 + ", 0")
-            print("\tjne " + instr.out)
+            print("\tjne " + instr.dest)
             
 
     def op_goto(self, instr):
         save_caller_context()
-        print("\tjmp " + instr.out)
+        print("\tjmp " + instr.dest)
 
     def op_label(self, instr):
         save_caller_context()
-        print(instr.out + ":")
+        print(instr.dest + ":")
 
     def op_param(self, instr):
-        global param_count
-        if param_count==0:
+        global n_args
+        if n_args==0:
             save_caller_context()
-        param_count+=1
-        print("\tpush " + str(get_location(instr.out)))
+        n_args+=1
+        print("\tpush " + str(get_location(instr.dest)))
 
     def op_pop(self, instr):
-        global param_count
-        param_count+=1
-        print("\tpush " + str(get_location(instr.out)))
+        global n_args
+        n_args+=1
+        print("\tpush " + str(get_location(instr.dest)))
 
     def op_call_function(self, instr):
-        global param_count
+        global n_args
         save_caller_context()
-        print("\tcall " + instr.inp1)
-        print("\tadd rsp, " + str(8 * param_count))
-        if instr.out != None:
-            update_reg_desc("rax",instr.out)
-        param_count = 0
+        print("\tcall " + instr.source1)
+        print("\tadd rsp, " + str(8 * n_args))
+        if instr.dest != None:
+            update_reg_desc("rax",instr.dest)
+        n_args = 0
 
     def op_return(self, instr):
         save_caller_context()
-        if instr.inp1 != None and instr.inp1 != '':
-            loc = get_location(instr.inp1)
+        if instr.source1 != None and instr.source1 != '':
+            loc = get_location(instr.source1)
             save_reg("rax")
             if(loc != "rax"):
                 print("\tmov rax, " + str(loc))
@@ -553,7 +484,7 @@ print$Imports$int:
         print("\tret")
 
     def op_stack_alloc(self, instr):
-        if instr.out.split('$')[0] == 'main' :
+        if instr.dest.split('$')[0] == 'main' :
             print("main:")
             print('\tmov rax,0',
         '\n\tpush rbp',
@@ -571,13 +502,13 @@ print$Imports$int:
         '\n\tpop rbp',
 
         '\n\tret',)
-        print(instr.out + ":")
+        print(instr.dest + ":")
         counter = 0
         for i in symbol_table.keys():
             if not is_temp_var(i)  and not is_valid_float(i) and symbol_table[i].isArg == False:
                 counter += 1
                 symbol_table[i].address_descriptor_mem.add(-8 * counter)
-                #print(instr.out,i)
+                #print(instr.dest,i)
         sz=0
         for i, arg in enumerate(reversed(instr.arg_set)):
             if arg!='':
@@ -592,7 +523,7 @@ print$Imports$int:
         # print("\tsub rsp, " + "56")
 
     def op_declare(self, instr):
-        loc = get_location(instr.inp2)
+        loc = get_location(instr.source2)
         save_caller_context()
         if loc not in reg_descriptor.keys():
             print("\tmov rax," + loc)
@@ -601,18 +532,18 @@ print$Imports$int:
         # print("\tmov rbp, rsp")
         print("\tpush " + loc)
         print("\tcall malloc")
-        loc=symbol_table[instr.inp1].address_descriptor_mem.pop()
-        symbol_table[instr.inp1].address_descriptor_mem.add(loc)
+        loc=symbol_table[instr.source1].address_descriptor_mem.pop()
+        symbol_table[instr.source1].address_descriptor_mem.add(loc)
         print("\tmov [rbp",loc,"], rax") 
         print("\tadd rsp, 8")
         # print("\tmov rsp, rbp")
         # print("\tpop rbp")
-        update_reg_desc("rax", instr.out)
+        update_reg_desc("rax", instr.dest)
 
     def op_extract(self, instr):
         R1,flag = get_reg(instr)
         print("\tmov", R1, f", [rbp+16]")
-        update_reg_desc(R1,instr.out)
+        update_reg_desc(R1,instr.dest)
 
     def gen_code(self, instr):
         if instr.operation == "int_+":
@@ -637,11 +568,6 @@ print$Imports$int:
             self.op_lshift(instr)
         elif instr.operation == "int_>>":
             self.op_rshift(instr)
-        # elif instr.operation == "int_+=":
-        #     instr.operation = 'int_+'
-        #     self.op_add(instr)
-        #     instr.operation = 'int_='
-        #     self.op_intassign(instr)
         elif instr.operation != None and instr.operation.endswith('&'):
             self.op_and(instr)
         elif instr.operation != None and instr.operation.endswith('|'):
@@ -684,124 +610,70 @@ print$Imports$int:
         
         elif instr.operation != None and instr.operation.endswith('_='):
             self.op_intassign(instr)
-        
-        elif instr.operation =='f2i':
-            self.float2int(instr)
-
-        elif instr.operation =='i2f':
-            self.int2float(instr)
-        
-        elif instr.operation =='c2i':
-            self.char2int(instr)
-        
-        elif instr.operation =='i2c':
-            self.int2char(instr)
 
         elif instr.operation =='EXTRACT_THIS':
             self.op_extract(instr)
 
-        # elif instr_type == "print":
-        #     self.op_print(instr)
-
-        # elif instr_type == "print_char":
-        #     self.op_print_char(instr)
-
-        # elif instr_type == "scan_int":
-        #     self.op_scan_int(instr)
-
-
-        # elif instr_type == "begin_func":
-        #     self.op_stack_alloc(instr)
-            # for sym, symentry in symbol_table.items():
-                # print(sym, symentry.address_descriptor_mem)
-
         elif instr.operation == "declare":
              self.op_declare(instr)
 
+generator = Codegen()
 
-###################################global generator############################
-generator = CodeGenerator()
-###################################global generator############################
-def read_three_address_code(filename):
+def read_tac(filename):
     leader = set()
     leader.add(0)
-    IR_code = []
+    instructions_arr = []
     #with open(filename, 'r') as csvfile:
     instruction_set = list(csv.reader(codecs.open(filename, 'rU', 'utf-8')))
     j=1
     for i,statement in enumerate(instruction_set):
         if len(statement) == 0:
             continue
-        #print(statement)
-        IR = Instruction(statement)
-        IR_code.append(IR)
+        instr = Instruction(statement)
+        instructions_arr.append(instr)
         ex = 0
-        if IR.operation in leader_instructions:
-            if IR.operation != "label"  and IR.operation != "func":
+        if instr.operation in leader_instr:
+            if instr.operation != "label"  and instr.operation != "func":
                 ex += 1
-
             leader.add(j-1+ex)
         j+=1
 
-    leader.add(len(IR_code))
+    leader.add(len(instructions_arr))
+    return (sorted(leader),instructions_arr)
 
-    return (sorted(leader), IR_code)
+def next_use(leader, instructions_arr):
 
-def next_use(leader, IR_code):
-
-    generator = CodeGenerator()
-    for b_start in range(len(leader) -  1):
-        # iterate through all basic blocks
-        basic_block = IR_code[leader[b_start] :leader[b_start + 1] ]
-        # for x in basic_block:
-            # print(x.inp1, x.out)
-        # for instr in basic_block:
-        #     if instr.instr_type == "begin_func" and instr.table != None:
-        #         symbol_table = instr.table
-
-        j = leader[b_start + 1] - 1
-        for instr in reversed(basic_block):
-            for sym in [instr.out,instr.inp1,instr.inp2]:
-                if is_valid_sym(sym):
+    gen = Codegen()
+    for block_start in range(len(leader) -  1):
+        b_block = instructions_arr[leader[block_start] :leader[block_start + 1] ]
+        j = leader[block_start + 1] - 1
+        for instr in reversed(b_block):
+            for sym in [instr.dest,instr.source1,instr.source2]:
+                if is_valid_symbol(sym):
                     instr.inst_info['next_use'][sym] = copy.deepcopy(symbol_table[sym].next_use)
-            for sym in [instr.out,instr.inp1,instr.inp2]:
-                if is_valid_sym(sym):
+            for sym in [instr.dest,instr.source1,instr.source2]:
+                if is_valid_symbol(sym):
                     instr.inst_info['live'][sym] = copy.deepcopy(symbol_table[sym].live)
-            if is_valid_sym(instr.out) and instr.array_index_o == None:
-                symbol_table[instr.out].live = False
-                symbol_table[instr.out].next_use = None
+            if is_valid_symbol(instr.dest):
+                symbol_table[instr.dest].live = False
+                symbol_table[instr.dest].next_use = None
 
-            if is_valid_sym(instr.inp1):
-                symbol_table[instr.inp1].live = True
-                symbol_table[instr.inp1].next_use = j
+            if is_valid_symbol(instr.source1):
+                symbol_table[instr.source1].live = True
+                symbol_table[instr.source1].next_use = j
 
-            if is_valid_sym(instr.inp2):
-                symbol_table[instr.inp2].live = True
-                symbol_table[instr.inp2].next_use = j
-
-            if instr.array_index_o and is_valid_sym(instr.array_index_o):
-                symbol_table[instr.array_index_o].live = True
-                symbol_table[instr.array_index_o].next_use = j
-
-            if instr.array_index_i1 and is_valid_sym(instr.array_index_i1):
-                symbol_table[instr.array_index_i1].live = True
-                symbol_table[instr.array_index_i1].next_use = j
+            if is_valid_symbol(instr.source2):
+                symbol_table[instr.source2].live = True
+                symbol_table[instr.source2].next_use = j
             j-=1
 
-        for instr in basic_block:
-            # print(instr)
+        for instr in b_block:
             generator.gen_code(instr)
-        # save_caller_context()
-        reset_live_and_next_use()
+        reset_info()
 
 
 if __name__ == "__main__":
-    # parser_main()
-    leader, IR_code = read_three_address_code(sys.argv[1])
-    # print(leader)
-    # print(len(IR_code))
+    leader, instructions_arr = read_tac(sys.argv[1])
     generator.gen_data_section()
     generator.gen_start_template()
-    next_use(leader, IR_code)
-    # for key in symbol_table.keys():
-    #     print(key,symbol_table[key].isArg)
+    next_use(leader, instructions_arr)

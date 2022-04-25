@@ -76,7 +76,7 @@ print_uint32:
     add eax, 1
     push rax
     mov eax, 4               ; __NR_write from /usr/include/asm/unistd_64.h
-    mov ebx, 1               ; fd = STDOUT_FILENO
+    mov ebx, 1               ; fd = STDdest_FILENO
     mov ecx, neg_
     mov edx, 1
     int 80h
@@ -104,7 +104,7 @@ print_uint32_c:
 
 
     mov    eax, 1               ; __NR_write from /usr/include/asm/unistd_64.h
-    mov    edi, 1               ; fd = STDOUT_FILENO
+    mov    edi, 1               ; fd = STDdest_FILENO
     ; pointer already in RSI    ; buf = last digit stored = most significant
     lea    edx, [rsp+16 + 1]    ; yes, its safe to truncate pointers before subtracting to find length.
     sub    edx, esi             ; RDX = length = end-start, including the
@@ -209,55 +209,30 @@ main$Main:
 	mov qword [rbp-48], rbx
 	mov rbx, 5
 	sub rbx, 1
-	mov rbx, qword _temp2
 	add rbx, 6
-	mov rbx, qword _temp3
 	sub rbx, 2
-	mov rbx, qword _temp4
 	add rbx, 7
-	mov rbx, qword _temp5
 	sub rbx, 3
-	mov rbx, qword _temp6
 	add rbx, 8
-	mov rbx, qword _temp7
 	add rbx, 9
-	mov rbx, qword _temp8
 	add rbx, 10
-	mov rbx, qword _temp9
 	add rbx, 5
-	mov rbx, qword _temp10
 	sub rbx, 1
-	mov rbx, qword _temp11
 	add rbx, 6
-	mov rbx, qword _temp12
 	sub rbx, 2
-	mov rbx, qword _temp13
 	add rbx, 7
-	mov rbx, qword _temp14
 	sub rbx, 3
-	mov rbx, qword _temp15
 	add rbx, 8
-	mov rbx, qword _temp16
 	add rbx, 9
-	mov rbx, qword _temp17
 	add rbx, 10
-	mov rbx, qword _temp18
 	add rbx, 5
-	mov rbx, qword _temp19
 	sub rbx, 1
-	mov rbx, qword _temp20
 	add rbx, 6
-	mov rbx, qword _temp21
 	sub rbx, 2
-	mov rbx, qword _temp22
 	add rbx, 7
-	mov rbx, qword _temp23
 	sub rbx, 3
-	mov rbx, qword _temp24
 	add rbx, 8
-	mov rbx, qword _temp25
 	add rbx, 9
-	mov rbx, qword _temp26
 	add rbx, 10
 	mov qword [rbp-112], 23
 	mov qword [rbp-120], 3
@@ -278,8 +253,7 @@ for_$n_2:
 $n_1:
 	mov rax, 1
 $n_2:
-	mov rbx, rax
-	cmp rbx, 0
+	cmp rax, 0
 	je for_$n_5
 	jmp for_$n_4
 for_$n_3:
@@ -332,8 +306,7 @@ for_$n_7:
 $n_3:
 	mov rax, 1
 $n_4:
-	mov rbx, rax
-	cmp rbx, 0
+	cmp rax, 0
 	je for_$n_10
 	jmp for_$n_9
 for_$n_8:
@@ -351,8 +324,8 @@ for_$n_9:
 	call print$Imports$int
 	add rsp, 16
 	mov qword rbx, qword [rbp-216]
-	mov qword [rbp-216], rbx
 	mov qword [rbp-48], rbx
+	mov qword [rbp-216], rbx
 	jmp for_$n_8
 for_$n_10:
 	mov qword rax, qword [rbp-40]
