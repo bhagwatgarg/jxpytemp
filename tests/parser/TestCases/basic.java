@@ -62,7 +62,7 @@ class Main{
     // }
 
     int arr[][] = new int[5][3];
-
+    arr[2][1]=0;
     return a;
   }
 }

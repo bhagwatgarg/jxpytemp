@@ -1,3 +1,6 @@
+from pkgutil import extend_path
+
+
 symbol_table = {}
 
 def is_val_reg(reg):
@@ -49,6 +52,7 @@ class symbol_data:
         self.isArr = isArr
         self.isArg = isArg
         self.size=0
+        self.dims=[]
 #       self.size = (size+3//4)*4
         self.address_descriptor_mem = set()
         self.address_descriptor_reg = set()
@@ -69,6 +73,7 @@ class Instruction:
         self.arg_set = []
         self.arrdec = False
         self.size = 0
+        self.dims=[]
         self.get_info(statement)
         symbols = [
                 self.inp1, self.array_index_i1,
@@ -193,6 +198,11 @@ class Instruction:
             self.out = statement[0]
             self.arrdec = True
             self.size = int(statement[1])
+            self.dims = self.extract_args(statement[2])
+            i=0
+            for dim in self.dims:
+                self.dims[i]=int(self.dims[i])
+                i+=1
         
         elif statement[3] == 'DEREFERENCE':
             self.operation = statement[3]
