@@ -9,28 +9,89 @@ extern scanf
 section	.data
 
 pint: db	"%ld ", 0
+neg_: db "-"
 sint: db	"%ld", 0
 _temp1	dd	0
 _temp2	dd	0
-_temp3	dd	0
 _temp4	dd	0
-_temp6	dd	0
+_temp3	dd	0
 _temp5	dd	0
+_temp7	dd	0
+_temp6	dd	0
+_temp8	dd	0
+_temp10	dd	0
+_temp9	dd	0
 
 section .text
 	global main
+print_uint32:
+    mov    eax, edi              ; function arg
+    cmp eax, 0
+    jge print_uint32_c
+    xor eax, 0xFFFFFFFF
+    add eax, 1
+    push rax
+    mov eax, 4               ; __NR_write from /usr/include/asm/unistd_64.h
+    mov ebx, 1               ; fd = STDOUT_FILENO
+    mov ecx, neg_
+    mov edx, 1
+    int 80h
+    pop rax
+
+print_uint32_c:
+
+    mov    ecx, 0xa              ; base 10
+    push   rcx                   ; ASCII newline
+    mov    rsi, rsp
+    sub    rsp, 16               ; not needed on 64-bit Linux, the red-zone is big enough.  Change the LEA below if you remove this.
+
+;;; rsi is pointing at nl on the stack, with 16B of "allocated" space below that.
+.toascii_digit:                ; do {
+    xor    edx, edx
+    div    ecx                   ; edx=remainder = low digit = 0..9.  eax/=10
+                                 ;; DIV IS SLOW.  use a multiplicative inverse if performance is relevant.
+    add    edx, '0'
+    dec    rsi                 ; store digits in MSD-first printing order, working backwards from the end of the string
+    mov    [rsi], dl
+
+    test   eax,eax             ; } while(x);
+    jnz  .toascii_digit
+;;; rsi points to the first digit
+
+
+    mov    eax, 1               ; __NR_write from /usr/include/asm/unistd_64.h
+    mov    edi, 1               ; fd = STDOUT_FILENO
+    ; pointer already in RSI    ; buf = last digit stored = most significant
+    lea    edx, [rsp+16 + 1]    ; yes, its safe to truncate pointers before subtracting to find length.
+    sub    edx, esi             ; RDX = length = end-start, including the
+    syscall                     ; write(1, string /*RSI*/,  digits + 1)
+
+    add  rsp, 24                ; (in 32-bit: add esp,20) undo the push and the buffer reservation
+    ret
+
+
+
 print$Imports$int:	
 	push rbp
 	mov rbp, rsp
+
 	push rsi
 	push rdi
-	mov rsi, qword [rbp+24]
-	lea rdi, [rel pint]
-	xor rax, rax
-	call printf
-	xor rax, rax
-	pop rsi
+	push rax
+	push rbx
+	push rcx
+	push rdx
+	mov rdi, qword [rbp+24] 
+
+	call print_uint32
+
+	pop rdx
+	pop rcx
+	pop rbx
+	pop rax
 	pop rdi
+	pop rsi
+
 	mov rsp, rbp
 	pop rbp
 	ret
@@ -113,9 +174,11 @@ $n_2:
 	je for_$n_5
 	jmp for_$n_4
 for_$n_3:
-	mov rax, qword [rbp-48]
-	add rax, 1
+	mov  rax, qword [rbp-48]
+	mov rbx, rax
+	add rbx, 1
 	mov qword [rbp-48], rax
+	mov qword [rbp-48], rbx
 	jmp for_$n_2
 for_$n_4:
 	mov  rax, qword [rbp-40]
@@ -126,6 +189,12 @@ for_$n_4:
 	add rsp, 16
 	jmp for_$n_3
 for_$n_5:
+	mov  rax, qword [rbp-40]
+	mov qword [rbp-40], rax
+	push qword [rbp-48]
+	push rax
+	call print$Imports$int
+	add rsp, 16
 	mov rax, 0
 	mov rsp, rbp
 	pop rbp

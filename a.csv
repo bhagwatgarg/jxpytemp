@@ -14,15 +14,21 @@ _temp2,i$main$Main,10,int_<
 ifgoto,_temp2,eq0c,for_$n_5
 goto,,,for_$n_4
 label :,,,for_$n_3
+_temp4,i$main$Main, ,int_=
 _temp3,i$main$Main,1,int_+
-i$main$Main,_temp3,,int_=
+i$main$Main,_temp3, ,int_=
 goto,,,for_$n_2
 label :,,,for_$n_4
-_temp4,imp$main$Main,,int_=
-_temp6,_temp4,,int_=
+_temp5,imp$main$Main,,int_=
+_temp7,_temp5,,int_=
 push,i$main$Main,,
-push,_temp6,,
-call,print$Imports$int,1,_temp5
+push,_temp7,,
+call,print$Imports$int,1,_temp6
 goto,,,for_$n_3
 label :,,,for_$n_5
+_temp8,imp$main$Main,,int_=
+_temp10,_temp8,,int_=
+push,i$main$Main,,
+push,_temp10,,
+call,print$Imports$int,1,_temp9
 ret,0,,

@@ -31,6 +31,7 @@ class CodeGenerator:
         print("extern scanf\n")
         print("section\t.data\n")
         print('pint: db	"%ld ", 0')
+        print('neg_: db "-"')
         print('sint: db	"%ld", 0')
         #print("print_char:\tdb\t\"%c\",0")
         #print("scan_int:\tdb\t\"%d\",0")
@@ -48,7 +49,77 @@ class CodeGenerator:
         print("section .text")
         print("\tglobal main")
 
-        print("print$Imports$int:	\n\tpush rbp\n\tmov rbp, rsp\n\tpush rsi\n\tpush rdi\n\tmov rsi, qword [rbp+24]\n\tlea rdi, [rel pint]\n\txor rax, rax\n\tcall printf\n\txor rax, rax\n\tpop rsi\n\tpop rdi\n\tmov rsp, rbp\n\tpop rbp\n\tret")
+        print("""print_uint32:
+    mov    eax, edi              ; function arg
+    cmp eax, 0
+    jge print_uint32_c
+    xor eax, 0xFFFFFFFF
+    add eax, 1
+    push rax
+    mov eax, 4               ; __NR_write from /usr/include/asm/unistd_64.h
+    mov ebx, 1               ; fd = STDOUT_FILENO
+    mov ecx, neg_
+    mov edx, 1
+    int 80h
+    pop rax
+
+print_uint32_c:
+
+    mov    ecx, 0xa              ; base 10
+    push   rcx                   ; ASCII newline
+    mov    rsi, rsp
+    sub    rsp, 16               ; not needed on 64-bit Linux, the red-zone is big enough.  Change the LEA below if you remove this.
+
+;;; rsi is pointing at nl on the stack, with 16B of "allocated" space below that.
+.toascii_digit:                ; do {
+    xor    edx, edx
+    div    ecx                   ; edx=remainder = low digit = 0..9.  eax/=10
+                                 ;; DIV IS SLOW.  use a multiplicative inverse if performance is relevant.
+    add    edx, '0'
+    dec    rsi                 ; store digits in MSD-first printing order, working backwards from the end of the string
+    mov    [rsi], dl
+
+    test   eax,eax             ; } while(x);
+    jnz  .toascii_digit
+;;; rsi points to the first digit
+
+
+    mov    eax, 1               ; __NR_write from /usr/include/asm/unistd_64.h
+    mov    edi, 1               ; fd = STDOUT_FILENO
+    ; pointer already in RSI    ; buf = last digit stored = most significant
+    lea    edx, [rsp+16 + 1]    ; yes, its safe to truncate pointers before subtracting to find length.
+    sub    edx, esi             ; RDX = length = end-start, including the
+    syscall                     ; write(1, string /*RSI*/,  digits + 1)
+
+    add  rsp, 24                ; (in 32-bit: add esp,20) undo the push and the buffer reservation
+    ret
+
+
+
+print$Imports$int:	
+	push rbp
+	mov rbp, rsp
+
+	push rsi
+	push rdi
+	push rax
+	push rbx
+	push rcx
+	push rdx
+	mov rdi, qword [rbp+24] 
+
+	call print_uint32
+
+	pop rdx
+	pop rcx
+	pop rbx
+	pop rax
+	pop rdi
+	pop rsi
+
+	mov rsp, rbp
+	pop rbp
+	ret""")
         print("""scan_int$Imports:
 \tpush rbp
 \tmov rbp, rsp
