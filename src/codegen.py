@@ -710,9 +710,7 @@ def next_use(leader, IR_code):
         # save_caller_context()
         reset_live_and_next_use()
 
-
-if __name__ == "__main__":
-    # parser_main()
+def main():
     leader, IR_code = read_three_address_code(sys.argv[1])
     # print(leader)
     # print(len(IR_code))
@@ -721,3 +719,10 @@ if __name__ == "__main__":
     next_use(leader, IR_code)
     # for key in symbol_table.keys():
     #     print(key,symbol_table[key].isArg)
+
+if __name__ == "__main__":
+    # parser_main()
+    try:
+        main()
+    except:
+        sys.exit("Compilation failed! Wrong 3 Address Provided!")

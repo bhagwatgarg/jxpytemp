@@ -1,3 +1,4 @@
+import sys
 from tac import *
 # widths = {'int': 4, 'float': 8, 'short': 4, 'long': 8, 'double': 8, 'char': 1}
 primitives = ['int', 'float', 'bool', 'char', 'long', 'double']
@@ -542,8 +543,8 @@ class Assignment(BinaryExpression):
                     tac.emit(lhs.place, rhs.place,'',
                              int_or_real(lhs.type) + '_' + operator)
         elif lhs.type != rhs.type:
-            print("Type mismatch in assignment.")
-            print(lhs, rhs)
+            sys.exit("Type mismatch in assignment.")
+            # print(lhs, rhs)
         else:  # ask
             # ST.print_scope_table()
             if self.type in ['int', 'char', 'long']:
@@ -781,7 +782,7 @@ class Xor(BinaryExpression):
                              int_or_real(lhs.type) + '_' + operator)
 
         else:
-            print("Error in Xor operator operand types.")
+            sys.exit("Error in Xor operator operand types.")
 
 
 class And(BinaryExpression):
@@ -829,7 +830,7 @@ class And(BinaryExpression):
                              int_or_real(lhs.type) + '_' + operator)
 
         else:
-            print("Error in And operator operand types.")
+            sys.exit("Error in And operator operand types.")
 
 
 class Equality(BinaryExpression):
@@ -895,7 +896,7 @@ class Equality(BinaryExpression):
             self.truelist = [len(tac.code)]
             tac.emit("goto", '', '', '')
         else:
-            print(f"Error in {self.operator} operator operand types.")
+            sys.exit(f"Error in {self.operator} operator operand types.")
 
 
 class Relational(BinaryExpression):
@@ -953,7 +954,7 @@ class Relational(BinaryExpression):
             self.truelist = [len(tac.code)]
             tac.emit("goto", '', '', '')
         else:
-            print("Error in relational operator operand types.")
+            sys.exit("Error in relational operator operand types.")
 
 
 class Shift(BinaryExpression):
@@ -1000,7 +1001,7 @@ class Shift(BinaryExpression):
                     tac.emit(self.place, lhs.place, rhs.place,
                              int_or_real(lhs.type) + '_' + operator)
         else:
-            print("Error in Shift operator operand types.")
+            sys.exit("Error in Shift operator operand types.")
 
 
 class Additive(BinaryExpression):
@@ -1048,7 +1049,7 @@ class Additive(BinaryExpression):
                              int_or_real(lhs.type) + '_' + operator)
                 #######################
         else:
-            print("Error in additive operator operand types.")
+            sys.exit("Error in additive operator operand types.")
 
 
 class Multiplicative(BinaryExpression):
@@ -1096,7 +1097,7 @@ class Multiplicative(BinaryExpression):
                              int_or_real(lhs.type) + '_' + operator)
                 #######################
         else:
-            print("Error in multiplicative operator operand types.")
+            sys.exit("Error in multiplicative operator operand types.")
 
 
 class Unary(Expression):
@@ -1247,12 +1248,12 @@ class MethodInvocation(Expression):
                 # print(get_func_name(var, arguments))
 
                 if ST.lookup(var) == None and ST.lookup(get_func_name(var, arguments), is_func=True) == None:
-                    print("Variable/Function", var,
+                    sys.exit("Variable/Function", var,
                           f"not declared in current scope {ST.curr_scope} (1)")
                     break
                 elif ST.lookup(var) != None and ST.lookup(var)['type'] not in primitives:
                     if 'private' in ST.lookup(var)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(var)['scope'], temp):
-                        print(
+                        sys.exit(
                             f"Tried to access a 'private' variable '{var}' from outside 1")
                         break
                     k = ST.lookup(var)['type']
@@ -1262,7 +1263,7 @@ class MethodInvocation(Expression):
                 elif ST.lookup(get_func_name(var, arguments), is_func=True) != None:
                     if 'private' in ST.lookup(get_func_name(var, arguments), is_func=True)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(get_func_name(var, arguments), is_func=True)['scope'], temp):
                         # print(get_func_name(var, arguments))
-                        print(
+                        sys.exit(
                             f"Tried to access a 'private' function '{var}' from outside")
                         break
                     func_name = get_func_name(var, arguments)
@@ -1274,7 +1275,7 @@ class MethodInvocation(Expression):
                     ST.curr_sym_table = ST.scope_and_table_map[ST.curr_scope]
                 elif ST.lookup(var) != None and ST.lookup(var)['type'] in primitives:
                     if 'private' in ST.lookup(var)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(var)['scope'], temp):
-                        print(
+                        sys.exit(
                             f"Tried to access a 'private' variable '{var}' from outside 2")
                         break
                     f_type = ST.lookup(var)['type']
@@ -1302,19 +1303,19 @@ class MethodInvocation(Expression):
         self.type_arguments = type_arguments
         try:
             if ST.lookup(ST.curr_scope, is_func=True) is None:
-                print("Not a function")
+                sys.exit("Not a function")
             else:
                 n_params = ST.lookup(ST.curr_scope, is_func=True)['n_params']
                 self.type = ST.lookup(ST.curr_scope, is_func=True)[
                     'return_type']
                 params = ST.lookup(ST.curr_scope, is_func=True)['params']
                 if n_params != len(arguments):
-                    print('Incorrect number of Arguements')
+                    sys.exit('Incorrect number of Arguements')
                 else:
                     for i in range(len(arguments)):
                         if arguments[i].type != params[i]['type']:
-                            print('Type of method arguement not correct')
-                            print(arguments[i].type, params[i]['type'])
+                            sys.exit('Type of method arguement not correct')
+                            # print(arguments[i].type, params[i]['type'])
         except:
             pass
         temp2 = ST.curr_scope
@@ -1403,7 +1404,7 @@ class Switch(Statement):
         self.switch_cases = switch_cases
 
         if expression.type not in ['int', 'long', 'bool', 'char']:
-            print('Error in switch expression type')
+            sys.exit('Error in switch expression type')
 
 
 class SwitchCase(BaseClass):
@@ -1453,11 +1454,11 @@ class Return(Statement):
             self.type = result.type
         res = ST.get_curr_func()
         if not res:
-            print("Not in a function")
+            sys.exit("Not in a function")
         elif res['return_type'] == self.type or (res['return_type'] in primitives and self.type in primitives):
             pass
         else:
-            print("Return type mismatch")
+            sys.exit("Return type mismatch")
 
         if result:
             tac.emit('ret', result.place, '', '')
@@ -1498,7 +1499,7 @@ class InstanceCreation(Expression):
         temp_table=ST.curr_sym_table
         ST.curr_scope=type
         ST.curr_sym_table=ST.scope_and_table_map[type]
-        if get_func_name(type, arguments) not in ST.curr_sym_table.functions.keys(): print(f"Constructor for {type} not declared")
+        if get_func_name(type, arguments) not in ST.curr_sym_table.functions.keys(): sys.exit(f"Constructor for {type} not declared")
         # print(get_func_name(type, arguments))
         for x in reversed(arguments):
             if isinstance(x, Literal): tac.emit('push',x.value,'','')
@@ -1548,7 +1549,7 @@ class ArrayAccess(Expression):
         width=8
         if self.type in primitives: width=widths[self.type]
         if index.type not in ['int', 'long']:
-            print('Array index not of type int')
+            sys.exit('Array index not of type int')
 
         # while ST.lookup(target) is not None:
         #   target=target.target
@@ -1561,7 +1562,7 @@ class ArrayAccess(Expression):
             value = ST.lookup(target.value)
             self.dimension = value['dims']
         if self.depth > self.dimension:
-            print("More than allowed dimension(s) accessed")
+            sys.exit("More than allowed dimension(s) accessed")
         # if self.depth < self.dimension:
         #     print("Less than allowed dimension(s) accessed")
 
@@ -1676,10 +1677,10 @@ class Name(BaseClass):
         for var in a:
             if var=='':continue
             if f_type in primitives:
-                print("primitive type")
+                sys.exit("primitive type")
             if ST.lookup(var) != None and ST.lookup(var)['type'] not in primitives:
                 if 'private' in ST.lookup(var)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(var)['scope'], temp):
-                    print(
+                    sys.exit(
                         f"Tried to access a 'private' variable '{var}' from outside 3")
                     break
                 k = ST.lookup(var)['type']
@@ -1688,14 +1689,14 @@ class Name(BaseClass):
                 f_type = k
             elif ST.lookup(var) != None and ST.lookup(var)['type'] in primitives:
                 if 'private' in ST.lookup(var)['modifiers'] and not ST.check_parent_child_relationship(ST.lookup(var)['scope'], temp):
-                    print(
+                    sys.exit(
                         f"Tried to access a 'private' variable '{var}' from outside 4")
                     break
                 f_type = ST.lookup(var)['type']
             elif ST.check_func_prefix(var) == True:
                 f_type = '$func'
             else:
-                print(f"{var} not declared in current scope")
+                sys.exit(f"{var} not declared in current scope")
 
         # print(self.value, self.type, self.place, name)
         # Say, temp var stores the address of the variable

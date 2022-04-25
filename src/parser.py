@@ -30,7 +30,7 @@ def generate_ast(p, parent=None, arr_name=None):
         if arr_name==None:
             arr_name="None"
             # raise Exception(f"ERROR! {curr_class.__name__} arrname not given")
-            print(f"ERROR! {curr_class.__name__} arrname not given")
+            sys.exit(f"ERROR! {curr_class.__name__} arrname not given")
         graph.add_node(pydot.Node((curr_val), label=arr_name))
         node_num+=1
         graph.add_edge(pydot.Edge(str(parent), (curr_val)))
@@ -1355,7 +1355,7 @@ def p_ForStatement(p):
         tac.backpatch(predicate.truelist, tl_jumps)
         tac.backpatch(predicate.falselist, brks)
     else:
-        print("Check condition missing in For loop")
+        sys.exit("Check condition missing in For loop")
 
     continues.pop()
     breaks.pop()
@@ -1425,7 +1425,7 @@ def p_ForStatementNoShortIf(p):
         tac.backpatch(predicate.truelist, tl_jumps)
         tac.backpatch(predicate.falselist, brks)
     else:
-        print("Check condition missing in For loop")
+        sys.exit("Check condition missing in For loop")
 
     continues.pop()
     breaks.pop()
@@ -1487,7 +1487,7 @@ def p_BreakStatement(p):
     BreakStatement : BREAK SEMI
     '''
     if len(continues) == 0:
-        print("Break Statement detected outside loop")
+        sys.exit("Break Statement detected outside loop")
     breaks[-1].append(len(tac.code))
     tac.emit('goto', '', '', '')
     p[0] = Break()
@@ -1501,7 +1501,7 @@ def p_ContinueStatement(p):
     ContinueStatement : CONTINUE SEMI
     '''
     if len(continues) == 0:
-        print("Continue Statement detected outside loop")
+        sys.exit("Continue Statement detected outside loop")
     continues[-1].append(len(tac.code))
     tac.emit('goto', '', '', '')
     p[0] = Continue()
@@ -1952,4 +1952,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        sys.exit(e)
+    except:
+        sys.exit("Parsing Failed. Please check the docs for supported features")
