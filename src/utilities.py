@@ -207,12 +207,12 @@ class Instruction:
 
 
 reg_descriptor = {}
-reg_descriptor["rax"] = set()
-reg_descriptor["rbx"] = set()
-reg_descriptor["rcx"] = set()
-reg_descriptor["rdx"] = set()
-reg_descriptor["rsi"] = set()
-reg_descriptor["rdi"] = set()
+reg_descriptor["eax"] = set()
+reg_descriptor["ebx"] = set()
+reg_descriptor["ecx"] = set()
+reg_descriptor["edx"] = set()
+reg_descriptor["esi"] = set()
+reg_descriptor["edi"] = set()
 reg_descriptor["xmm0"] = set()
 reg_descriptor["xmm1"] = set()
 reg_descriptor["xmm2"] = set()
@@ -236,14 +236,14 @@ def get_loc_mem(symbol,flag=1):
     if type(loc) == type(1):
         if loc > 0 :
             if flag:
-                return "[rbp+" + str(loc) + "]"
+                return "[ebp+" + str(loc) + "]"
             else:
-                return 'rbp+'+ str(loc)
+                return 'ebp+'+ str(loc)
         else:
             if flag:
-                return "[rbp" + str(loc) + "]"
+                return "[ebp" + str(loc) + "]"
             else:
-                return 'rbp'+ str(loc)           
+                return 'ebp'+ str(loc)           
     else:
         if flag:
             return "[" + loc + "]"
@@ -273,9 +273,9 @@ def free_regs(instr):
             symbol_table[instr.inp1].address_descriptor_reg.clear()
             if is_val_reg(treg):
                 if treg.startswith('xmm'):
-                    print("\tmovsd qword " + get_loc_mem(instr.inp1) + ", " + treg)
+                    print("\tmovsd dword " + get_loc_mem(instr.inp1) + ", " + treg)
                 else:
-                    print("\tmov qword " + get_loc_mem(instr.inp1) + ", " + treg)
+                    print("\tmov dword " + get_loc_mem(instr.inp1) + ", " + treg)
             #print('aaaaa',treg)
     if is_valid_sym(instr.inp2):
             if instr.inst_info['next_use'][instr.inp1] == None and instr.inst_info['live'][instr.inp1] == False:
@@ -286,9 +286,9 @@ def free_regs(instr):
                 symbol_table[instr.inp2].address_descriptor_reg.clear()
                 if is_val_reg(treg):
                     if treg.startswith('xmm'):
-                        print("\tmovsd qword " + get_loc_mem(instr.inp2) + ", " + treg)
+                        print("\tmovsd dword " + get_loc_mem(instr.inp2) + ", " + treg)
                     else:
-                        print("\tmov qword " + get_loc_mem(instr.inp2) + ", " + reg)
+                        print("\tmov dword " + get_loc_mem(instr.inp2) + ", " + reg)
 
 def get_location(symbol,exclude_reg=[]):
 
@@ -303,7 +303,7 @@ def get_location(symbol,exclude_reg=[]):
             for reg in reg_descriptor.keys():
                 if symbol in reg_descriptor[reg]:
                     return reg
-        return 'qword ' + get_loc_mem(symbol)
+        return 'dword ' + get_loc_mem(symbol)
 
 def save_caller_context():
     saved = set()
@@ -313,7 +313,7 @@ def save_caller_context():
                 if reg.startswith('xmm'):
                     print("\tmovsd " + get_loc_mem(symbol) + ", " + str(reg))
                 else :
-                    print("\tmov qword " + get_loc_mem(symbol) + ", " + str(reg))
+                    print("\tmov dword " + get_loc_mem(symbol) + ", " + str(reg))
                 symbol_table[symbol].address_descriptor_reg.clear()
                 saved.add(symbol)
         reg_descriptor[reg].clear()
@@ -325,7 +325,7 @@ def save_reg(reg):
             if reg.startswith('xmm'):
                 print("\tmovsd "+ get_loc_mem(symbol) + ", " + reg)
             else:
-                print("\tmov qword " + get_loc_mem(symbol) + ", " + reg)
+                print("\tmov dword " + get_loc_mem(symbol) + ", " + reg)
         symbol_table[symbol].address_descriptor_reg.remove(reg)
     reg_descriptor[reg].clear()
 

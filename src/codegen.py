@@ -48,66 +48,66 @@ class CodeGenerator:
         print("section .text")
         print("\tglobal main")
 
-        print("print$Imports$int:	\n\tpush rbp\n\tmov rbp, rsp\n\tpush rsi\n\tpush rdi\n\tmov rsi, qword [rbp+24]\n\tlea rdi, [rel pint]\n\txor rax, rax\n\tcall printf\n\txor rax, rax\n\tpop rsi\n\tpop rdi\n\tmov rsp, rbp\n\tpop rbp\n\tret")
+        print("print$Imports$int:	\n\tpush ebp\n\tmov ebp, esp\n\tmov esi, dword [ebp+12]\n\tmov edi, pint\n\tpush edi\n\tpush esi\n\txor eax, eax\n\tcall printf\n\tadd esp, 4\n\txor eax, eax\n\tmov esp, ebp\n\tpop ebp\n\tret")
         print("""scan_int$Imports:
-\tpush rbp
-\tmov rbp, rsp
-\tpush rsi
-\tpush rdi
-\tadd rsp, 8
-\tmov rsi, rsp
-\tlea rdi, [rel sint]
-\txor rax, rax
+\tpush ebp
+\tmov ebp, esp
+\tpush esi
+\tpush edi
+\tadd esp, 4
+\tmov esi, esp
+\tlea edi, [rel sint]
+\txor eax, eax
 \tcall scanf
-\tmov rax, qword [rsp]
-\tpop rdi
-\tpop rsi
-\tmov rsp, rbp
-\tpop rbp
+\tmov eax, dword [esp]
+\tpop edi
+\tpop esi
+\tmov esp, ebp
+\tpop ebp
 \tret
         """)
     # def op_print(self, instr):
     #     loc = get_location(instr.inp1)
     #     save_caller_context()
     #     if loc not in reg_descriptor.keys():
-    #         print("\tmov rax, " + loc)
-    #         loc = "rax"
-    #     print("\tpush rbp")
-    #     print("\tmov rbp,esp")
-    #     print("\tpush qword " + str(loc))
-    #     print("\tpush qword print")
+    #         print("\tmov eax, " + loc)
+    #         loc = "eax"
+    #     print("\tpush ebp")
+    #     print("\tmov ebp,esp")
+    #     print("\tpush dword " + str(loc))
+    #     print("\tpush dword print")
     #     print("\tcall printf")
-    #     print("\tadd esp, 8")
-    #     print("\tmov esp, rbp")
-    #     print("\tpop rbp")
+    #     print("\tadd esp, 4")
+    #     print("\tmov esp, ebp")
+    #     print("\tpop ebp")
 
     # def op_print_char(self, instr):
     #     loc = get_location(instr.inp1)
     #     save_caller_context()
     #     if loc not in reg_descriptor.keys():
-    #         print("\tmov rax, " + loc)
-    #         loc = "rax"
-    #     print("\tpush rbp")
-    #     print("\tmov rbp,esp")
-    #     print("\tpush qword " + str(loc))
-    #     print("\tpush qword print_char")
+    #         print("\tmov eax, " + loc)
+    #         loc = "eax"
+    #     print("\tpush ebp")
+    #     print("\tmov ebp,esp")
+    #     print("\tpush dword " + str(loc))
+    #     print("\tpush dword print_char")
     #     print("\tcall printf")
-    #     print("\tadd esp, 8")
-    #     print("\tmov esp, rbp")
-    #     print("\tpop rbp")
+    #     print("\tadd esp, 4")
+    #     print("\tmov esp, ebp")
+    #     print("\tpop ebp")
 
     # def op_scan_int(self, instr):
     #     save_caller_context()
     #     loc = get_location(instr.out)
-    #     print("\tlea rax, " + loc)
-    #     print("\tpush rbp")
-    #     print("\tmov rbp,esp")
-    #     print("\tpush rax")
+    #     print("\tlea eax, " + loc)
+    #     print("\tpush ebp")
+    #     print("\tmov ebp,esp")
+    #     print("\tpush eax")
     #     print("\tpush scan_int")
     #     print("\tcall scanf")
-    #     print("\tadd esp, 8")
-    #     print("\tmov esp, rbp")
-    #     print("\tpop rbp")
+    #     print("\tadd esp, 4")
+    #     print("\tmov esp, ebp")
+    #     print("\tpop ebp")
 
     # def optimize_if_possible(self, out, inp1, inp2, op):
     #     '''
@@ -190,18 +190,18 @@ class CodeGenerator:
 
     def op_div(self, instr):
 
-        save_reg("rax")
-        print("\tmov rax, " + get_location(instr.inp1))
-        save_reg("rdx")
+        save_reg("eax")
+        print("\tmov eax, " + get_location(instr.inp1))
+        save_reg("edx")
         if is_valid_number(instr.inp2):
-            R1, flag = get_reg(instr,exclude=["rax","rdx"])
+            R1, flag = get_reg(instr,exclude=["eax","edx"])
             print("\tmov " + R1 + ", " + get_location(instr.inp2))
             print("\tcdq")
             print("\tidiv " + R1)
         else:
             print("\tcdq")
-            print("\tidiv qword " + get_location(instr.inp2))
-        update_reg_desc("rax", instr.out)
+            print("\tidiv dword " + get_location(instr.inp2))
+        update_reg_desc("eax", instr.out)
         free_regs(instr)
     
     def op_fadd(self,instr):
@@ -284,19 +284,19 @@ class CodeGenerator:
 
     def op_modulo(self, instr):
 
-        save_reg("rax")
-        print("\tmov rax, " + get_location(instr.inp1))
-        save_reg("rdx")
+        save_reg("eax")
+        print("\tmov eax, " + get_location(instr.inp1))
+        save_reg("edx")
         if is_valid_number(instr.inp2):
-            R1, flag = get_reg(instr,exclude=["rax","rdx"])
+            R1, flag = get_reg(instr,exclude=["eax","edx"])
             print("\tmov " + R1 + ", " + get_location(instr.inp2))
             print("\tcdq")
             print("\tidiv " + R1)
         else:
             print("\tcdq")
-            print("\tidiv qword" + get_location(instr.inp2))
+            print("\tidiv dword" + get_location(instr.inp2))
 
-        update_reg_desc("rdx", instr.out)
+        update_reg_desc("edx", instr.out)
         free_regs(instr)
 
 
@@ -633,7 +633,7 @@ class CodeGenerator:
     def op_unary(self, instr):
         R1, flag = get_reg(instr,compulsory=False)
         if R1 not in reg_descriptor.keys():
-            R1 = "qword " + R1
+            R1 = "dword " + R1
         if flag:
             print("\tmov "+ R1 + ", " + get_location(instr.inp1))
         if instr.operation == "!" or instr.operation == "~":
@@ -677,8 +677,8 @@ class CodeGenerator:
 
 
     def int2char(self, instr):
-        R1,flag = get_reg(instr,  exclude = ["rsi", "rdi"])
-        R2,flag2 = get_reg(instr, exclude = [R1, "rsi", "rdi"])
+        R1,flag = get_reg(instr,  exclude = ["esi", "edi"])
+        R2,flag2 = get_reg(instr, exclude = [R1, "esi", "edi"])
         print("\tmov " + R1 +", " + get_location(instr.inp1))
         update_reg_desc(R2, instr.out)
         print("\txor " + R2 + ", " + R2)
@@ -690,7 +690,7 @@ class CodeGenerator:
         print("\tmovsd " + R1 + ", " + get_location(instr.inp1))
         R2 = get_reg(instr)
         print("\tcvttss2si " + R2  + ", " + R1)
-        R3 = get_reg(instr, exclude = [R2, "rsi", "rdi"])
+        R3 = get_reg(instr, exclude = [R2, "esi", "edi"])
         print("\txor " + R3 + ", " + R3)
         print("\tmov " + R3 + ", " + R2)
         update_reg_desc(R3, instr.out)
@@ -773,40 +773,40 @@ class CodeGenerator:
         global param_count
         save_caller_context()
         print("\tcall " + instr.inp1)
-        print("\tadd rsp, " + str(8 * param_count))
+        print("\tadd esp, " + str(4 * param_count))
         if instr.out != None:
-            update_reg_desc("rax",instr.out)
+            update_reg_desc("eax",instr.out)
         param_count = 0
 
     def op_return(self, instr):
         save_caller_context()
         if instr.inp1 != None and instr.inp1 != '':
             loc = get_location(instr.inp1)
-            save_reg("rax")
-            if(loc != "rax"):
-                print("\tmov rax, " + str(loc))
+            save_reg("eax")
+            if(loc != "eax"):
+                print("\tmov eax, " + str(loc))
 
-        print("\tmov rsp, rbp")
-        print("\tpop rbp")
+        print("\tmov esp, ebp")
+        print("\tpop ebp")
         print("\tret")
 
     def op_stack_alloc(self, instr):
         if instr.out.split('$')[0] == 'main' :
             print("main:")
-            print('\tmov rax,0',
-        '\n\tpush rbp',
-        '\n\tmov rbp, rsp',
-        '\n\tpush rax',
+            print('\tmov eax,0',
+        '\n\tpush ebp',
+        '\n\tmov ebp, esp',
+        '\n\tpush eax',
         '\n\tcall malloc',
-        '\n\tadd rsp, 8',
-        '\n\tmov rsp, rbp',
-        '\n\tpush rax',
+        '\n\tadd esp, 4',
+        '\n\tmov esp, ebp',
+        '\n\tpush eax',
         '\n\tcall Main$Main',
-        '\n\tadd rsp, 8',
-        '\n\tpush rax',
+        '\n\tadd esp, 4',
+        '\n\tpush eax',
         '\n\tcall main$Main',
-        '\n\tadd rsp, 8',
-        '\n\tpop rbp',
+        '\n\tadd esp, 4',
+        '\n\tpop ebp',
 
         '\n\tret',)
         print(instr.out + ":")
@@ -814,42 +814,42 @@ class CodeGenerator:
         for i in symbol_table.keys():
             if not is_temp_var(i)  and not is_valid_float(i) and symbol_table[i].isArg == False:
                 counter += 1
-                symbol_table[i].address_descriptor_mem.add(-8 * counter)
+                symbol_table[i].address_descriptor_mem.add(-4 * counter)
                 #print(instr.out,i)
         sz=0
         for i, arg in enumerate(reversed(instr.arg_set)):
             if arg!='':
-                sz+=8
-                symbol_table[arg].address_descriptor_mem.add(sz + 16)
-                #print('here',arg,sz+16)
+                sz+=4
+                symbol_table[arg].address_descriptor_mem.add(sz + 8)
+                #print('here',arg,sz+8)
 
-        print("\tpush rbp")
-        print("\tmov rbp, rsp")
-        print("\tsub rsp, " + str(8*(counter + 10)))
+        print("\tpush ebp")
+        print("\tmov ebp, esp")
+        print("\tsub esp, " + str(4*(counter + 10)))
         # TODO
-        # print("\tsub rsp, " + "56")
+        # print("\tsub esp, " + "56")
 
     def op_declare(self, instr):
         loc = get_location(instr.inp2)
         save_caller_context()
         if loc not in reg_descriptor.keys():
-            print("\tmov rax," + loc)
-            loc = "rax"
-        # print("\tpush rbp")
-        # print("\tmov rbp, rsp")
+            print("\tmov eax," + loc)
+            loc = "eax"
+        # print("\tpush ebp")
+        # print("\tmov ebp, esp")
         print("\tpush " + loc)
         print("\tcall malloc")
         loc=symbol_table[instr.inp1].address_descriptor_mem.pop()
         symbol_table[instr.inp1].address_descriptor_mem.add(loc)
-        print("\tmov [rbp",loc,"], rax") 
-        print("\tadd rsp, 8")
-        print("\tmov rsp, rbp")
-        print("\tpop rbp")
-        update_reg_desc("rax", instr.out)
+        print("\tmov [ebp",loc,"], eax") 
+        print("\tadd esp, 4")
+        print("\tmov esp, ebp")
+        print("\tpop ebp")
+        update_reg_desc("eax", instr.out)
 
     def op_extract(self, instr):
         R1,flag = get_reg(instr)
-        print("\tmov", R1, f", [rbp+16]")
+        print("\tmov", R1, f", [ebp+8]")
         update_reg_desc(R1,instr.out)
 
     def gen_code(self, instr):

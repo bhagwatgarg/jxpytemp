@@ -20,113 +20,112 @@ _temp5	dd	0
 section .text
 	global main
 print$Imports$int:	
-	push rbp
-	mov rbp, rsp
-	push rsi
-	push rdi
-	mov rsi, qword [rbp+24]
-	lea rdi, [rel pint]
-	xor rax, rax
+	push ebp
+	mov ebp, esp
+	mov esi, dword [ebp+12]
+	mov edi, pint
+	push edi
+	push esi
+	xor eax, eax
 	call printf
-	xor rax, rax
-	pop rsi
-	pop rdi
-	mov rsp, rbp
-	pop rbp
+	add esp, 4
+	xor eax, eax
+	mov esp, ebp
+	pop ebp
 	ret
 scan_int$Imports:
-	push rbp
-	mov rbp, rsp
-	push rsi
-	push rdi
-	add rsp, 8
-	mov rsi, rsp
-	lea rdi, [rel sint]
-	xor rax, rax
+	push ebp
+	mov ebp, esp
+	push esi
+	push edi
+	add esp, 4
+	mov esi, esp
+	lea edi, [rel sint]
+	xor eax, eax
 	call scanf
-	mov rax, qword [rsp]
-	pop rdi
-	pop rsi
-	mov rsp, rbp
-	pop rbp
+	mov eax, dword [esp]
+	pop edi
+	pop esi
+	mov esp, ebp
+	pop ebp
 	ret
         
 Imports$Imports:
-	push rbp
-	mov rbp, rsp
-	sub rsp, 176
-	mov rsp, rbp
-	pop rbp
+	push ebp
+	mov ebp, esp
+	sub esp, 88
+	mov esp, ebp
+	pop ebp
 	ret
 Main$Main:
-	push rbp
-	mov rbp, rsp
-	sub rsp, 176
-	mov rsp, rbp
-	pop rbp
+	push ebp
+	mov ebp, esp
+	sub esp, 88
+	mov esp, ebp
+	pop ebp
 	ret
 main:
-	mov rax,0 
-	push rbp 
-	mov rbp, rsp 
-	push rax 
+	mov eax,0 
+	push ebp 
+	mov ebp, esp 
+	push eax 
 	call malloc 
-	add rsp, 8 
-	mov rsp, rbp 
-	push rax 
+	add esp, 4 
+	mov esp, ebp 
+	push eax 
 	call Main$Main 
-	add rsp, 8 
-	push rax 
+	add esp, 4 
+	push eax 
 	call main$Main 
-	add rsp, 8 
-	pop rbp 
+	add esp, 4 
+	pop ebp 
 	ret
 main$Main:
-	push rbp
-	mov rbp, rsp
-	sub rsp, 176
-	mov rax,0
-	push rax
+	push ebp
+	mov ebp, esp
+	sub esp, 88
+	mov eax,0
+	push eax
 	call malloc
-	mov [rbp -40 ], rax
-	add rsp, 8
-	mov rsp, rbp
-	pop rbp
-	push rax
+	mov [ebp -20 ], eax
+	add esp, 4
+	mov esp, ebp
+	pop ebp
+	push eax
 	call Imports$Imports
-	add rsp, 8
-	mov  rbx, 0
-	mov  rcx, 0
-	mov qword [rbp-40], rax
-	mov qword [rbp-48], rcx
+	add esp, 4
+	mov  ebx, 0
+	mov  ecx, 0
+	mov dword [ebp-20], eax
+	mov dword [ebp-24], ecx
 for_$n_2:
-	mov rax, qword [rbp-48]
-	cmp rax, 10
+	mov eax, dword [ebp-24]
+	cmp eax, 10
 	jl $n_1
-	mov rax, 0
+	mov eax, 0
 	jmp $n_2
 $n_1:
-	mov rax, 1
+	mov eax, 1
 $n_2:
-	mov rbx, rax
-	cmp rbx, 0
+	mov ebx, eax
+	cmp ebx, 0
 	je for_$n_5
 	jmp for_$n_4
 for_$n_3:
-	mov rax, qword [rbp-48]
-	add rax, 1
-	mov qword [rbp-48], rax
+	mov eax, dword [ebp-24]
+	add eax, 1
+	mov dword [ebp-24], eax
 	jmp for_$n_2
 for_$n_4:
-	mov  rax, qword [rbp-40]
-	mov qword [rbp-40], rax
-	push qword [rbp-48]
-	push rax
+	mov  eax, dword [ebp-20]
+	mov dword [ebp-20], eax
+	push dword [ebp-24]
+	push eax
 	call print$Imports$int
-	add rsp, 16
+	add esp, 8
 	jmp for_$n_3
 for_$n_5:
-	mov rax, 0
-	mov rsp, rbp
-	pop rbp
+	mov eax, 0
+	mov esp, ebp
+	pop ebp
 	ret
