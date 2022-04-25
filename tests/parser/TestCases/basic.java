@@ -21,31 +21,29 @@ class Imports{
 }
 
 class Main{
-  int c;
   // declare int fact2(int b);
-  // int fact(int b){
-  //   if(b==0){return 1;}
-  //   else{
-  //       int k=b-1;
-  //       int k1=this.fact(k);
-  //       return b*k1;
-  //   }
-  //   return 0;
-  // }
-  // int fact(int b, int r, int p){
-  //   if(b==r){return r*p;}
-  //   else{
-  //       int k=b-1;
-  //       int k1=this.fact(k, r, p);
-  //       return b*k1;
-  //   }
-  //   return 0;
-  // }
+  int fact(int b){
+    if(b==0){return 1;}
+    else{
+        int k=b-1;
+        int k1=this.fact(k);
+        return b*k1;
+    }
+    return 0;
+  }
+  int fact(int b, int r, int p){
+    if(b==r){return r*p;}
+    else{
+        int k=b-1;
+        int k1=this.fact(k, r, p);
+        return b*k1;
+    }
+    return 0;
+  }
   void Main(){return;}
   int main(){
     Imports imp=new Imports();
     int a =5, _b = 6, c_ = 7;
-    this.c=12;
     // a=5;
     // int i;
     // for(int i=0; i <10; i=i+1){
@@ -87,17 +85,18 @@ class Main{
     int c__ = 3;
     int d__ = 4; 
     int e__ = 5;
-    // for(int i = 0; i < 4; ++i)
-    // {
-    //   int p = imp.scan_int();
-    //   imp.print(p);
-    // }
+    for(int i = 0; i < 4; ++i)
+    {
+      int p = imp.scan_int();
+      p=this.fact(p);
+      imp.print(p);
+    }
     // imp.print(b);
     imp.print(_b);
     // imp.print(a);
     int i=0;
-    a=imp.scan_int();
-
+    // a=imp.scan_int();
+    
     Math math=new Math();
     int v=math.abs(a);
     imp.print(v);
