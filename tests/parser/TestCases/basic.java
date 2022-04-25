@@ -76,11 +76,11 @@ class Main{
     int c__ = 3;
     int d__ = 4; 
     int e__ = 5;
-    for(int i = 0; i < 4; ++i)
-    {
-      int p = imp.scan_int();
-      imp.print(p);
-    }
+    // for(int i = 0; i < 4; ++i)
+    // {
+    //   int p = imp.scan_int();
+    //   imp.print(p);
+    // }
     imp.print(b);
     imp.print(a__);
     imp.print(a);
