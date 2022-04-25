@@ -83,9 +83,9 @@ class Instruction:
         #print(self.arg_set)
         for symbol in symbols:
             if is_valid_sym(symbol) and symbol not in symbol_table.keys() and self.arrdec:
-                for i in range(self.size//8):
-                    s = symbol+'$'+str(i)+'$'+'1'
-                    symbol_table[s] = symbol_data(isArr=True,size=self.size)
+                    for i in range(self.size//8):
+                        s = symbol+'$'+str(i)+'$'+'1'
+                        symbol_table[s] = symbol_data(isArr=True,size=self.size)
         for symbol in symbols:
             if is_valid_sym(symbol) and symbol not in symbol_table.keys():
                 symbol_table[symbol] = symbol_data()
