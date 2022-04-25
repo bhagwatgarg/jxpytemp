@@ -337,7 +337,8 @@ def get_reg(instr, compulsory=True, exclude=[],isFloat=False):
             if is_valid_sym(instr.inp1):
                 for reg in symbol_table[instr.inp1].address_descriptor_reg:
                     if reg not in exclude:
-                        if len(reg_descriptor[reg]) == 1 and instr.inst_info['next_use'][instr.inp1]== None and not instr.inst_info['live'][instr.inp1] and not reg.startswith('xmm'):
+                        # print('hhhhh',reg,instr.inp1,instr.inst_info['next_use'][instr.inp1])
+                        if len(reg_descriptor[reg]) == 1 and instr.inst_info['next_use'][instr.inp1]== None  and not reg.startswith('xmm'):
                             save_reg(reg)
                             return reg, False
 
