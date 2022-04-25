@@ -5,6 +5,7 @@ from math import log
 from utilities import *
 from tac import ST
 import codecs
+from lib import math_lib, print_int, scan_int
 n_args = 0
 
 leader_instr = [
@@ -29,7 +30,7 @@ class Codegen:
         print("extern printf\n")
         print("extern scanf\n")
         print("section\t.data\n")
-        print('pint: db	"%ld ", 0')
+        print('pint: db	"%ld", 10, 0')
         print('neg_: db "-"')
         print('sint: db	"%ld", 0')
         for var in symbol_table.keys():
@@ -40,95 +41,9 @@ class Codegen:
         print()
         print("section .text")
         print("\tglobal main")
-
-        print("""print_uint32:
-    mov    eax, edi              ; function arg
-    cmp eax, 0
-    jge print_uint32_c
-    xor eax, 0xFFFFFFFF
-    add eax, 1
-    push rax
-    mov eax, 4               ; __NR_write from /usr/include/asm/unistd_64.h
-    mov ebx, 1               ; fd = STDdest_FILENO
-    mov ecx, neg_
-    mov edx, 1
-    int 80h
-    pop rax
-
-print_uint32_c:
-
-    mov    ecx, 0xa              ; base 10
-    push   rcx                   ; ASCII newline
-    mov    rsi, rsp
-    sub    rsp, 16               ; not needed on 64-bit Linux, the red-zone is big enough.  Change the LEA below if you remove this.
-
-;;; rsi is pointing at nl on the stack, with 16B of allocated space below that.
-.toascii_digit:                ; do {
-    xor    edx, edx
-    div    ecx                   ; edx=remainder = low digit = 0..9.  eax/=10
-                                 ;; DIV IS SLOW.  use a multiplicative inverse if performance is relevant.
-    add    edx, '0'
-    dec    rsi                 ; store digits in MSD-first printing order, working backwards from the end of the string
-    mov    [rsi], dl
-
-    test   eax,eax             ; } while(x);
-    jnz  .toascii_digit
-;;; rsi points to the first digit
-
-
-    mov    eax, 1               ; __NR_write from /usr/include/asm/unistd_64.h
-    mov    edi, 1               ; fd = STDdest_FILENO
-    ; pointer already in RSI    ; buf = last digit stored = most significant
-    lea    edx, [rsp+16 + 1]    ; yes, its safe to truncate pointers before subtracting to find length.
-    sub    edx, esi             ; RDX = length = end-start, including the
-    syscall                     ; write(1, string RSI,  digits + 1)
-
-    add  rsp, 24                ; (in 32-bit: add esp,20) undo the push and the buffer reservation
-    ret
-
-
-
-print$Imports$int:	
-	push rbp
-	mov rbp, rsp
-
-	push rsi
-	push rdi
-	push rax
-	push rbx
-	push rcx
-	push rdx
-	mov rdi, qword [rbp+24] 
-
-	call print_uint32
-
-	pop rdx
-	pop rcx
-	pop rbx
-	pop rax
-	pop rdi
-	pop rsi
-
-	mov rsp, rbp
-	pop rbp
-	ret""")
-        print("""scan_int$Imports:
-\tpush rbp
-\tmov rbp, rsp
-\tpush rsi
-\tpush rdi
-\tadd rsp, 8
-\tmov rsi, rsp
-\tlea rdi, [rel sint]
-\txor rax, rax
-\tcall scanf
-\tmov rax, qword [rsp]
-\tpop rdi
-\tpop rsi
-\tmov rsp, rbp
-\tpop rbp
-\tret
-        """)
+        print(math_lib)
+        print(print_int)
+        print(scan_int)
 
     def op_binary(self,instr,op):
 
@@ -185,7 +100,7 @@ print$Imports$int:
             print("\tidiv " + R1)
         else:
             print("\tcdq")
-            print("\tidiv qword " + get_location(instr.source2))
+            print("\tidiv " + get_location(instr.source2))
         update_reg_desc("rax", instr.dest)
         free_regs(instr)
     
@@ -275,7 +190,7 @@ print$Imports$int:
             print("\tidiv " + R1)
         else:
             print("\tcdq")
-            print("\tidiv qword" + get_location(instr.source2))
+            print("\tidiv " + get_location(instr.source2))
 
         update_reg_desc("rdx", instr.dest)
         free_regs(instr)
