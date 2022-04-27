@@ -16,7 +16,6 @@ class Main{
     for(; j < 10 ; ++j){         //for loop
       b=b+1;
       a=a/2;
-      
     }
     int c=(a+b);
 

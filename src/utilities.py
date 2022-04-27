@@ -239,7 +239,7 @@ def free_regs(instr):
                     print("\tmov qword " + get_loc_mem(instr.source1) + ", " + treg)
             #print('aaaaa',treg)
     if is_valid_symbol(instr.source2):
-            if instr.inst_info['next_use'][instr.source1] == None and instr.inst_info['live'][instr.source1] == False:
+            if instr.inst_info['next_use'][instr.source2] == None and instr.inst_info['live'][instr.source2] == False:
                 treg = ''
                 for reg in symbol_table[instr.source2].address_descriptor_reg:
                     reg_descriptor[reg].remove(instr.source2)
@@ -249,7 +249,7 @@ def free_regs(instr):
                     if treg.startswith('xmm'):
                         print("\tmovsd qword " + get_loc_mem(instr.source2) + ", " + treg)
                     else:
-                        print("\tmov qword " + get_loc_mem(instr.source2) + ", " + reg)
+                        print("\tmovq qword " + get_loc_mem(instr.source2) + ", " + reg)
 
 def get_location(symbol,exclude_reg=[]):
 
